@@ -102,6 +102,7 @@ class GameState:
     processed_requests: set[str] = field(default_factory=set)
     corpse: dict[int, list[str]] = field(default_factory=dict)
     turn_number: int = 0
+    card_decks: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

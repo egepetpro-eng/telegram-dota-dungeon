@@ -45,6 +45,7 @@ def start(state: GameState, actor_id: int, catalog: Catalog, rng: Random) -> tup
     if len(doors) < 4 * len(state.order) or len(treasures) < 4 * len(state.order):
         raise RuleError("not enough cards for initial deal")
     result = deepcopy(state)
+    result.card_decks = {card.id: card.deck for card in catalog.values()}
     rng.shuffle(doors)
     rng.shuffle(treasures)
     events: list[Event] = []
