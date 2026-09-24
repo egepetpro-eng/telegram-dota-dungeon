@@ -28,17 +28,20 @@ HANDLERS: dict[str, Handler] = {
     "end_turn": lambda s, c, catalog, rng: turn.end_turn(s, c.actor_id, rng),
     "equip": lambda s, c, catalog, rng: items.equip(s, c.actor_id, _arg(c, "card_id"), catalog),
     "unequip": lambda s, c, catalog, rng: items.unequip(s, c.actor_id, _arg(c, "card_id")),
+    "play_identity": lambda s, c, catalog, rng: items.play_identity(s, c.actor_id, _arg(c, "card_id"), catalog),
     "sell": lambda s, c, catalog, rng: items.sell(s, c.actor_id, _arg(c, "card_ids"), catalog),
     "offer_trade": lambda s, c, catalog, rng: trade.offer_trade(
         s, c.actor_id, _arg(c, "partner_id"), _arg(c, "offered_ids"),
-        _arg(c, "requested_ids"), _arg(c, "expires_at")),
+        _arg(c, "requested_ids"), _arg(c, "expires_at"), catalog, _arg(c, "now")),
     "accept_trade": lambda s, c, catalog, rng: trade.accept_trade(
         s, c.actor_id, _arg(c, "trade_id"), catalog, _arg(c, "now")),
+    "expire_trade": lambda s, c, catalog, rng: trade.expire_trade(
+        s, _arg(c, "trade_id"), _arg(c, "now")),
     "ask_help": lambda s, c, catalog, rng: combat.ask_help(
-        s, c.actor_id, _arg(c, "helper_id"), _arg(c, "treasure_count"), _arg(c, "item_ids")),
+        s, c.actor_id, _arg(c, "helper_id"), _arg(c, "treasure_count"), _arg(c, "item_ids"), catalog),
     "accept_help": lambda s, c, catalog, rng: combat.accept_help(s, c.actor_id),
     "play_combat_card": lambda s, c, catalog, rng: combat.play_combat_card(
-        s, c.actor_id, _arg(c, "card_id"), _arg(c, "target_id"), catalog),
+        s, c.actor_id, _arg(c, "card_id"), _arg(c, "target_id"), catalog, _arg(c, "now")),
     "declare_win": lambda s, c, catalog, rng: combat.declare_win(
         s, c.actor_id, catalog, _arg(c, "now"), c.args.get("seconds", 30)),
     "pass_reaction": lambda s, c, catalog, rng: combat.pass_reaction(s, c.actor_id),
@@ -54,7 +57,8 @@ HANDLERS: dict[str, Handler] = {
 
 ACTIVE_PLAYER_COMMANDS = {
     "open_door", "seek_trouble", "loot_room", "give_charity", "end_turn",
-    "equip", "unequip", "sell", "ask_help", "declare_win", "begin_escape",
+    "equip", "unequip", "play_identity", "sell", "ask_help", "declare_win",
+    "close_reaction", "begin_escape",
 }
 
 

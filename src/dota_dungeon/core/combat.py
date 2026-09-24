@@ -32,7 +32,7 @@ def declare_result(state: GameState, actor_id: int, catalog: Catalog) -> CombatD
 
 
 def ask_help(state: GameState, actor_id: int, helper_id: int, treasure_count: int,
-             item_ids: list[str]) -> tuple[GameState, list[Event]]:
+             item_ids: list[str], catalog: Catalog) -> tuple[GameState, list[Event]]:
     _require_combat(state)
     if actor_id != state.active_user_id:
         raise RuleError("only active fighter can ask for help")
@@ -42,8 +42,13 @@ def ask_help(state: GameState, actor_id: int, helper_id: int, treasure_count: in
         raise RuleError("combat already has a helper offer")
     if treasure_count < 0:
         raise RuleError("negative treasure offer")
+    available = sum(catalog[cid].treasures for cid in state.combat.monster_ids)
+    if treasure_count > available:
+        raise RuleError("promised treasure exceeds monster reward")
     if len(item_ids) != len(set(item_ids)) or any(cid not in state.players[actor_id].in_play for cid in item_ids):
         raise RuleError("promised item must be in play")
+    if any(catalog[cid].kind != "item" for cid in item_ids):
+        raise RuleError("only items can be promised")
     result = deepcopy(state)
     result.combat.pending_help = (helper_id, treasure_count, item_ids.copy())
     return result, [Event(f"user:{helper_id}", "help.offered", {
@@ -63,11 +68,15 @@ def accept_help(state: GameState, actor_id: int) -> tuple[GameState, list[Event]
     result.combat.fighter_ids.append(actor_id)
     result.combat.reaction_deadline = None
     result.combat.passes.clear()
-    return result, [Event("group", "help.accepted", {"helper_id": actor_id})]
+    from .trade import cancel_trades_for_combat
+    events = [Event("group", "help.accepted", {"helper_id": actor_id})]
+    events.extend(cancel_trades_for_combat(result, actor_id))
+    return result, events
 
 
 def play_combat_card(state: GameState, actor_id: int, card_id: str,
-                     target_id: str, catalog: Catalog) -> tuple[GameState, list[Event]]:
+                     target_id: str, catalog: Catalog,
+                     now: datetime) -> tuple[GameState, list[Event]]:
     _require_combat(state)
     if actor_id not in state.players or card_id not in state.players[actor_id].hand:
         raise RuleError("combat card is not in hand")
@@ -77,6 +86,7 @@ def play_combat_card(state: GameState, actor_id: int, card_id: str,
     if card.kind == "modifier" and target_id not in state.combat.monster_ids:
         raise RuleError("modifier requires a monster target")
     result = deepcopy(state)
+    was_reacting = result.combat.reaction_deadline is not None
     result.players[actor_id].hand.remove(card_id)
     if card.kind == "modifier":
         result.combat.modifier_ids.append(card_id)
@@ -86,8 +96,13 @@ def play_combat_card(state: GameState, actor_id: int, card_id: str,
         (result.door_discard if card.deck == "door" else result.treasure_discard).append(card_id)
     result.combat.passes.clear()
     result.combat.reaction_deadline = None
-    return result, [Event("group", "combat.card_played", {
+    events = [Event("group", "combat.card_played", {
         "actor_id": actor_id, "card_id": card_id, "target_id": target_id})]
+    if was_reacting and declare_result(result, result.active_user_id, catalog).outcome == "provisional_win":
+        result.combat.reaction_deadline = now + timedelta(seconds=30)
+        events.append(Event("group", "combat.reaction_restarted", {
+            "deadline": result.combat.reaction_deadline.isoformat()}))
+    return result, events
 
 
 def declare_win(state: GameState, actor_id: int, catalog: Catalog,
@@ -144,7 +159,7 @@ def resolve_rewards(state: GameState, catalog: Catalog,
         cid = _draw_treasure(result, rng)
         recipient = combat.helper_id if index < combat.help_treasure_count else leader.user_id
         result.players[recipient].hand.append(cid)
-        events.append(Event("group" if combat.helper_id else "actor", "treasure.drawn",
+        events.append(Event("group" if combat.helper_id else f"user:{leader.user_id}", "treasure.drawn",
                             {"card_id": cid, "recipient_id": recipient}))
     if combat.helper_id is not None:
         helper = result.players[combat.helper_id]

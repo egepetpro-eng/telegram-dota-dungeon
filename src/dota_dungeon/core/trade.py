@@ -1,7 +1,7 @@
 """Atomic exchange of open possessions between players."""
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from .model import Catalog, Event, GameState, Player, RuleError, Trade
@@ -23,13 +23,19 @@ def _check_open(player: Player, card_ids: list[str], label: str) -> None:
 
 def offer_trade(state: GameState, actor_id: int, partner_id: int,
                 offered_ids: list[str], requested_ids: list[str],
-                expires_at: datetime) -> tuple[GameState, list[Event]]:
+                expires_at: datetime, catalog: Catalog,
+                now: datetime) -> tuple[GameState, list[Event]]:
     _ensure_trade_allowed(state, actor_id, partner_id)
+    if expires_at <= now or expires_at > now + timedelta(minutes=2):
+        raise RuleError("trade must expire within two minutes")
     if not offered_ids and not requested_ids:
         raise RuleError("empty trade")
     _check_open(state.players[actor_id], offered_ids, "offered")
     _check_open(state.players[partner_id], requested_ids, "requested")
+    if any(catalog[cid].kind != "item" for cid in offered_ids + requested_ids):
+        raise RuleError("only items can be traded")
     reserved = {cid for trade in state.trades.values() if trade.status == "pending"
+                and trade.expires_at > now
                 for cid in trade.offered_ids + trade.requested_ids}
     if reserved.intersection(offered_ids + requested_ids):
         raise RuleError("item already reserved in another trade")
@@ -44,6 +50,8 @@ def offer_trade(state: GameState, actor_id: int, partner_id: int,
 def validate_trade_transfer(seller: Player, buyer: Player, trade: Trade, catalog: Catalog) -> None:
     _check_open(seller, trade.offered_ids, "offered")
     _check_open(buyer, trade.requested_ids, "requested")
+    if any(catalog[cid].kind != "item" for cid in trade.offered_ids + trade.requested_ids):
+        raise RuleError("only items can be traded")
     for player, outgoing, incoming in (
         (seller, trade.offered_ids, trade.requested_ids),
         (buyer, trade.requested_ids, trade.offered_ids),
@@ -82,3 +90,33 @@ def accept_trade(state: GameState, actor_id: int, trade_id: str,
     return result, [Event("group", "trade.accepted", {"trade_id": trade_id,
                     "sender_id": saved.sender_id, "receiver_id": saved.receiver_id,
                     "offered_ids": saved.offered_ids.copy(), "requested_ids": saved.requested_ids.copy()})]
+
+
+def expire_trade(state: GameState, trade_id: str,
+                 now: datetime) -> tuple[GameState, list[Event]]:
+    if trade_id not in state.trades:
+        raise RuleError("unknown trade")
+    trade = state.trades[trade_id]
+    if trade.status != "pending" or now < trade.expires_at:
+        raise RuleError("trade is not ready to expire")
+    result = deepcopy(state)
+    result.trades[trade_id].status = "expired"
+    return result, [Event(f"user:{trade.sender_id}", "trade.expired", {"trade_id": trade_id}),
+                    Event(f"user:{trade.receiver_id}", "trade.expired", {"trade_id": trade_id})]
+
+
+def cancel_trades_for_combat(state: GameState, fighter_id: int) -> list[Event]:
+    events = []
+    for trade in state.trades.values():
+        if trade.status == "pending" and fighter_id in {trade.sender_id, trade.receiver_id}:
+            trade.status = "cancelled"
+            events.append(Event(f"user:{trade.receiver_id}", "trade.cancelled", {"trade_id": trade.id}))
+            events.append(Event(f"user:{trade.sender_id}", "trade.cancelled", {"trade_id": trade.id}))
+    return events
+
+
+def cancel_trades_for_cards(state: GameState, card_ids: list[str]) -> None:
+    changed = set(card_ids)
+    for trade in state.trades.values():
+        if trade.status == "pending" and changed.intersection(trade.offered_ids + trade.requested_ids):
+            trade.status = "cancelled"

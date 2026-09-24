@@ -13,6 +13,10 @@ def apply_effects(state: GameState, target_id: int, effects: list[dict],
     for effect in effects:
         if effect.get("op") not in EFFECTS:
             raise RuleError("unknown effect")
+        if effect["op"] in {"gain_level", "lose_level", "draw"}:
+            amount = effect.get("amount", 1)
+            if type(amount) is not int or amount <= 0:
+                raise RuleError("effect requires positive amount")
     result = deepcopy(state)
     player = result.players[target_id]
     events: list[Event] = []
@@ -22,7 +26,10 @@ def apply_effects(state: GameState, target_id: int, effects: list[dict],
         if op == "gain_level":
             if player.level + amount >= 10 and not effect.get("can_win", False):
                 raise RuleError("effect cannot grant winning level")
-            player.level += amount
+            player.level = min(10, player.level + amount)
+            if player.level == 10:
+                result.phase = "game.finished"
+                events.append(Event("group", "game.won", {"user_id": target_id}))
         elif op == "lose_level":
             player.level = max(1, player.level - amount)
         elif op == "add_strength":
@@ -44,7 +51,10 @@ def apply_effects(state: GameState, target_id: int, effects: list[dict],
             from .items import remove_owned_card
             card_id = effect["card_id"]
             remove_owned_card(player, card_id)
-            result.treasure_discard.append(card_id)
+            (result.door_discard if result.card_decks.get(card_id) == "door"
+             else result.treasure_discard).append(card_id)
+            from .trade import cancel_trades_for_cards
+            cancel_trades_for_cards(result, [card_id])
         elif op == "draw":
             deck = effect.get("deck", "treasure")
             stack = result.door_deck if deck == "door" else result.treasure_deck
@@ -61,7 +71,21 @@ def apply_effects(state: GameState, target_id: int, effects: list[dict],
             result.door_discard.append(monster_id)
         elif op == "persistent":
             card_id = effect["card_id"]
+            if card_id not in catalog:
+                raise RuleError("unknown persistent card")
             if card_id not in player.in_play:
+                if card_id in player.hand:
+                    player.hand.remove(card_id)
+                elif card_id in result.door_discard:
+                    result.door_discard.remove(card_id)
+                elif card_id in result.treasure_discard:
+                    result.treasure_discard.remove(card_id)
+                else:
+                    raise RuleError("persistent card has no movable source")
                 player.in_play.append(card_id)
+            if catalog[card_id].kind == "role" and card_id not in player.role_ids:
+                player.role_ids.append(card_id)
+            if catalog[card_id].kind == "race" and card_id not in player.race_ids:
+                player.race_ids.append(card_id)
         events.append(Event("group", "effect.applied", {"target_id": target_id, "op": op}))
     return result, events

@@ -29,5 +29,9 @@ def load_catalog(raw: dict) -> Catalog:
         for effect in entry.get("effects", []):
             if not isinstance(effect, dict) or effect.get("op") not in EFFECTS:
                 raise ValueError("unknown effect")
+            if effect["op"] in {"gain_level", "lose_level", "draw"}:
+                amount = effect.get("amount", 1)
+                if type(amount) is not int or amount <= 0:
+                    raise ValueError("effect requires positive amount")
         cards[card_id] = CardDef.from_dict(entry)
     return cards

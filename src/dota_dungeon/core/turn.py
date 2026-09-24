@@ -36,6 +36,8 @@ def open_door(state: GameState, actor_id: int, catalog: Catalog,
     if card.kind == "monster":
         result.phase = "combat.active"
         result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[card_id])
+        from .trade import cancel_trades_for_combat
+        events.extend(cancel_trades_for_combat(result, actor_id))
     elif card.kind == "curse":
         result.phase = "turn.after_door"
         result.door_discard.append(card_id)
@@ -57,7 +59,10 @@ def seek_trouble(state: GameState, actor_id: int, card_id: str,
     result.players[actor_id].hand.remove(card_id)
     result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[card_id])
     result.phase = "combat.active"
-    return result, [Event("group", "combat.started", {"monster_ids": [card_id], "fighter_id": actor_id})]
+    from .trade import cancel_trades_for_combat
+    events = [Event("group", "combat.started", {"monster_ids": [card_id], "fighter_id": actor_id})]
+    events.extend(cancel_trades_for_combat(result, actor_id))
+    return result, events
 
 
 def loot_room(state: GameState, actor_id: int, rng: Random | None = None) -> tuple[GameState, list[Event]]:

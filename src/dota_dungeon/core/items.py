@@ -56,6 +56,30 @@ def unequip(state: GameState, actor_id: int, card_id: str) -> tuple[GameState, l
     return result, [Event("group", "item.unequipped", {"user_id": actor_id, "card_id": card_id})]
 
 
+def play_identity(state: GameState, actor_id: int, card_id: str,
+                  catalog: Catalog) -> tuple[GameState, list[Event]]:
+    if actor_id != state.active_user_id or state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}:
+        raise RuleError("identity can be played only on your turn")
+    _outside_combat(state)
+    if card_id not in state.players[actor_id].hand:
+        raise RuleError("identity card is not in hand")
+    card = catalog[card_id]
+    if card.kind not in {"role", "race"}:
+        raise RuleError("card is not a role or race")
+    result = deepcopy(state)
+    player = result.players[actor_id]
+    active = player.role_ids if card.kind == "role" else player.race_ids
+    if active:
+        old_id = active.pop()
+        player.in_play.remove(old_id)
+        result.door_discard.append(old_id)
+    player.hand.remove(card_id)
+    player.in_play.append(card_id)
+    active.append(card_id)
+    return result, [Event("group", "identity.played", {
+        "user_id": actor_id, "card_id": card_id, "kind": card.kind})]
+
+
 def remove_owned_card(player: Player, card_id: str) -> None:
     if card_id in player.hand:
         player.hand.remove(card_id)
@@ -91,5 +115,7 @@ def sell(state: GameState, actor_id: int, card_ids: list[str],
     for cid in card_ids:
         remove_owned_card(result.players[actor_id], cid)
         result.treasure_discard.append(cid)
+    from .trade import cancel_trades_for_cards
+    cancel_trades_for_cards(result, card_ids)
     result.players[actor_id].level += gained
     return result, [Event("group", "items.sold", {"user_id": actor_id, "card_ids": card_ids.copy(), "levels": gained})]

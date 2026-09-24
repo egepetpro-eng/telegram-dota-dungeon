@@ -65,7 +65,7 @@ def test_strictly_greater_strength_wins_and_multiple_monsters_sum():
 
 def test_helper_accepts_explicit_terms_and_adds_strength():
     state, catalog = combat_game(monster_level=7)
-    state, _ = ask_help(state, 101, 102, 1, ["hat"])
+    state, _ = ask_help(state, 101, 102, 1, ["hat"], catalog)
     assert state.combat.pending_help == (102, 1, ["hat"])
     state, _ = accept_help(state, 102)
     assert state.combat.fighter_ids == [101, 102]
@@ -76,7 +76,7 @@ def test_intervention_recalculates_declared_victory():
     state, catalog = combat_game(monster_level=5)
     state, _ = declare_win(state, 101, catalog, NOW)
     first_deadline = state.combat.reaction_deadline
-    state, _ = play_combat_card(state, 103, "debuff", "m1", catalog)
+    state, _ = play_combat_card(state, 103, "debuff", "m1", catalog, NOW + timedelta(seconds=5))
     assert state.combat.reaction_deadline is None
     assert declare_result(state, 101, catalog).outcome == "must_run_away"
     assert first_deadline is not None
@@ -85,7 +85,7 @@ def test_intervention_recalculates_declared_victory():
 def test_one_shot_from_hand_changes_fighter_strength_and_restarts_window():
     state, catalog = combat_game(monster_level=7)
     state.players[101].hand.append("buff")
-    state, _ = play_combat_card(state, 101, "buff", "101", catalog)
+    state, _ = play_combat_card(state, 101, "buff", "101", catalog, NOW)
     assert combat_strength(state, 101, catalog) == 9
     assert declare_result(state, 101, catalog).outcome == "provisional_win"
     assert "buff" in state.treasure_discard
@@ -100,13 +100,13 @@ def test_rewards_wait_for_reaction_window_then_solo_draw_is_private():
     state, events = close_reaction(state, catalog, NOW + timedelta(seconds=31))
     assert state.players[101].level == 4
     assert state.phase == "turn.charity"
-    assert sum(e.name == "treasure.drawn" and e.audience == "actor" for e in events) == 2
+    assert sum(e.name == "treasure.drawn" and e.audience == "user:101" for e in events) == 2
     assert all(e.name != "treasure.drawn" or e.audience != "group" for e in events)
 
 
 def test_helped_treasure_is_public_and_promised_share_and_item_transfer():
     state, catalog = combat_game(monster_level=1)
-    state, _ = ask_help(state, 101, 102, 1, ["hat"])
+    state, _ = ask_help(state, 101, 102, 1, ["hat"], catalog)
     state, _ = accept_help(state, 102)
     state, _ = declare_win(state, 101, catalog, NOW)
     state, events = close_reaction(state, catalog, NOW + timedelta(seconds=31))
@@ -136,7 +136,7 @@ def test_escape_threshold_and_public_die_event(die, escaped):
 
 def test_each_fighter_rolls_against_each_monster():
     state, catalog = combat_game(monster_level=20, second=True)
-    state, _ = ask_help(state, 101, 102, 0, [])
+    state, _ = ask_help(state, 101, 102, 0, [], catalog)
     state, _ = accept_help(state, 102)
     state, _ = begin_escape(state, 101, catalog)
     rolls = []
@@ -152,7 +152,7 @@ def test_helper_death_on_second_monster_does_not_erase_fighters_escape_rolls():
     from dataclasses import replace
     catalog = dict(catalog)
     catalog["m2"] = replace(catalog["m2"], bad_stuff=[{"op": "death"}])
-    state, _ = ask_help(state, 101, 102, 0, [])
+    state, _ = ask_help(state, 101, 102, 0, [], catalog)
     state, _ = accept_help(state, 102)
     state, _ = begin_escape(state, 101, catalog)
     recorded = []
