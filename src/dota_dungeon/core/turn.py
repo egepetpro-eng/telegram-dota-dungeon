@@ -110,7 +110,20 @@ def give_charity(state: GameState, actor_id: int,
     return result, [Event("group", "charity.given", {"from": actor_id, "counts": {u: len(v) for u, v in assignments.items()}})]
 
 
-def end_turn(state: GameState, actor_id: int) -> tuple[GameState, list[Event]]:
+def _draw_for_rebirth(state: GameState, deck: str, rng: Random | None) -> str:
+    stack = state.door_deck if deck == "door" else state.treasure_deck
+    discard = state.door_discard if deck == "door" else state.treasure_discard
+    if not stack:
+        if not discard:
+            raise RuleError(f"{deck} deck is empty")
+        stack.extend(discard)
+        discard.clear()
+        (rng or Random()).shuffle(stack)
+    return stack.pop()
+
+
+def end_turn(state: GameState, actor_id: int,
+             rng: Random | None = None) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.charity")
     if len(state.players[actor_id].hand) > 5:
         raise RuleError("hand cannot exceed five cards")
@@ -119,5 +132,17 @@ def end_turn(state: GameState, actor_id: int) -> tuple[GameState, list[Event]]:
     result.active_user_id = result.order[(index + 1) % len(result.order)]
     result.turn_number += 1
     result.phase = "turn.prepare"
-    result.players[result.active_user_id].alive = True
-    return result, [Event("group", "turn.started", {"user_id": result.active_user_id})]
+    next_player = result.players[result.active_user_id]
+    events = [Event("group", "turn.started", {"user_id": result.active_user_id})]
+    if not next_player.alive:
+        for cid in result.corpse.pop(next_player.user_id, []):
+            deck = result.card_decks[cid]
+            (result.door_discard if deck == "door" else result.treasure_discard).append(cid)
+        result.corpse_looted_by.pop(next_player.user_id, None)
+        result.corpse_hand.pop(next_player.user_id, None)
+        next_player.hand.extend(_draw_for_rebirth(result, "door", rng) for _ in range(4))
+        next_player.hand.extend(_draw_for_rebirth(result, "treasure", rng) for _ in range(4))
+        next_player.alive = True
+        events.append(Event(f"user:{next_player.user_id}", "player.reborn", {
+            "card_ids": next_player.hand.copy()}))
+    return result, events

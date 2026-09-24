@@ -21,6 +21,9 @@ class CardDef:
     size: str = "small"
     effects: list[dict[str, Any]] = field(default_factory=list)
     tags: tuple[str, ...] = ()
+    treasures: int = 0
+    levels: int = 1
+    bad_stuff: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CardDef":
@@ -30,6 +33,8 @@ class CardDef:
             bonus=data.get("bonus", 0), slots=data.get("slots"),
             size=data.get("size", "small"), effects=list(data.get("effects", [])),
             tags=tuple(data.get("tags", [])),
+            treasures=data.get("treasures", 0), levels=data.get("levels", 1),
+            bad_stuff=list(data.get("bad_stuff", [])),
         )
 
 
@@ -103,6 +108,8 @@ class GameState:
     corpse: dict[int, list[str]] = field(default_factory=dict)
     turn_number: int = 0
     card_decks: dict[str, str] = field(default_factory=dict)
+    corpse_looted_by: dict[int, set[int]] = field(default_factory=dict)
+    corpse_hand: dict[int, set[str]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
