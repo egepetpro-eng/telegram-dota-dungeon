@@ -12,3 +12,5 @@ The approved plan is the design baseline. These interface details were settled d
 - Starting a fighter's combat cancels their pending trades. `offer_trade` permits expiry at most two minutes after trusted `now`; `expire_trade` changes an elapsed offer to expired. The adapter schedules that command.
 
 The engine has only a small test catalog. The 168-card mapping, Telegram transport, storage, timers, content rights and deployment remain separate work.
+
+The catalog plan must extend command routing for card-specific cases not present in the small test catalog, especially `level_up`, noncombat `one_shot`, `special` cards and exceptions permitting multiple roles or races. Each new operation needs a failing rule test before being enabled.
