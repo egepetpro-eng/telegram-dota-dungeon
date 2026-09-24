@@ -7,7 +7,11 @@ from .model import Catalog, Event, GameState, Player, RuleError
 
 
 def new_lobby(game_id: str, group_id: int, host_id: int, catalog: Catalog) -> GameState:
-    return GameState(game_id, group_id, host_id, "lobby", None, [], {})
+    state = GameState(game_id, group_id, host_id, "lobby", None, [], {})
+    state.door_deck = [card.id for card in catalog.values() if card.deck == "door"]
+    state.treasure_deck = [card.id for card in catalog.values() if card.deck == "treasure"]
+    state.card_decks = {card.id: card.deck for card in catalog.values()}
+    return state
 
 
 def join(state: GameState, user_id: int) -> tuple[GameState, list[Event]]:
