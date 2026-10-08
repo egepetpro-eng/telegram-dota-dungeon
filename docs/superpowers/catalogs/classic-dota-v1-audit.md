@@ -31,6 +31,7 @@ Non-item value zero is a nonapplicable contract default, not a printed sale valu
 - Wizard charm spends the **entire hand**, minimum three cards. Cost mode is `all_hand`; three is the eligibility minimum, not a fixed price. Flight is applied after the escape die.
 - Kneepads cannot be used by Clerics, force only a **strictly higher-level** helper, and cannot force a helper for the wearer's winning level. The photographed face supplies this precise comparison.
 - Mutilate the Bodies requires **after a combat**, not after killing a monster. Whine cannot be used by anyone tied for highest level.
+- Ordinary Go Up a Level cards, including Boil an Anthill, may target any player who can legally gain the level. The publisher FAQ permits another recipient; these cards still cannot grant the winning level.
 - Really Impressive Title and Hireling are not saleable Items. Limburger and Anchovy Sandwich is permanent Halfling equipment. Doppleganger is a 300-value one-shot Item.
 - Ghoulfiends are not Undead and use level-only combat. Mr. Bones, King Tut, Undead Horse and Wight Brothers carry the printed Undead tag.
 - Baby uses a special descriptor to preserve both floors: monster level minimum one and Treasure minimum one. The -5 and -1 adjustments never discard those floors.
@@ -221,4 +222,4 @@ Older face evidence was reconciled with known publisher changes, but there is no
 
 ## Verification
 
-TDD red: four missing-manifest failures; numeric-evidence failure for Net Troll; price-evidence failure for Magic Missile; final Rat ability regression failed because it was an equip effect. Green manifest suite: 7 passed. Full suite: 77 passed. Tests verify independent per-card copy counts, totals, evidence completeness, fixed factual examples, naming isolation and conditional escape representation.
+TDD red: four missing-manifest failures; numeric-evidence failure for Net Troll; price-evidence failure for Magic Missile; Rat ability regression failed because it was an equip effect; GUAL recipient regression failed because Boil an Anthill was self-only. Green manifest suite: 8 passed. Full suite: 78 passed. Tests verify independent per-card copy counts, totals, evidence completeness, fixed factual examples, naming isolation, conditional escape representation and ordinary GUAL recipient eligibility.

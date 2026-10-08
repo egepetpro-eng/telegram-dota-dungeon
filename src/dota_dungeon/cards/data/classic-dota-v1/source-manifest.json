@@ -3909,7 +3909,7 @@
         "combat.active",
         "combat.run_away"
       ],
-      "target_rule": "self",
+      "target_rule": "player",
       "restrictions": {},
       "conditions": [],
       "abilities": [],
@@ -3917,13 +3917,14 @@
       "source_refs": [
         "https://www.munchkin.game/products/games/munchkin/",
         "https://i.ebayimg.com/images/g/ev0AAeSwU3ZqMPcA/s-l1600.webp",
-        "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
+        "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf",
+        "https://munchkin.game/gameplay/faq/"
       ],
       "verified_on": "2026-10-08",
       "dota_entity_id": "item:radiance",
       "display_name_ru": "Радианс",
       "evidence_status": "verified",
-      "evidence_notes": "Verified: inspected original publisher-authored physical card face photograph; publisher rules supply general play timing, default monster reward of one level and nonapplicable contract defaults. Source descriptors preserve factual exceptions; named callbacks require later implementation."
+      "evidence_notes": "Verified: inspected original publisher-authored physical card face photograph; publisher rules supply general play timing, default monster reward of one level and nonapplicable contract defaults. Source descriptors preserve factual exceptions; named callbacks require later implementation. Publisher FAQ Combat GUAL recipient ruling: ordinary GUAL may target any player who can legally gain the level, including another player; the level cannot win."
     },
     {
       "rule_key": "boots_of_butt_kicking",

@@ -121,3 +121,17 @@ def test_conditional_escape_is_an_ability_not_an_equip_effect():
     assert by_key["plutonium_dragon"]["dota_entity_id"] == "creep:roshan"
     assert len({c["dota_entity_id"] for c in cards()
                 if c["dota_entity_id"].startswith("creep:")}) >= 5
+
+
+def test_ordinary_gual_can_target_any_player_who_can_legally_gain_level():
+    # Original faces have no recipient exception; publisher FAQ permits others.
+    by_key = {c["rule_key"]: c for c in cards()}
+    ordinary = (
+        "1_000_gold_pieces", "boil_an_anthill", "bribe_gm_with_food",
+        "convenient_addition_error", "invoke_obscure_rules",
+        "potion_of_general_studliness",
+    )
+    for key in ordinary:
+        assert by_key[key]["target_rule"] == "player", key
+        assert by_key[key]["effects"] == [
+            {"op": "gain_level", "amount": 1, "can_win": False}], key
