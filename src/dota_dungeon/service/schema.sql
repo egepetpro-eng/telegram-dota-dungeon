@@ -68,3 +68,11 @@ CREATE TABLE IF NOT EXISTS service_state (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL
 );
+CREATE TABLE IF NOT EXISTS game_members (
+    game_id TEXT NOT NULL REFERENCES games(game_id),
+    user_id BIGINT NOT NULL,
+    PRIMARY KEY(game_id,user_id)
+);
+CREATE INDEX IF NOT EXISTS member_matches ON game_members(user_id);
+ALTER TABLE outbox ADD COLUMN IF NOT EXISTS lease_until TIMESTAMPTZ;
+ALTER TABLE outbox ADD COLUMN IF NOT EXISTS failed_at TIMESTAMPTZ;

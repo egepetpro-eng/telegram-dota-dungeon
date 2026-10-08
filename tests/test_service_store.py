@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 from random import Random
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import psycopg
@@ -125,3 +126,67 @@ def test_sent_outbox_stays_sent_after_repository_restart(repository):
     restarted = GameRepository(repository.database_url, schema=repository.schema)
     assert restarted.pending_outbox() == []
     assert restarted.get("game").state.players[11].level == 2
+
+
+def test_navigation_callbacks_and_receipt_survive_restart(repository):
+    from dota_dungeon.telegram.callbacks import CallbackIntent
+    create(repository)
+    intent = CallbackIntent("opaque", "game", 0, 11, 11, "nav", {"screen": "hand"},
+                            datetime.now(timezone.utc) + timedelta(minutes=5))
+    message = {"method": "sendMessage", "payload": {"chat_id": 11, "text": "private"}}
+    assert repository.enqueue("tg:nav", [message], callbacks=[intent], game_id="game")
+    assert not repository.enqueue("tg:nav", [message], callbacks=[intent], game_id="game")
+    assert repository.callback("opaque") == intent
+    assert repository.get("game").version == 0
+    assert len(repository.pending_outbox()) == 1
+
+
+def test_private_links_and_membership_are_scoped(repository):
+    create(repository)
+    create(repository, "other", -200)
+    assert repository.private_chat(11) is None
+    repository.link_private(11, 11)
+    assert repository.private_chat(11) == 11
+    assert {s.state.game_id for s in repository.active_user(11)} == {"game", "other"}
+    assert repository.active_user(99) == []
+    repository.unavailable_private(11)
+    assert repository.private_chat(11) is None
+
+
+def test_outbox_lease_retry_and_permanent_failure(repository):
+    create(repository)
+    repository.apply("game", 0, "tg:lease", level_up)
+    now = datetime.now(timezone.utc)
+    entries = repository.claim_outbox(now=now)
+    assert len(entries) == 1
+    assert repository.claim_outbox(now=now) == []
+    repository.retry_outbox(entries[0]["id"], "429", now + timedelta(seconds=10))
+    assert repository.claim_outbox(now=now) == []
+    assert len(repository.claim_outbox(now=now + timedelta(seconds=11))) == 1
+    repository.fail_outbox(entries[0]["id"], "403")
+    assert repository.pending_outbox(now=now + timedelta(hours=1)) == []
+
+
+def test_durable_offset_and_singleton_lock(repository):
+    assert repository.setting("poll_offset", 0) == 0
+    repository.set_setting("poll_offset", 901)
+    assert repository.setting("poll_offset", 0) == 901
+    with repository.singleton("poller") as first:
+        assert first
+        with repository.singleton("poller") as second:
+            assert not second
+
+
+def test_timer_replacement_is_atomic_and_newer_version_invalidates_old_jobs(repository):
+    create(repository)
+    now = datetime.now(timezone.utc)
+
+    def scheduled(snapshot):
+        mutation = level_up(snapshot)
+        mutation.timers = [{"timer_id": "game:idle", "kind": "idle", "due_at": now}]
+        return mutation
+
+    repository.apply("game", 0, "tg:timer", scheduled)
+    assert repository.due_timers(now=now)[0]["expected_version"] == 1
+    repository.apply("game", 1, "tg:newer", level_up)
+    assert repository.due_timers(now=now) == []

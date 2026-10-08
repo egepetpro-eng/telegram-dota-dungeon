@@ -1,7 +1,8 @@
 """Per-game PostgreSQL transactions persist state, receipts, events and outbox."""
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from importlib.resources import files
 from random import Random
 
@@ -40,6 +41,7 @@ class Mutation:
     timers: list[dict] = field(default_factory=list)
     metadata: dict | None = None
     status: str | None = None
+    callbacks: list = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -63,9 +65,10 @@ def _message(message):
 
 
 class GameRepository:
-    def __init__(self, database_url: str, *, schema: str = "public"):
+    def __init__(self, database_url: str, *, schema: str = "public", scheduler=None):
         self.database_url = database_url
         self.schema = schema
+        self.scheduler = scheduler
 
     def connection(self):
         connection = psycopg.connect(self.database_url, row_factory=dict_row, connect_timeout=10)
@@ -80,16 +83,104 @@ class GameRepository:
         with self.connection() as connection:
             connection.execute(files(__package__).joinpath("schema.sql").read_text(encoding="utf-8"))
 
-    def create(self, state: GameState, rng: Random, metadata: dict | None = None):
+    def create(self, state: GameState, rng: Random, metadata: dict | None = None, *,
+               update_id: str | None = None, messages: list | None = None, callbacks: list | None = None):
         try:
             with self.connection() as connection:
+                if update_id and not self._receipt(connection, update_id, state.game_id):
+                    return False
                 connection.execute(
                     "INSERT INTO games(game_id, group_id, active, state, rng, metadata) VALUES (%s,%s,%s,%s,%s,%s)",
                     (state.game_id, state.group_id, state.phase != "game.finished",
                      Jsonb(encode_state(state)), Jsonb(encode_rng(rng)), Jsonb(metadata or {})),
                 )
+                self._members(connection, state)
+                self._outgoing(connection, update_id, state.game_id, messages or [], callbacks or [])
+                return True
         except psycopg.errors.UniqueViolation as exc:
             raise ActiveGameExists("group or game already exists") from exc
+
+    @staticmethod
+    def _members(connection, state):
+        connection.execute("DELETE FROM game_members WHERE game_id=%s", (state.game_id,))
+        for user_id in state.players:
+            connection.execute("INSERT INTO game_members(game_id,user_id) VALUES (%s,%s)", (state.game_id, user_id))
+
+    @staticmethod
+    def _receipt(connection, update_id, game_id):
+        row = connection.execute("INSERT INTO update_receipts(update_id,game_id) VALUES (%s,%s) ON CONFLICT DO NOTHING RETURNING update_id",
+                                 (update_id, game_id)).fetchone()
+        return row is not None
+
+    @staticmethod
+    def _outgoing(connection, update_id, game_id, messages, callbacks):
+        for intent in callbacks:
+            if intent.expires_at.utcoffset() is None or (game_id is not None and intent.game_id != game_id):
+                raise ValueError("invalid callback context")
+            connection.execute("INSERT INTO callback_intentions(token,game_id,expected_version,actor_id,chat_id,action,args,expires_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                               (intent.token, intent.game_id, intent.expected_version, intent.actor_id, intent.chat_id,
+                                intent.action, Jsonb(intent.args), intent.expires_at))
+        for ordinal, message in enumerate(messages):
+            _message(message)
+            connection.execute("INSERT INTO outbox(game_id,update_id,ordinal,method,payload) VALUES (%s,%s,%s,%s,%s)",
+                               (game_id, update_id, ordinal, message["method"], Jsonb(message["payload"])))
+
+    def enqueue(self, update_id, messages, *, callbacks=None, game_id=None):
+        with self.connection() as connection:
+            if not self._receipt(connection, update_id, game_id):
+                return False
+            self._outgoing(connection, update_id, game_id, messages, callbacks or [])
+            return True
+
+    def callback(self, token):
+        from ..telegram.callbacks import CallbackIntent
+        with self.connection() as connection:
+            row = connection.execute("SELECT * FROM callback_intentions WHERE token=%s", (token,)).fetchone()
+        return CallbackIntent(**row) if row else None
+
+    def link_private(self, user_id, chat_id):
+        if type(user_id) is not int or user_id <= 0 or chat_id != user_id:
+            raise ValueError("invalid private chat identity")
+        with self.connection() as connection:
+            connection.execute("INSERT INTO private_chats(user_id,chat_id) VALUES (%s,%s) ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id,available=TRUE,updated_at=CURRENT_TIMESTAMP", (user_id, chat_id))
+
+    def private_chat(self, user_id):
+        with self.connection() as connection:
+            row = connection.execute("SELECT chat_id FROM private_chats WHERE user_id=%s AND available", (user_id,)).fetchone()
+        return row["chat_id"] if row else None
+
+    def unavailable_private(self, user_id):
+        with self.connection() as connection:
+            connection.execute("UPDATE private_chats SET available=FALSE,updated_at=CURRENT_TIMESTAMP WHERE user_id=%s", (user_id,))
+
+    def active_user(self, user_id):
+        with self.connection() as connection:
+            rows = connection.execute("SELECT g.* FROM games g JOIN game_members m USING(game_id) WHERE g.active AND m.user_id=%s ORDER BY g.updated_at DESC", (user_id,)).fetchall()
+        return [_snapshot(row) for row in rows]
+
+    def active_games(self):
+        with self.connection() as connection:
+            return [_snapshot(row) for row in connection.execute("SELECT * FROM games WHERE active").fetchall()]
+
+    def setting(self, key, default=None):
+        with self.connection() as connection:
+            row = connection.execute("SELECT value FROM service_state WHERE key=%s", (key,)).fetchone()
+        return row["value"] if row else default
+
+    def set_setting(self, key, value):
+        with self.connection() as connection:
+            connection.execute("INSERT INTO service_state(key,value) VALUES (%s,%s) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, Jsonb(value)))
+
+    @contextmanager
+    def singleton(self, name):
+        with self.connection() as connection:
+            key = self.schema + ":" + name
+            acquired = connection.execute("SELECT pg_try_advisory_lock(hashtextextended(%s,0)) AS locked", (key,)).fetchone()["locked"]
+            try:
+                yield acquired
+            finally:
+                if acquired:
+                    connection.execute("SELECT pg_advisory_unlock(hashtextextended(%s,0))", (key,))
 
     def get(self, game_id: str) -> Snapshot:
         with self.connection() as connection:
@@ -124,6 +215,8 @@ class GameRepository:
             mutation = transition(snapshot)
             if not isinstance(mutation, Mutation):
                 raise ValueError("transition must return a mutation")
+            if self.scheduler is not None:
+                mutation = self.scheduler(snapshot, mutation)
             if (mutation.state.game_id, mutation.state.group_id) != (game_id, row["group_id"]):
                 raise ValueError("transition changed game identity")
             for message in mutation.messages:
@@ -140,12 +233,12 @@ class GameRepository:
                 (Jsonb(state_data), Jsonb(rng_data), Jsonb(metadata), version, status,
                  mutation.state.phase != "game.finished" and status != "finished", game_id),
             )
+            self._members(connection, mutation.state)
             for event in mutation.events:
                 connection.execute("INSERT INTO game_events(game_id,update_id,audience,name,data) VALUES (%s,%s,%s,%s,%s)",
                                    (game_id, update_id, event.audience, event.name, Jsonb(event.data)))
-            for ordinal, message in enumerate(mutation.messages):
-                connection.execute("INSERT INTO outbox(game_id,update_id,ordinal,method,payload) VALUES (%s,%s,%s,%s,%s)",
-                                   (game_id, update_id, ordinal, message["method"], Jsonb(message["payload"])))
+            self._outgoing(connection, update_id, game_id, mutation.messages, mutation.callbacks)
+            connection.execute("UPDATE game_timers SET status='cancelled' WHERE game_id=%s AND status='pending'", (game_id,))
             for timer in mutation.timers:
                 due = timer.get("due_at")
                 if type(due) is not datetime or due.utcoffset() is None:
@@ -159,10 +252,34 @@ class GameRepository:
 
     def pending_outbox(self, *, limit: int = 100, now: datetime | None = None) -> list[dict]:
         with self.connection() as connection:
-            return connection.execute("SELECT * FROM outbox WHERE sent_at IS NULL AND next_attempt_at<=%s ORDER BY id LIMIT %s",
+            return connection.execute("SELECT * FROM outbox WHERE sent_at IS NULL AND failed_at IS NULL AND next_attempt_at<=%s ORDER BY id LIMIT %s",
                                       (now or datetime.now(timezone.utc), limit)).fetchall()
 
     def mark_sent(self, entry_id: int, result: dict):
         with self.connection() as connection:
-            connection.execute("UPDATE outbox SET sent_at=CURRENT_TIMESTAMP,result=%s,error_code=NULL WHERE id=%s AND sent_at IS NULL",
+            connection.execute("UPDATE outbox SET sent_at=CURRENT_TIMESTAMP,result=%s,error_code=NULL,lease_until=NULL WHERE id=%s AND sent_at IS NULL",
                                (Jsonb(result), entry_id))
+
+    def claim_outbox(self, *, limit=100, now=None):
+        now = now or datetime.now(timezone.utc)
+        with self.connection() as connection:
+            return connection.execute(
+                "WITH chosen AS (SELECT id FROM outbox WHERE sent_at IS NULL AND failed_at IS NULL AND next_attempt_at<=%s AND (lease_until IS NULL OR lease_until<=%s) ORDER BY id FOR UPDATE SKIP LOCKED LIMIT %s) "
+                "UPDATE outbox o SET lease_until=%s,attempts=o.attempts+1 FROM chosen WHERE o.id=chosen.id RETURNING o.*",
+                (now, now, limit, now + timedelta(seconds=120))).fetchall()
+
+    def retry_outbox(self, entry_id, error_code, next_attempt_at):
+        with self.connection() as connection:
+            connection.execute("UPDATE outbox SET error_code=%s,next_attempt_at=%s,lease_until=NULL WHERE id=%s AND sent_at IS NULL", (str(error_code), next_attempt_at, entry_id))
+
+    def fail_outbox(self, entry_id, error_code):
+        with self.connection() as connection:
+            connection.execute("UPDATE outbox SET failed_at=CURRENT_TIMESTAMP,error_code=%s,lease_until=NULL WHERE id=%s AND sent_at IS NULL", (str(error_code), entry_id))
+
+    def due_timers(self, *, now=None, limit=100):
+        with self.connection() as connection:
+            return connection.execute("SELECT t.* FROM game_timers t JOIN games g USING(game_id) WHERE t.status='pending' AND g.status='active' AND t.expected_version=g.version AND t.due_at<=%s ORDER BY t.due_at,t.timer_id LIMIT %s", (now or datetime.now(timezone.utc), limit)).fetchall()
+
+    def cancel_timer(self, timer_id, expected_version):
+        with self.connection() as connection:
+            connection.execute("UPDATE game_timers SET status='cancelled' WHERE timer_id=%s AND expected_version=%s", (timer_id, expected_version))
