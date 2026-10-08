@@ -108,21 +108,10 @@ def apply_effects(state: GameState, target_id: int, effects: list[dict],
             reconcile_equipment(player, catalog)
             events.append(Event(f'user:{target_id}' if hidden else 'group', 'card.lost', {'target_id': target_id, 'card_id': cid}))
         elif op == 'draw':
+            from .draw import draw_cards
             deck = effect.get('deck', 'treasure')
-            stack = result.door_deck if deck == 'door' else result.treasure_deck
-            discard = result.door_discard if deck == 'door' else result.treasure_discard
-            if len(stack) + len(discard) < amount:
-                raise RuleError('not enough cards to draw')
-            drawn = []
-            for _ in range(amount):
-                if not stack:
-                    stack.extend(discard)
-                    discard.clear()
-                    transition_rng.shuffle(stack)
-                cid = stack.pop()
-                player.hand.append(cid)
-                drawn.append(cid)
-            events.append(Event(f'user:{target_id}', 'card.drawn', {'count': amount, 'card_ids': drawn}))
+            result, drawn_events = draw_cards(result, target_id, deck, amount, False, catalog, transition_rng)
+            events.extend(drawn_events)
         elif op == 'persistent':
             cid = effect.get('card_id', choices.get('played_card_id'))
             if cid not in catalog:

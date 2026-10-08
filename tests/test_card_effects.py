@@ -80,6 +80,9 @@ def test_failed_chain_does_not_advance_random_source():
     state, catalog = fixture()
     rng = Random(3)
     before_rng = rng.getstate()
+    state.players[2].level = 9
+    before = deepcopy(state)
     with pytest.raises(RuleError):
-        apply_effects(state, 2, [{'op': 'remove_item', 'selector': {'zone': 'hand'}}, {'op': 'draw', 'amount': 99}], catalog, rng=rng)
+        apply_effects(state, 2, [{'op': 'remove_item', 'selector': {'zone': 'hand'}}, {'op': 'gain_level'}], catalog, rng=rng)
+    assert state == before
     assert rng.getstate() == before_rng

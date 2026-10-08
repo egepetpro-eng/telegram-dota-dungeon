@@ -20,3 +20,16 @@ CONDITION_HANDLERS: dict[str, RegisteredRule] = {}
 TRIGGER_HANDLERS: dict[str, RegisteredRule] = {}
 ABILITY_HANDLERS: dict[str, RegisteredRule] = {}
 SPECIAL_RULES = SPECIAL_HANDLERS
+
+# Import code-owned builtins so release validation sees real implementations.
+from .draw_triggers import (  # noqa: E402
+    all_clerics_gain_level, hoard, mandatory_play,
+    _cleric_args, _hoard_args, _mandatory_args,
+)
+
+TRIGGER_HANDLERS.update({
+    "mandatory_play": RegisteredRule(mandatory_play, _mandatory_args),
+    "hoard": RegisteredRule(hoard, _hoard_args),
+})
+SPECIAL_HANDLERS["all_clerics_gain_level"] = RegisteredRule(
+    all_clerics_gain_level, _cleric_args)

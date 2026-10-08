@@ -3,6 +3,7 @@
 from copy import deepcopy
 from random import Random
 
+from .draw import draw_cards, resolve_initial_deal
 from .model import Catalog, Event, GameState, Player, RuleError
 
 
@@ -60,18 +61,24 @@ def start(state: GameState, actor_id: int, catalog: Catalog, rng: Random) -> tup
     if len(doors) < 4 * len(state.order) or len(treasures) < 4 * len(state.order):
         raise RuleError("not enough cards for initial deal")
     result = deepcopy(state)
+    transition_rng = deepcopy(rng)
     result.card_decks = {card.id: card.deck for card in catalog.values()}
-    rng.shuffle(doors)
-    rng.shuffle(treasures)
-    events: list[Event] = []
-    for user_id in result.order:
-        hand = [doors.pop() for _ in range(4)] + [treasures.pop() for _ in range(4)]
-        result.players[user_id].hand = hand
-        events.append(Event(f"user:{user_id}", "hand.dealt", {"card_ids": hand.copy()}))
+    transition_rng.shuffle(doors)
+    transition_rng.shuffle(treasures)
     result.door_deck = doors
     result.treasure_deck = treasures
-    result.active_user_id = rng.choice(result.order)
+    events: list[Event] = []
+    for user_id in result.order:
+        for deck in ("door", "treasure"):
+            result, drawn_events = draw_cards(result, user_id, deck, 4, False, catalog, transition_rng)
+            events.extend(drawn_events)
+        events.append(Event(f"user:{user_id}", "hand.dealt", {
+            "card_ids": result.players[user_id].hand.copy()}))
+    result.active_user_id = transition_rng.choice(result.order)
     result.phase = "turn.prepare"
     result.turn_number = 1
+    result, trigger_events = resolve_initial_deal(result, catalog, transition_rng)
+    events.extend(trigger_events)
     events.append(Event("group", "game.started", {"active_user_id": result.active_user_id, "order": result.order.copy()}))
+    rng.setstate(transition_rng.getstate())
     return result, events

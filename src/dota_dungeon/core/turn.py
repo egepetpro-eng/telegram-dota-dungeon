@@ -4,6 +4,7 @@ from copy import deepcopy
 from random import Random
 
 from .effects import apply_effects
+from .draw import draw_cards, legacy_catalog, resolve_pending_initial_triggers
 from .model import Catalog, CombatState, Event, GameState, RuleError
 
 
@@ -14,39 +15,39 @@ def _require_active(state: GameState, actor_id: int, phase: str) -> None:
         raise RuleError(f"action requires {phase}")
 
 
-def _draw_door(state: GameState, rng: Random | None) -> str:
-    if not state.door_deck:
-        if not state.door_discard:
-            raise RuleError("door deck is empty")
-        state.door_deck = state.door_discard
-        state.door_discard = []
-        (rng or Random()).shuffle(state.door_deck)
-    return state.door_deck.pop()
-
-
 def open_door(state: GameState, actor_id: int, catalog: Catalog,
               rng: Random | None = None) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.prepare")
-    if not state.door_deck and not state.door_discard:
-        raise RuleError("door deck is empty")
-    result = deepcopy(state)
-    card_id = _draw_door(result, rng)
-    card = catalog[card_id]
-    events = [Event("group", "door.revealed", {"card_id": card_id})]
-    if card.kind == "monster":
-        result.phase = "combat.active"
-        result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[card_id])
-        from .trade import cancel_trades_for_combat
-        events.extend(cancel_trades_for_combat(result, actor_id))
-    elif card.kind == "curse":
-        result.phase = "turn.after_door"
-        result.door_discard.append(card_id)
-        result, effect_events = apply_effects(result, actor_id, card.effects, catalog)
-        events.extend(effect_events)
-        events.append(Event("group", "curse.applied", {"card_id": card_id, "target_id": actor_id}))
-    else:
-        result.phase = "turn.after_door"
-        result.players[actor_id].hand.append(card_id)
+    transition_rng = deepcopy(rng) if rng is not None else Random()
+    result, events = resolve_pending_initial_triggers(state, catalog, transition_rng)
+    if result.phase == "game.finished":
+        if rng is not None:
+            rng.setstate(transition_rng.getstate())
+        return result, events
+    result, draw_events = draw_cards(result, actor_id, "door", 1, True, catalog, transition_rng)
+    events.extend(draw_events)
+    result.phase = "game.finished" if result.phase == "game.finished" else "turn.after_door"
+    drawn = next((e.data["card_id"] for e in draw_events if e.name == "card.drawn"), None)
+    if drawn is not None:
+        card = catalog[drawn]
+        events.append(Event("group", "door.revealed", {"card_id": drawn}))
+        if drawn in result.players[actor_id].hand and not card.trigger:
+            if card.kind == "monster":
+                result.players[actor_id].hand.remove(drawn)
+                result.phase = "combat.active"
+                result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[drawn])
+                from .trade import cancel_trades_for_combat
+                events.extend(cancel_trades_for_combat(result, actor_id))
+            elif card.kind == "curse":
+                # Reserve the exposed source while its effects draw cards.
+                result, effect_events = apply_effects(result, actor_id, card.effects, catalog,
+                    choices={"played_card_id": drawn, "actor_id": actor_id}, rng=transition_rng)
+                events.extend(effect_events)
+                result.players[actor_id].hand.remove(drawn)
+                result.door_discard.append(drawn)
+                events.append(Event("group", "curse.applied", {"card_id": drawn, "target_id": actor_id}))
+    if rng is not None:
+        rng.setstate(transition_rng.getstate())
     return result, events
 
 
@@ -65,16 +66,18 @@ def seek_trouble(state: GameState, actor_id: int, card_id: str,
     return result, events
 
 
-def loot_room(state: GameState, actor_id: int, rng: Random | None = None) -> tuple[GameState, list[Event]]:
+def loot_room(state: GameState, actor_id: int, rng: Random | None = None,
+              *, catalog: Catalog | None = None) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.after_door")
-    if not state.door_deck and not state.door_discard:
-        raise RuleError("door deck is empty")
-    result = deepcopy(state)
-    card_id = _draw_door(result, rng)
-    result.players[actor_id].hand.append(card_id)
-    result.phase = "turn.charity"
-    return result, [Event("actor", "card.drawn", {"card_id": card_id}),
-                    Event("group", "room.looted", {"user_id": actor_id})]
+    transition_rng = deepcopy(rng) if rng is not None else Random()
+    result, events = draw_cards(state, actor_id, "door", 1, False,
+                               catalog if catalog is not None else legacy_catalog(state), transition_rng)
+    if result.phase != "game.finished":
+        result.phase = "turn.charity"
+    events.append(Event("group", "room.looted", {"user_id": actor_id}))
+    if rng is not None:
+        rng.setstate(transition_rng.getstate())
+    return result, events
 
 
 def give_charity(state: GameState, actor_id: int,
@@ -100,7 +103,7 @@ def give_charity(state: GameState, actor_id: int,
             (result.door_discard if deck == "door" else result.treasure_discard).append(card_id)
         return result, [Event("group", "charity.discarded", {"user_id": actor_id, "count": excess})]
     recipients = {u for u, p in result.players.items() if p.level == minimum}
-    if set(assignments) != recipients or any(not cards for cards in assignments.values()):
+    if set(assignments) != recipients:
         raise RuleError("charity must go to lowest-level players")
     cards = [card_id for group in assignments.values() for card_id in group]
     if len(cards) != excess or len(set(cards)) != excess or not set(cards).issubset(player.hand):
@@ -115,24 +118,13 @@ def give_charity(state: GameState, actor_id: int,
     return result, [Event("group", "charity.given", {"from": actor_id, "counts": {u: len(v) for u, v in assignments.items()}})]
 
 
-def _draw_for_rebirth(state: GameState, deck: str, rng: Random | None) -> str:
-    stack = state.door_deck if deck == "door" else state.treasure_deck
-    discard = state.door_discard if deck == "door" else state.treasure_discard
-    if not stack:
-        if not discard:
-            raise RuleError(f"{deck} deck is empty")
-        stack.extend(discard)
-        discard.clear()
-        (rng or Random()).shuffle(stack)
-    return stack.pop()
-
-
 def end_turn(state: GameState, actor_id: int,
-             rng: Random | None = None) -> tuple[GameState, list[Event]]:
+             rng: Random | None = None, *, catalog: Catalog | None = None) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.charity")
     if len(state.players[actor_id].hand) > 5:
         raise RuleError("hand cannot exceed five cards")
     result = deepcopy(state)
+    transition_rng = deepcopy(rng) if rng is not None else Random()
     index = result.order.index(actor_id)
     result.active_user_id = result.order[(index + 1) % len(result.order)]
     result.turn_number += 1
@@ -145,9 +137,14 @@ def end_turn(state: GameState, actor_id: int,
             (result.door_discard if deck == "door" else result.treasure_discard).append(cid)
         result.corpse_looted_by.pop(next_player.user_id, None)
         result.corpse_hand.pop(next_player.user_id, None)
-        next_player.hand.extend(_draw_for_rebirth(result, "door", rng) for _ in range(4))
-        next_player.hand.extend(_draw_for_rebirth(result, "treasure", rng) for _ in range(4))
         next_player.alive = True
+        for deck in ("door", "treasure"):
+            result, drawn_events = draw_cards(result, next_player.user_id, deck, 4, False,
+                catalog if catalog is not None else legacy_catalog(result), transition_rng)
+            events.extend(drawn_events)
+        next_player = result.players[result.active_user_id]
         events.append(Event(f"user:{next_player.user_id}", "player.reborn", {
             "card_ids": next_player.hand.copy()}))
+    if rng is not None:
+        rng.setstate(transition_rng.getstate())
     return result, events

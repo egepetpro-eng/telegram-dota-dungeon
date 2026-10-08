@@ -152,16 +152,6 @@ def pass_reaction(state: GameState, actor_id: int) -> tuple[GameState, list[Even
     return result, [Event("group", "combat.passed", {"user_id": actor_id})]
 
 
-def _draw_treasure(state: GameState, rng: Random | None) -> str:
-    if not state.treasure_deck:
-        if not state.treasure_discard:
-            raise RuleError("treasure deck is empty")
-        state.treasure_deck = state.treasure_discard
-        state.treasure_discard = []
-        (rng or Random()).shuffle(state.treasure_deck)
-    return state.treasure_deck.pop()
-
-
 def resolve_rewards(state: GameState, catalog: Catalog,
                     rng: Random | None = None) -> tuple[GameState, list[Event]]:
     _require_combat(state)
@@ -175,18 +165,28 @@ def resolve_rewards(state: GameState, catalog: Catalog,
     for cid in combat.help_item_ids:
         if cid not in leader.in_play:
             raise RuleError("promised item changed owner")
-    if len(result.treasure_deck) + len(result.treasure_discard) < treasures:
-        raise RuleError("not enough treasure cards")
     leader.level = min(10, leader.level + levels)
     events = [Event("group", "combat.won", {"fighter_id": leader.user_id,
                                               "monster_ids": combat.monster_ids.copy(),
                                               "levels": levels})]
-    for index in range(treasures):
-        cid = _draw_treasure(result, rng)
-        recipient = combat.helper_id if index < combat.help_treasure_count else leader.user_id
-        result.players[recipient].hand.append(cid)
-        events.append(Event("group" if combat.helper_id else f"user:{leader.user_id}", "treasure.drawn",
-                            {"card_id": cid, "recipient_id": recipient}))
+    from .draw import draw_cards
+    transition_rng = deepcopy(rng) if rng is not None else Random()
+    existing_hand = set(leader.hand)
+    result, draw_events = draw_cards(result, leader.user_id, "treasure", treasures,
+                                    combat.helper_id is not None, catalog, transition_rng)
+    leader = result.players[leader.user_id]
+    acquired = [cid for cid in leader.hand if cid not in existing_hand]
+    helper_cards = acquired[:combat.help_treasure_count] if combat.helper_id is not None else []
+    for cid in helper_cards:
+        leader.hand.remove(cid)
+        result.players[combat.helper_id].hand.append(cid)
+    for event in draw_events:
+        if event.name == "card.drawn":
+            cid = event.data["card_id"]
+            recipient = combat.helper_id if cid in helper_cards else leader.user_id
+            events.append(Event(event.audience, "treasure.drawn", {**event.data, "recipient_id": recipient}))
+        else:
+            events.append(event)
     if combat.helper_id is not None:
         helper = result.players[combat.helper_id]
         for cid in combat.help_item_ids:
@@ -198,9 +198,11 @@ def resolve_rewards(state: GameState, catalog: Catalog,
             events.append(Event("group", "help.items_transferred", {"card_ids": combat.help_item_ids.copy()}))
     _discard_combat_cards(result)
     result.combat = None
-    result.phase = "game.finished" if leader.level >= 10 else "turn.charity"
+    result.phase = "game.finished" if leader.level >= 10 or result.phase == "game.finished" else "turn.charity"
     if result.phase == "game.finished":
         events.append(Event("group", "game.won", {"user_id": leader.user_id}))
+    if rng is not None:
+        rng.setstate(transition_rng.getstate())
     return result, events
 
 

@@ -43,7 +43,7 @@ def test_end_to_end_nonmonster_turn_keeps_hidden_draw_private():
     state, events = do(state, catalog, rng, "door", actor, "open_door")
     assert sum(e.name == "door.revealed" and e.audience == "group" for e in events) == 1
     state, events = do(state, catalog, rng, "loot", actor, "loot_room")
-    assert any(e.name == "card.drawn" and e.audience == "actor" for e in events)
+    assert any(e.name == "card.drawn" and e.audience == f"user:{actor}" for e in events)
     assert not any(e.name == "card.drawn" and e.audience == "group" for e in events)
     state, _ = do(state, catalog, rng, "charity", actor, "give_charity", assignments={})
     state, events = do(state, catalog, rng, "end", actor, "end_turn")

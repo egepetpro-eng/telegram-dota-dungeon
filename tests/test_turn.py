@@ -43,7 +43,7 @@ def test_room_loot_is_private_after_nonmonster_door():
     state, events = loot_room(state, 101)
     assert state.phase == "turn.charity"
     assert "room" in state.players[101].hand
-    assert any(e.name == "card.drawn" and e.audience == "actor" for e in events)
+    assert any(e.name == "card.drawn" and e.audience == "user:101" for e in events)
     assert not any(e.name == "card.drawn" and e.audience == "group" for e in events)
 
 

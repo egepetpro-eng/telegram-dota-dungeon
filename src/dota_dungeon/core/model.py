@@ -124,6 +124,8 @@ class GameState:
     corpse_hand: dict[int, set[str]] = field(default_factory=dict)
     catalog_version: str | None = None
     catalog_digest: str | None = None
+    # References to source cards still reserved in their initial owner's hand.
+    pending_initial_triggers: list[tuple[int, str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

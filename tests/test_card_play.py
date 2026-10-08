@@ -77,7 +77,10 @@ def test_carried_item_has_no_bonus():
 
 
 def test_last_chained_effect_failure_is_atomic():
-    state, catalog = fixture('one_shot', [{'op': 'lose_level'}, {'op': 'draw', 'amount': 2}])
+    state, catalog = fixture('one_shot', [{'op': 'draw', 'amount': 2}, {'op': 'gain_level'}])
+    state.players[1].level = 9
+    catalog['drawn'] = CardDef('drawn', 'treasure', 'item', 'Drawn')
+    state.card_decks['drawn'] = 'treasure'
     state.treasure_deck = ['drawn']
     before = deepcopy(state)
     with pytest.raises(RuleError):
