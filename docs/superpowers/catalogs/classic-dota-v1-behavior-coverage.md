@@ -4,12 +4,13 @@ This ledger is keyed by the independently audited manifest `rule_key`. It is
 compiled from source facts, not runtime registries. Each linked face/rules source
 is also recorded with all supporting references in `source-manifest.json`.
 
-**Status: pending production behavior acceptance.** Existing tests listed here
-exercise shared engine behavior on synthetic cards. They do not prove the exact
-classic definition is implemented. The final column proposes a real-catalog
-scenario name for the coordinator/C owner; every such row is explicitly PENDING
-until that actual collected test exists, exercises the printed facts and passes.
-No pending name is included in the existing-test column.
+**Status: pending production behavior acceptance.** All 147 names in the final
+column now collect from `tests/test_catalog_behavior.py`. They exercise the
+strict installed release through public commands and literal source expectations.
+The current execution fails during release setup at unimplemented
+`orcs_bad_stuff_die`, before any scenario executes. No row is PASS. The existing
+generic evidence column remains limited synthetic evidence; collection is not
+behavior acceptance. Additional distinctive branches listed below remain work.
 
 All definitions have compilation coverage through
 `tests/test_card_descriptions.py::test_compilation_preserves_all_verified_facts_and_accepted_mappings`,
@@ -19,12 +20,67 @@ and Russian prose coverage through
 `tests/test_card_descriptions.py::test_every_description_is_russian_player_facing_prose`.
 These are data checks, not distinctive behavior tests.
 
+## Executable checkpoint, 2026-10-08
+
+`python -m pytest tests/test_catalog_behavior.py --collect-only -q` collected
+147 distinct rule-key nodes in 0.14 seconds. A fresh execution with `-q -x`
+reported one setup ERROR in 0.24 seconds: the strict release validator rejected
+`source manifest.cards[0].bad_stuff[0]` / `orcs_bad_stuff_die`. No loader bypass,
+dummy handler, synthetic definition, xfail, or skip is used in this suite.
+
+The implemented bodies include literal equipment bonuses/restrictions/slots,
+900/1000 sale boundaries and carrying/trading, both sides of ordinary potions,
+level-card recipients/caps/replay, enhancer reward deltas and Baby floors, all 37
+monster victories, conditional identities, and explicit Bad Stuff families.
+Character abilities, curses, persistent effects and exceptional Items use the
+coordinator's frozen continuation schema. Physical conservation and rejected
+action state/RNG rollback are asserted after public commands. These are written
+assertions, not a claim that the scenarios have run successfully.
+
+Known distinctive gaps still to finish (and then execute against accepted core):
+
+- Equipment: Tuba multi-monster/helper whole-fight timing, sex-change re-equipping,
+  every restricted identity-loss case, Item-only death/loss exclusions, and
+  Kneepads level-nine/equal-helper boundaries. Rat Mate and all impossible-foe
+  interactions need completion; pole distraction with Staff remains pending.
+- Enhancers/topology: escaped-combat cleanup and no rewards; Baby stacking;
+  Mate enhanced-source duplication in both orders, potion exclusion and independent
+  source/Mate escape; Illusion with a remaining virtual monster.
+- Monster exceptions: helper-only identity conditions, all slot/no-slot branches,
+  Ghoulfiends helper-level-only and Cleric rejection, Lawyers two-Treasure exchange,
+  Hippogriff blind-hand picks, Net Troll inferred simultaneous receiver ordering,
+  Potted Plant forced Glue, Platycore empty-hand/floor branches, and Squidzilla's
+  low-level Elf/one-race Half-Breed pursuit contrasts. Random transfers currently
+  check actual distinct recipients/cards but still need literal draw-order assertions.
+- Curses: all Door-opening variants, dual Change Class/Race choice, repeated Change
+  Sex and next-combat expiry, Chicken actual die penalty and sale persistence,
+  Income Tax no-item and invalid portfolio paths, tied largest Item choice,
+  hand transfer privacy with six seats, and Mirror expiry in a subsequent combat.
+- Characters: ability limit reset across a second actual combat/attempt, helper
+  Warrior ties, simultaneous Cleric reward resurrection, Halfling sale reset,
+  theft forbidden zones/participants, and multi-monster Wizard deferred/lost rewards.
+- Specials/exceptional Items: multi-monster removal/escape reward entitlements,
+  Transferral modifiers/helper reset/original-owner continuation, Help Me Out Here
+  discard-to-fit plus rejected nonwinning targets, all Wall willingness/impossible
+  foe paths, after-roll stale/foreign IDs, Loaded Die theft/Orcs/Snails continuations,
+  persistent Ring targets and Door cancellation, Hoard public/initial/depleted
+  draws, and Divine initial identity opportunity/replay. Single-case baseline
+  success alone must not promote these rows to PASS.
+
+The source preparation's Help Me Out Here example incorrectly called Chainsaw
+`+4`; the test uses its accepted printed `+3`, with level 6 becoming strength 9
+against Gazebo 8. A level-9 fighter with a `+1` Item ties Net Troll 10 and cannot
+win ordinarily; that equipment scenario asserts the tie strength, then plays an
+actual `+2` potion before claiming victory. These corrections change test setup,
+not source definitions.
+
 The source callback requirements preserve all argument/cost/limit/phase variants
 in the manifest and the Task 1 report. Task 5 owns conditions/identities/abilities
 and acquisition triggers; Task 6 owns special effects/Bad Stuff and exceptional
 combat completion. Generic monster-modifier reward deltas also require explicit
-runtime support. The base branch's four registries are empty; no callback in this
-table is described as implemented.
+runtime support. Accepted Task 5 character/equipment code is present, while full
+production release validation correctly waits for Task 6. This ledger does not
+infer implemented behavior from registry membership.
 
 | Rule key | Evidence | Source callback requirements / scenario facts | Existing generic evidence (limited) | Required real-catalog scenario |
 |---|---|---|---|---|
