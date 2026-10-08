@@ -106,12 +106,8 @@ class Application:
                         "text": "Партия на паузе: участнику нужно снова открыть бота в личке. Затем ведущий может продолжить через /resume."}})
                 return mutation
 
-            try:
-                self.repository.apply(snapshot.state.game_id, snapshot.version,
-                                      f"delivery:{entry['id']}:{snapshot.state.game_id}", transition)
-            except StaleAction:
-                # Next undeliverable entry retries against the latest version.
-                LOG.info("Private availability changed concurrently")
+            self.repository.apply(snapshot.state.game_id, snapshot.version,
+                                  f"delivery:{entry['id']}:{snapshot.state.game_id}", transition)
 
     def deliver_outbox(self, now=None):
         now = now or self.clock()
@@ -133,8 +129,15 @@ class Application:
             except BotAPIError as error:
                 code = error.error_code
                 if code == 403:
-                    self.repository.fail_outbox(entry["id"], str(code))
-                    self._pause_unavailable(entry, now)
+                    try:
+                        self._pause_unavailable(entry, now)
+                    except StaleAction:
+                        # Keep the failed delivery durable until every affected
+                        # game has paused, even if no later message is queued.
+                        self.repository.retry_outbox(entry["id"], str(code),
+                                                     now + timedelta(seconds=1))
+                    else:
+                        self.repository.fail_outbox(entry["id"], str(code))
                 elif code in {0, 429} or code >= 500:
                     seconds = error.retry_after or min(120, 2 ** min(entry["attempts"], 7))
                     self.repository.retry_outbox(entry["id"], str(code), now + timedelta(seconds=seconds))

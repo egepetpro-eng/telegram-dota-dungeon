@@ -4,6 +4,7 @@ from random import Random
 
 from dota_dungeon.core.model import GameState, Player
 from dota_dungeon.service.store import Snapshot, TransactionResult
+from dota_dungeon.service.store import StaleAction
 
 from dota_dungeon.service.application import Application, Config
 from dota_dungeon.telegram.client import BotAPIError
@@ -49,6 +50,9 @@ class Store:
 
     def active_group(self, group_id):
         return self.snapshot if self.snapshot.state.group_id == group_id else None
+
+    def get(self, game_id):
+        return self.snapshot
 
     def apply(self, game_id, version, request_id, transition, **kwargs):
         mutation = transition(self.snapshot)
@@ -154,3 +158,32 @@ def test_removing_bot_pauses_game_and_readding_requires_explicit_host_resume():
     assert store.snapshot.status == "paused"
     assert store.snapshot.state.players[11].level == 1
     assert store.setting("poll_offset") == 3
+
+
+def test_blocked_private_delivery_keeps_durable_retry_when_pause_version_races():
+    class RacingStore(Store):
+        raced = False
+
+        def active_user(self, user_id):
+            return [self.snapshot]
+
+        def apply(self, game_id, version, request_id, transition, **kwargs):
+            if not self.raced:
+                self.raced = True
+                self.snapshot.version += 1
+                raise StaleAction("concurrent legitimate action")
+            return super().apply(game_id, version, request_id, transition, **kwargs)
+
+    store = RacingStore()
+    state = GameState("g", -100, 11, "turn.prepare", 11, [11, 22],
+                      {11: Player(11), 22: Player(22)})
+    store.snapshot = Snapshot(state, Random(0), 0)
+    store.entries = [entry()]
+    worker = app(store, Bot([BotAPIError(403, "blocked"), BotAPIError(403, "blocked")]))
+    worker.deliver_outbox(NOW)
+    assert store.snapshot.status == "active"
+    assert store.failed == {}
+    assert store.retries == {1: ("403", NOW + timedelta(seconds=1))}
+    worker.deliver_outbox(NOW + timedelta(seconds=1))
+    assert store.snapshot.status == "paused"
+    assert store.failed == {1: "403"}
