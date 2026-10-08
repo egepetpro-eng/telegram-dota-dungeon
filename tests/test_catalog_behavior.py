@@ -24,9 +24,10 @@ NOW = datetime(2026, 10, 8, 12, tzinfo=timezone.utc)
 
 class Dice(Random):
     """Reproducible real RNG whose explicit die stream survives transaction copies."""
-    def __init__(self, *dice):
+    def __init__(self, *dice, picks=()):
         super().__init__(37)
         self.dice = list(dice)
+        self.picks = list(picks)
 
     def randint(self, a, b):
         if (a, b) == (1, 6):
@@ -34,13 +35,21 @@ class Dice(Random):
             return self.dice.pop(0)
         return super().randint(a, b)
 
+    def choice(self, seq):
+        if self.picks:
+            selected = self.picks.pop(0)
+            assert selected in seq, "scripted selection was not eligible"
+            return selected
+        return super().choice(seq)
+
     def getstate(self):
-        return super().getstate(), tuple(self.dice)
+        return super().getstate(), tuple(self.dice), tuple(self.picks)
 
     def setstate(self, state):
-        base, dice = state
+        base, dice, picks = state
         super().setstate(base)
         self.dice = list(dice)
+        self.picks = list(picks)
 
 
 @pytest.fixture(scope="module")
@@ -140,7 +149,7 @@ class Game:
     def win(self):
         self.do(1, "declare_win")
         for uid in self.state.order:
-            if uid != 1:
+            if uid not in self.state.combat.fighter_ids:
                 self.do(uid, "pass_reaction")
         events = self.do(1, "close_reaction")
         events.extend(self.decline_windows())
@@ -177,7 +186,7 @@ class Game:
                     events.extend(self.respond(actor, **({"card_ids": []} if pending.kind == "reward_draw" else {})))
         raise AssertionError("response windows did not converge")
 
-    def lose_to(self, key, *, die=1, bad_die=None):
+    def lose_to(self, key, *, die=1, bad_die=None, order_dice=(), picks=()):
         monster = self.open(key)
         self.decline_windows()
         # Low monsters require real intervention before the fighter may flee.
@@ -186,7 +195,7 @@ class Game:
             if fighter <= enemy:
                 break
             self.play(enhancer, actor=2, target={"monster_id": monster})
-        self.rng = Dice(die, *([] if bad_die is None else [bad_die]))
+        self.rng = Dice(die, *([] if bad_die is None else [bad_die]), *order_dice, picks=picks)
         self.do(1, "begin_escape")
         self.do(1, "run_away", monster_id=monster)
         self.decline_windows()
@@ -386,6 +395,17 @@ def equipment_case(release, key):
     if big and identity != "dwarf":
         extra = other.give("huge_rock" if key != "huge_rock" else "tuba_of_charm")
         other.reject(1, "carry_item", card_id=extra)
+    if key in {"bow_with_ribbons", "cheese_grater_of_peace", "cloak_of_obscurity",
+               "dagger_of_treachery", "hammer_of_kneecapping", "limburger_and_anchovy_sandwich",
+               "mace_of_sharpness", "pointy_hat_of_power", "rapier_of_unfairness",
+               "shield_of_ubiquity", "short_wide_armor", "staff_of_napalm", "stepladder"}:
+        loss = Game(release)
+        identity_id = loss.identity(identity)
+        item = loss.equip(key)
+        loss.do(1, "discard_identity", card_id=identity_id)
+        assert item in loss.state.players[1].in_play
+        assert item not in loss.state.players[1].equipped
+        assert combat_strength(loss.state, 1, loss.catalog) == 3
     if key == "horny_helmet":
         elf = Game(release, level=9)
         identity_id = elf.identity("elf")
@@ -452,9 +472,27 @@ def equipment_distinctive(release, key):
             if succeeds:
                 game.do(1, "use_ability", **args)
                 game.decline_windows()
+                if game.state.combat:
+                    game.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=10))
+                    game.decline_windows()
                 assert rat in game.state.treasure_discard and game.state.combat is None
             else:
                 game.reject(1, "use_ability", **args)
+        game = Game(release, level=1)
+        rat = game.give(key)
+        game.do(1, "carry_item", card_id=rat)
+        source = game.open("amazon")
+        game.play("ancient", actor=2, target={"monster_id": source})
+        game.play("mate", actor=2, target={"monster_id": source})
+        virtual = next(iter(game.state.combat.virtual_monsters))
+        game.do(1, "begin_escape")
+        game.do(1, "use_ability", ability_key="rat_on_a_stick_escape", cost_ids=[rat], target={"monster_id": virtual})
+        game.do(1, "resolve_escape", monster_id=virtual, now=NOW + timedelta(minutes=1))
+        assert game.state.combat.escape_pending == {(1, source)}
+        game.rng = Dice(6)
+        game.do(1, "run_away", monster_id=source)
+        game.do(1, "resolve_escape", monster_id=source, now=NOW + timedelta(minutes=1))
+        assert game.state.combat is None and not game.state.players[1].hand
     elif key == "sandals_of_protection":
         for equipped, from_door, expected in ((True, True, 3), (True, False, 2), (False, True, 2)):
             game = Game(release)
@@ -480,6 +518,11 @@ def equipment_distinctive(release, key):
         gazebo.state.players[2].level = 4
         gazebo.open("gazebo")
         gazebo.reject(1, "force_help", helper_id=2)
+        capped = Game(release, level=9)
+        capped.equip(key)
+        capped.state.players[2].level = 9
+        capped.open("net_troll")
+        capped.reject(1, "force_help", helper_id=2)
     elif key in {"flaming_armor", "staff_of_napalm"}:
         for equipped in (False, True):
             game = Game(release)
@@ -491,7 +534,7 @@ def equipment_distinctive(release, key):
             game.safe_treasures()
             game.win()
             assert game.state.players[1].level == (5 if equipped else 4)
-    elif key in {"eleven_foot_pole", "swiss_army_polearm"}:
+    if key in {"eleven_foot_pole", "swiss_army_polearm", "staff_of_napalm"}:
         game = Game(release, level=1)
         item = game.give(key)
         game.do(1, "carry_item", card_id=item)
@@ -500,6 +543,22 @@ def equipment_distinctive(release, key):
         game.do(1, "monster_action", monster_id=monster, choices={"option": "distract", "card_ids": [item]})
         game.decline_windows()
         assert item in game.state.treasure_discard and game.state.players[1].level == 1
+    if key in {"broad_sword", "gentleman_s_club"}:
+        game = Game(release)
+        game.state.players[1].character_sex = "female" if key == "broad_sword" else "male"
+        old = game.equip(key)
+        curse(game, "curse_change_sex")
+        assert old not in game.state.players[1].equipped
+        game.reject(1, "equip", card_id=old)
+        game.equip("gentleman_s_club" if key == "broad_sword" else "broad_sword")
+        assert combat_strength(game.state, 1, game.catalog) == 6
+    if key in {"pantyhose_of_giant_strength", "spiky_knees"}:
+        monster_distinctive(release, "crabs")
+    if key in {"helm_of_courage", "slimy_armor"}:
+        game = Game(release)
+        item = game.equip(key)
+        curse(game, "curse_lose_the_headgear_you_are_wearing" if key == "helm_of_courage" else "curse_lose_the_armor_you_are_wearing")
+        assert item in game.state.treasure_discard
 
 
 def boost_case(release, key):
@@ -557,10 +616,20 @@ def level_case(release, key):
         assert_zones(g.state, g.catalog)
         assert g.state.players[1].level == 3
         assert g.state.players[2].level == 4
-        assert cid in g.state.treasure_discard
         before = deepcopy(g.state)
         replay, events = decide(g.state, command, g.catalog, g.rng)
         assert replay == before and not events
+        if g.state.combat:
+            assert cid in g.state.combat.played_card_ids
+            if phase == "combat.active":
+                g.do(1, "begin_escape")
+            g.rng = Dice(6)
+            g.do(1, "run_away", monster_id="net_troll:1")
+            g.decline_windows()
+            if g.state.combat:
+                g.do(1, "resolve_escape", monster_id="net_troll:1", now=NOW + timedelta(minutes=10))
+                g.decline_windows()
+        assert cid in g.state.treasure_discard
     g = Game(release)
     g.state.players[2].level = 9
     cid = g.give(key)
@@ -619,6 +688,27 @@ def enhancer_case(release, key):
         floor.win()
         assert floor.state.players[1].level == 4
         assert len(floor.state.players[1].hand) == 1
+        for baby_first in (True, False):
+            stacked = Game(release, level=9)
+            plant = stacked.open("potted_plant")
+            for modifier in (("baby", "ancient") if baby_first else ("ancient", "baby")):
+                stacked.play(modifier, actor=2, target={"monster_id": plant})
+            assert combat_totals(stacked.state, stacked.catalog) == (9, 6)
+            stacked.safe_treasures()
+            stacked.win()
+            assert len(stacked.state.players[1].hand) == 2
+    escaped = Game(release)
+    monster = escaped.open("net_troll")
+    source = escaped.play(key, actor=2, target={"monster_id": monster})
+    escaped.do(1, "begin_escape")
+    escaped.rng = Dice(6)
+    escaped.do(1, "run_away", monster_id=monster)
+    escaped.decline_windows()
+    if escaped.state.combat:
+        escaped.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=10))
+        escaped.decline_windows()
+    assert escaped.state.players[1].level == 3 and not escaped.state.players[1].hand
+    assert {source, monster}.issubset(escaped.state.door_discard)
 
 
 def strong_human(g):
@@ -682,14 +772,14 @@ def monster_case(release, key):
         kept = loss.identity("elf") if key != "squidzilla" else loss.identity("dwarf")
         item = loss.equip("helm_of_courage")
         hidden = loss.give("magic_missile")
-        loss.lose_to(key)
+        loss.lose_to(key, order_dice=(6, 1))
         assert not loss.state.players[1].alive
         assert kept in loss.state.players[1].in_play
         assert {item, hidden}.issubset(loss.state.corpse[1])
     elif key == "3_872_orcs":
         for die in range(1, 7):
             loss = Game(release, level=7)
-            loss.lose_to(key, bad_die=die)
+            loss.lose_to(key, bad_die=die, order_dice=(6, 1) if die < 3 else ())
             if die < 3:
                 assert not loss.state.players[1].alive
             else:
@@ -729,6 +819,14 @@ def monster_case(release, key):
         naked.safe_treasures()
         naked.win()
         assert naked.state.players[1].level == 9
+        helped = Game(release, level=5)
+        helped.state.players[2].level = 3
+        helped.open(key)
+        helped.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        helped.do(2, "accept_help")
+        helped.safe_treasures()
+        helped.win()
+        assert helped.state.players[1].level == 6
     elif key == "potted_plant":
         elf = Game(release, level=3)
         elf.identity("elf")
@@ -780,6 +878,11 @@ def monster_case(release, key):
             else:
                 assert hidden in loss.state.players[1].hand
                 assert loss.state.players[1].level == 5
+        for option in ("discard_hand", "lose_levels"):
+            loss = Game(release, level=1)
+            loss.lose_to(key)
+            loss.respond(1, option=option)
+            assert loss.state.players[1].level == 1 and not loss.state.players[1].hand
 
 
 def curse(g, key, victim=1, actor=2):
@@ -817,7 +920,7 @@ def monster_distinctive(release, key):
             secret = g.give("pretty_balloons")
             for cid in items:
                 g.do(1, "carry_item", card_id=cid)
-            g.lose_to(key)
+            g.lose_to(key, order_dice=(6, 1) if recipients else ())
             for receiver, cid in zip(recipients, items):
                 assert g.state.pending_decision.chooser_ids == [receiver]
                 g.reject(1, "respond_decision", decision_id=g.state.pending_decision.id, choices={"card_ids": [cid]})
@@ -854,12 +957,25 @@ def monster_distinctive(release, key):
     elif key == "lawyers":
         g = Game(release, count=4, level=7)
         originals = [g.give(k) for k in ("magic_missile", "warrior", "elf", "wizard", "cleric")]
-        g.lose_to(key)
+        g.lose_to(key, picks=("wizard:1", "magic_missile:1", "cleric:1"))
         assert not g.state.players[1].hand
         assert all(len(g.state.players[uid].hand) == 1 for uid in (2, 3, 4))
+        assert [g.state.players[uid].hand for uid in (2, 3, 4)] == [["wizard:1"], ["magic_missile:1"], ["cleric:1"]]
         passed = {g.state.players[uid].hand[0] for uid in (2, 3, 4)}
         assert passed.issubset(originals)
         assert set(originals) - passed <= set(g.state.door_discard + g.state.treasure_discard)
+        exchange = Game(release)
+        exchange.identity("thief")
+        first, second = exchange.give("magic_missile"), exchange.give("pretty_balloons")
+        door = exchange.give("warrior")
+        exchange.safe_treasures()
+        exchange.open(key)
+        exchange.reject(1, "respond_decision", decision_id=exchange.state.pending_decision.id,
+                        choices={"card_ids": [first, door]})
+        exchange.respond(1, card_ids=[first, second])
+        assert exchange.state.combat is None and exchange.state.players[1].level == 3
+        assert set(exchange.state.players[1].hand) == {door, "1_000_gold_pieces:1", "boil_an_anthill:1"}
+        assert {first, second}.issubset(exchange.state.treasure_discard)
     elif key == "hippogriff":
         for count, order in ((2, (2, 2, 2)), (3, (3, 2, 3)), (6, (6, 5, 4))):
             g = Game(release, count=count, level=7)
@@ -870,9 +986,21 @@ def monster_distinctive(release, key):
             g.lose_to(key)
             for actor, cid in zip(order, items):
                 assert g.state.pending_decision.chooser_ids == [actor]
-                g.respond(actor, card_ids=[cid])
+                g.respond(actor, option=cid)
                 assert cid in g.state.players[actor].in_play + g.state.players[actor].hand
             assert g.state.players[1].hand == [keep]
+        g = Game(release, level=7)
+        secret = g.give("magic_missile")
+        open_item = g.equip("helm_of_courage")
+        g.lose_to(key)
+        from dota_dungeon.core.card_rules import decision_options
+        public_options = decision_options(g.state, 3, g.catalog)
+        assert secret not in strings_in(public_options)
+        assert public_options["choices"]["options"] == [open_item, "blind"]
+        g.respond(3, option="blind")
+        assert secret in g.state.players[3].hand
+        g.respond(2, option=open_item)
+        assert open_item in g.state.players[2].in_play
     elif key == "king_tut":
         g = Game(release, level=7)
         race = g.identity("elf")
@@ -949,6 +1077,60 @@ def monster_distinctive(release, key):
         g = Game(release, level=7)
         g.lose_to(key, die=6)
         assert g.state.players[1].level == (6 if key == "mr_bones" else 5)
+    if key in {"drooling_slime", "face_sucker"}:
+        for equipped in (False, True):
+            g = Game(release, level=7)
+            item = g.give("boots_of_butt_kicking" if key == "drooling_slime" else "helm_of_courage")
+            g.do(1, "equip" if equipped else "carry_item", card_id=item)
+            g.lose_to(key)
+            assert g.state.players[1].level == (7 if equipped and key == "drooling_slime" else 6)
+            assert item in (g.state.treasure_discard if equipped else g.state.players[1].in_play)
+    if key in {"flying_frogs", "gelatinous_octahedron", "lame_goblin"}:
+        good, bad = (6, 5) if key == "flying_frogs" else (4, 3)
+        for die, succeeds in ((good, True), (bad, False)):
+            g = Game(release, level=7)
+            if key == "gelatinous_octahedron":
+                item = g.give("huge_rock")
+                g.do(1, "carry_item", card_id=item)
+            g.lose_to(key, die=die)
+            if key == "gelatinous_octahedron":
+                assert item in (g.state.players[1].in_play if succeeds else g.state.treasure_discard)
+            else:
+                assert g.state.players[1].level == (7 if succeeds else 5 if key == "flying_frogs" else 6)
+    if key == "bigfoot":
+        g = Game(release)
+        g.identity("dwarf")
+        g.play("half_breed")
+        g.identity("halfling")
+        g.open(key)
+        assert combat_totals(g.state, g.catalog) == (3, 15)
+    if key == "3_872_orcs":
+        g = Game(release, level=7)
+        g.identity("dwarf", actor=2)
+        g.open(key)
+        g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        g.do(2, "accept_help")
+        assert combat_totals(g.state, g.catalog) == (14, 16)
+    if key == "squidzilla":
+        for half_breed in (False, True):
+            g = Game(release, level=4)
+            g.identity("elf")
+            if half_breed:
+                g.play("half_breed")
+            g.lose_to(key, order_dice=(6, 1) if not half_breed else ())
+            assert g.state.players[1].alive == half_breed
+    if key == "ghoulfiends":
+        g = Game(release, level=7)
+        g.identity("wizard")
+        g.equip("staff_of_napalm")
+        g.identity("cleric", actor=2)
+        cost = g.give("sleep_potion", actor=2)
+        g.open(key)
+        g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        g.do(2, "accept_help")
+        g.play("magic_missile", target={"player_id": 1})
+        assert combat_totals(g.state, g.catalog) == (14, 8)
+        g.reject(2, "use_ability", ability_key="cleric_turn_undead", cost_ids=[cost], target={})
 
 
 def curse_case(release, key):
@@ -1026,6 +1208,28 @@ def curse_case(release, key):
         no_identity = Game(release)
         curse(no_identity, key)
         assert no_identity.state.players[1].level == 3
+        # Printed Class(es)/Race(s): replace all by the nearest single discard.
+        for available in (False, True):
+            dual = Game(release)
+            if key == "curse_change_class":
+                first, second, candidate, earlier, enabler, other_kind = (
+                    "warrior", "cleric", "wizard", "cleric:2", "super_munchkin", "elf")
+            else:
+                first, second, candidate, earlier, enabler, other_kind = (
+                    "elf", "dwarf", "halfling", "dwarf:2", "half_breed", "warrior")
+            a = dual.identity(first)
+            dual.play(enabler)
+            b = dual.identity(second)
+            keep = dual.identity(other_kind)
+            if available:
+                for discarded in (earlier, "curse_duck_of_doom:1", candidate + ":1", "baby:1"):
+                    dual.state.door_deck.remove(discarded)
+                    dual.state.door_discard.append(discarded)
+            curse(dual, key)
+            actual = dual.state.players[1].role_ids if key == "curse_change_class" else dual.state.players[1].race_ids
+            assert actual == ([candidate + ":1"] if available else [])
+            assert {a, b}.issubset(dual.state.door_discard)
+            assert keep in dual.state.players[1].in_play
     elif key in {"curse_lose_your_class", "curse_lose_your_race"}:
         first, second, enabler = (("warrior", "wizard", "super_munchkin")
                                    if key == "curse_lose_your_class" else ("elf", "dwarf", "half_breed"))
@@ -1050,9 +1254,12 @@ def curse_case(release, key):
         for count in (0, 1, 2):
             game = Game(release, count=2)
             given = [game.give(k) for k in ("warrior", "magic_missile")[:count]]
+            game.rng = Dice(picks=("magic_missile:1", "warrior:1") if count == 2 else given)
             curse(game, key)
             assert not game.state.players[1].hand
             assert set(game.state.players[2].hand) == set(given)
+            if count == 2:
+                assert game.state.players[2].hand == ["magic_missile:1", "warrior:1"]
     elif key == "curse_malign_mirror":
         g.state.players[1].level = 3
         g.identity("thief")
@@ -1079,7 +1286,9 @@ def curse_case(release, key):
         curse(g, key)
         g.respond(1, card_ids=[chosen])
         g.respond(2, card_ids=pay)
-        g.respond(3, card_ids=[short])
+        # Insufficient total has no selection freedom: all Items are lost.
+        if g.state.pending_decision is not None:
+            g.respond(3, card_ids=[short])
         assert {chosen, short, *pay}.issubset(g.state.treasure_discard)
         assert [g.state.players[i].level for i in (1, 2, 3)] == [7, 7, 6]
 
@@ -1111,7 +1320,7 @@ def special_level_case(release, key):
         g.state.players[2].level = 5
         g.play(key, target={"player_id": 1})
         assert g.state.players[1].level == 4
-        for target_level, other_level in ((5, 3), (5, 5), (9, 10)):
+        for target_level, other_level in ((5, 3), (5, 5), (9, 9)):
             capped = Game(release)
             capped.state.players[1].level, capped.state.players[2].level = other_level, target_level
             cid = capped.give(key)
@@ -1177,7 +1386,8 @@ def character_case(release, key):
             cost = game.give("sleep_potion")
             item = game.equip("helm_of_courage", 2)
             game.rng = Dice(die)
-            game.do(1, "use_ability", ability_key="thief_steal", cost_ids=[cost], target={"player_id": 2, "card_id": item})
+            game.do(1, "use_ability", ability_key="thief_theft", cost_ids=[cost], target={"player_id": 2, "card_id": item})
+            game.decline_windows()
             assert cost in game.state.treasure_discard
             assert item in game.state.players[1 if success else 2].in_play
             assert game.state.players[1].level == (3 if success else 2)
@@ -1223,11 +1433,25 @@ def special_case(release, key):
         dual.play(key)
         second_id = dual.identity(second)
         third_id = dual.give(third)
-        dual.reject(1, "play_identity", card_id=third_id)
-        dual.do(1, "discard_identity", card_id=key + ":1")
-        dual.do(1, "resolve_identity_excess", card_ids=[first_id])
+        # Switching an identity is legal; explicitly choose the discarded one.
+        dual.do(1, "discard_identity", card_id=first_id)
+        dual.do(1, "play_identity", card_id=third_id)
         ids = dual.state.players[1].race_ids if key == "half_breed" else dual.state.players[1].role_ids
-        assert ids == [second_id]
+        assert ids == [second_id, third_id]
+        assert key + ":1" in dual.state.players[1].in_play
+        dual.do(1, "discard_identity", card_id=key + ":1")
+        dual.do(1, "resolve_identity_excess", card_ids=[second_id])
+        ids = dual.state.players[1].race_ids if key == "half_breed" else dual.state.players[1].role_ids
+        assert ids == [third_id]
+        replacement = Game(release)
+        old = replacement.identity(first)
+        replacement.play(key)
+        new = replacement.give(first, copy=2)
+        replacement.reject(1, "play_identity", card_id=new)
+        replacement.do(1, "play_identity", card_id=new, replace_id=old)
+        ids = replacement.state.players[1].race_ids if key == "half_breed" else replacement.state.players[1].role_ids
+        assert ids == [new] and old in replacement.state.door_discard
+        assert key + ":1" in replacement.state.players[1].in_play
     elif key == "cheat":
         g.equip("buckler_of_swashing")
         g.equip("sneaky_bastard_sword")
@@ -1246,13 +1470,20 @@ def special_case(release, key):
         g.do(1, "assign_hireling", hireling_id=hireling, card_id=bow)
         assert combat_strength(g.state, 1, g.catalog) == 8
         second = g.give("mace_of_sharpness")
-        g.reject(1, "assign_hireling", hireling_id=hireling, card_id=second)
+        g.do(1, "assign_hireling", hireling_id=hireling, card_id=second)
+        assert g.state.players[1].hireling_items == {hireling: second}
+        assert bow in g.state.players[1].in_play and bow not in g.state.players[1].equipped
+        assert combat_strength(g.state, 1, g.catalog) == 8
         g.reject(1, "sell", card_ids=[hireling])
         monster = g.open("net_troll")
         g.do(1, "begin_escape")
         g.do(1, "use_ability", ability_key="hireling_escape", cost_ids=[hireling], target={"monster_id": monster})
         g.decline_windows()
-        assert {hireling, bow}.issubset(g.state.treasure_discard)
+        if g.state.combat:
+            g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=10))
+            g.decline_windows()
+        assert {hireling, second}.issubset(g.state.treasure_discard)
+        assert bow in g.state.players[1].in_play
         assert g.state.players[1].level == 3
     elif key == "really_impressive_title":
         source = g.play(key)
@@ -1346,7 +1577,17 @@ def character_distinctive(release, key):
     off_turn.state.turn_number = 4
     cid = off_turn.give(key, 2)
     off_turn.reject(2, "play_identity", card_id=cid)
-    if key == "cleric":
+    if key == "warrior":
+        g = Game(release, level=5)
+        g.identity("warrior", actor=2)
+        g.open("net_troll")
+        g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        g.do(2, "accept_help")
+        assert combat_totals(g.state, g.catalog) == (10, 10)
+        g.safe_treasures()
+        g.win()
+        assert g.state.players[1].level == 6
+    elif key == "cleric":
         g = Game(release)
         g.identity(key)
         cost = g.give("magic_missile")
@@ -1409,6 +1650,28 @@ def character_distinctive(release, key):
             g.decline_windows()
         assert g.state.players[1].level == 3
         assert set(costs[:count]).issubset(g.state.treasure_discard)
+        if key == "halfling":
+            sale = Game(release)
+            sale.identity(key)
+            first = sale.give("cloak_of_obscurity")
+            sale.do(1, "sell", card_ids=[first])
+            assert sale.state.players[1].level == 4
+            second = sale.give("mace_of_sharpness")
+            sale.reject(1, "sell", card_ids=[second])
+            fillers = [sale.give("helm_of_courage"), sale.give("leather_armor")]
+            sale.do(1, "sell", card_ids=[second, *fillers])
+            assert sale.state.players[1].level == 5
+            for actor, door, loot in ((1, "elf:1", "dwarf:1"),
+                                      (2, "warrior:1", "wizard:1"),
+                                      (3, "cleric:1", "warrior:2")):
+                for card, action in ((door, "open_door"), (loot, "loot_room")):
+                    sale.state.door_deck.remove(card)
+                    sale.state.door_deck.append(card)
+                    sale.do(actor, action)
+                sale.do(actor, "end_turn")
+            third = sale.give("mithril_armor")
+            sale.do(1, "sell", card_ids=[third])
+            assert sale.state.players[1].level == 6
     elif key == "elf":
         for elf_level, after in ((7, 9), (9, 10)):
             g = Game(release, level=9)
@@ -1427,6 +1690,130 @@ def character_distinctive(release, key):
             g.decline_windows()
             assert g.state.players[1].level == 7
             assert g.state.players[2].level == after
+
+
+def topology_distinctive(release, key):
+    if key == "mate":
+        for enhancer_first in (False, True):
+            g = Game(release, level=9)
+            strong_human(g)
+            g.play("really_impressive_title")
+            monster = g.open("net_troll")
+            for card in (("ancient", "mate") if enhancer_first else ("mate", "ancient")):
+                g.play(card, actor=2, target={"monster_id": monster})
+            assert combat_totals(g.state, g.catalog) == (24, 40)
+            g.play("magic_missile", target={"player_id": 1})
+            assert combat_totals(g.state, g.catalog) == (29, 40)
+            g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+            g.do(2, "accept_help")
+            g.play("electric_radioactive_acid_potion", target={"player_id": 1})
+            assert combat_totals(g.state, g.catalog) == (43, 40)
+            g.safe_treasures()
+            g.do(1, "declare_win")
+            g.do(3, "pass_reaction")
+            g.do(1, "close_reaction")
+            g.decline_windows()
+            assert len(g.state.players[1].hand) == 10
+        # Removing the physical source must leave the Mate's immutable definition.
+        g = Game(release, level=9)
+        g.identity("wizard")
+        for equipment in ("staff_of_napalm", "pointy_hat_of_power", "boots_of_butt_kicking",
+                          "pantyhose_of_giant_strength", "leather_armor", "spiky_knees"):
+            g.equip(equipment)
+        costs = [g.give(k) for k in ("sleep_potion", "pretty_balloons", "magic_missile")]
+        monster = g.open("net_troll")
+        g.play("ancient", actor=2, target={"monster_id": monster})
+        g.play("mate", actor=2, target={"monster_id": monster})
+        g.do(1, "use_ability", ability_key="wizard_charm", cost_ids=costs, target={"monster_id": monster})
+        assert combat_totals(g.state, g.catalog) == (24, 20)
+        assert not g.state.players[1].hand
+        g.safe_treasures()
+        g.win()
+        assert len(g.state.players[1].hand) == 10
+    elif key == "illusion":
+        g = Game(release, level=9)
+        strong_human(g)
+        source = g.open("net_troll")
+        g.play("ancient", actor=2, target={"monster_id": source})
+        g.play("mate", actor=2, target={"monster_id": source})
+        replacement = g.give("potted_plant", actor=2)
+        g.play(key, actor=2, target={"monster_id": source}, choices={"replacement_card_id": replacement})
+        assert combat_totals(g.state, g.catalog) == (21, 21)
+        g.play("sleep_potion", target={"player_id": 1})
+        g.safe_treasures()
+        g.win()
+        assert len(g.state.players[1].hand) == 6
+    elif key in {"pollymorph_potion", "magic_lamp", "potion_of_halitosis", "wizard"}:
+        for escape in (False, True):
+            g = Game(release, level=3 if escape else 9)
+            if key == "wizard":
+                g.identity("wizard")
+                costs = [g.give(k) for k in ("sleep_potion", "pretty_balloons", "magic_missile")]
+            removed = g.open("floating_nose" if key == "potion_of_halitosis" else "net_troll")
+            other = g.give("gazebo", actor=2)
+            g.play("wandering_monster", actor=2, choices={"monster_card_id": other})
+            if key == "wizard":
+                g.do(1, "use_ability", ability_key="wizard_charm", cost_ids=costs, target={"monster_id": removed})
+            else:
+                g.play(key, target={"monster_id": removed})
+            assert len(g.state.players[1].hand) == 0
+            assert g.state.combat is not None
+            assert g.state.players[1].level == (3 if escape else 9)
+            if escape:
+                g.do(1, "begin_escape")
+                g.rng = Dice(6)
+                g.do(1, "run_away", monster_id=other)
+                g.decline_windows()
+                if g.state.combat:
+                    g.do(1, "resolve_escape", monster_id=other, now=NOW + timedelta(minutes=10))
+                    g.decline_windows()
+                assert not g.state.players[1].hand
+                assert g.state.players[1].level == 3
+            else:
+                g.safe_treasures()
+                g.win()
+                assert len(g.state.players[1].hand) == (2 if key == "magic_lamp" else 5)
+                assert g.state.players[1].level == 10
+    elif key in {"friendship_potion", "out_to_lunch"}:
+        g = Game(release)
+        g.identity("elf", actor=2)
+        g.open("net_troll")
+        other = g.give("maul_rat", actor=3)
+        g.play("wandering_monster", actor=3, choices={"monster_card_id": other})
+        g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        g.do(2, "accept_help")
+        g.safe_treasures()
+        g.play(key, actor=3)
+        g.decline_windows()
+        assert g.state.combat is None
+        assert g.state.players[1].level == g.state.players[2].level == 3
+        assert len(g.state.players[1].hand) == (2 if key == "out_to_lunch" else 0)
+        assert not g.state.players[2].hand and not g.state.players[3].hand
+        assert {"net_troll:1", other, "wandering_monster:1"}.issubset(g.state.door_discard)
+    elif key == "tuba_of_charm":
+        for wearer, all_success in ((1, True), (2, True), (1, False), (2, False)):
+            g = Game(release)
+            g.equip(key, actor=wearer)
+            monster = g.open("net_troll")
+            other = g.give("maul_rat", actor=3)
+            g.play("wandering_monster", actor=3, choices={"monster_card_id": other})
+            g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+            g.do(2, "accept_help")
+            g.do(1, "begin_escape")
+            g.safe_treasures()
+            # Resolve the other fighter first; wearer reward waits for both own foes.
+            outsider = 2 if wearer == 1 else 1
+            g.rng = Dice(6, 6, 2, 2 if all_success else 1)
+            for actor, foe in ((outsider, monster), (outsider, other), (wearer, monster), (wearer, other)):
+                g.do(actor, "run_away", monster_id=foe)
+                g.decline_windows()
+                if g.state.combat and (actor, foe) in g.state.combat.escape_rolls:
+                    g.do(actor, "resolve_escape", monster_id=foe, now=NOW + timedelta(minutes=10))
+                    g.decline_windows()
+                if (actor, foe) != (wearer, other):
+                    assert not g.state.players[wearer].hand
+            assert len(g.state.players[wearer].hand) == (1 if all_success else 0)
+            assert not g.state.players[outsider].hand
 
 
 def exceptional_item_case(release, key):
@@ -1454,6 +1841,12 @@ def exceptional_item_case(release, key):
         g.play("sleep_potion", target={"player_id": 1})
         assert combat_totals(g.state, g.catalog) == (18, 10)
         g.win()
+        helped = Game(release)
+        source = helped.give(key)
+        helped.open("net_troll")
+        helped.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        helped.do(2, "accept_help")
+        helped.reject(1, "play_card", card_id=source, target={"player_id": 1})
     elif key in {"magic_lamp", "pollymorph_potion"}:
         monster = g.open("net_troll")
         g.safe_treasures()
@@ -1481,13 +1874,16 @@ def exceptional_item_case(release, key):
         for side in ("player_id", "monster_id"):
             ordinary = Game(release, level=7)
             monster = ordinary.open("gazebo")
-            ordinary.play(key, target={side: 1 if side == "player_id" else monster})
+            ordinary.play(key, target={side: 1 if side == "player_id" else monster},
+                          choices={"side": "fighters" if side == "player_id" else "monsters"})
             assert combat_totals(ordinary.state, ordinary.catalog) == ((9, 8) if side == "player_id" else (7, 10))
     elif key == "yuppie_water":
         for elves, expected in ((0, 6), (1, 8), (2, 10)):
             game = Game(release)
             if elves:
                 game.identity("elf")
+            else:
+                game.identity("elf", actor=3)  # Outsider contributes nothing.
             if elves == 2:
                 game.identity("elf", actor=2, copy=2)
             game.open("net_troll")
@@ -1548,14 +1944,290 @@ def exceptional_item_case(release, key):
         if getattr(g.state, "pending_decision", None):
             g.respond(1, option="accept")
         g.decline_windows()
+        if g.state.combat:
+            g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=10))
+            g.decline_windows()
         assert g.state.combat is None and g.state.players[1].level == 3
         assert source in g.state.treasure_discard and monster in g.state.door_discard
+
+
+def response_distinctive(release, key):
+    if key == "loaded_die":
+        for context in ("thief", "orcs", "snails"):
+            g = Game(release, level=7)
+            source = g.give(key)
+            if context == "thief":
+                g.identity("thief")
+                cost = g.give("sleep_potion")
+                target = g.equip("helm_of_courage", actor=2)
+                g.rng = Dice(1)
+                g.do(1, "use_ability", ability_key="thief_theft", cost_ids=[cost],
+                     target={"player_id": 2, "card_id": target})
+            else:
+                if context == "snails":
+                    losses = [g.give(k) for k in ("warrior", "wizard", "elf")]
+                monster = g.open("3_872_orcs" if context == "orcs" else "snails_on_speed")
+                if context == "snails":
+                    g.play("humongous", actor=2, target={"monster_id": monster})
+                g.do(1, "begin_escape")
+                g.rng = Dice(1, 1)
+                g.do(1, "run_away", monster_id=monster)
+                g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=1))
+            assert g.state.pending_decision.kind == "die_response"
+            roll_id = g.state.pending_decision.id
+            g.reject(1, "play_card", card_id=source, target={}, choices={"roll_id": "stale", "result": 3})
+            g.do(1, "play_card", card_id=source, target={}, choices={"roll_id": roll_id, "result": 4 if context == "thief" else 3})
+            g.decline_windows()
+            if context == "thief":
+                assert target in g.state.players[1].in_play and g.state.players[1].level == 7
+            elif context == "orcs":
+                assert g.state.players[1].alive and g.state.players[1].level == 4
+            else:
+                assert g.state.pending_decision.kind == "loss_choice"
+                g.respond(1, card_ids=losses)
+                assert set(losses).issubset(g.state.door_discard)
+            assert source in g.state.treasure_discard
+        foreign = Game(release)
+        source = foreign.give(key, actor=2)
+        monster = foreign.open("gazebo")
+        foreign.do(1, "begin_escape")
+        foreign.rng = Dice(1)
+        foreign.do(1, "run_away", monster_id=monster)
+        foreign.reject(2, "play_card", card_id=source, target={},
+                       choices={"roll_id": foreign.state.combat.escape_roll_ids[(1, monster)], "result": 6})
+    elif key == "wishing_ring":
+        for persistent in ("curse_chicken_on_your_head", "curse_malign_mirror"):
+            g = Game(release)
+            source = curse(g, persistent)
+            ring = g.give(key, actor=3)
+            g.do(3, "play_card", card_id=ring, target={"player_id": 1}, choices={"curse_id": source})
+            assert source in g.state.door_discard and ring in g.state.treasure_discard
+        door = Game(release)
+        ring = door.give(key, actor=2)
+        source = door.open("curse_lose_a_level")
+        pending = door.state.pending_decision.id
+        assert door.state.players[1].level == 3
+        door.do(2, "play_card", card_id=ring, target={"player_id": 1}, choices={"effect_id": pending})
+        assert door.state.players[1].level == 3
+        assert {source} <= set(door.state.door_discard)
+        resolved = Game(release)
+        source = curse(resolved, "curse_lose_a_level")
+        ring = resolved.give(key)
+        resolved.reject(1, "play_card", card_id=ring, target={"player_id": 1}, choices={"curse_id": source})
+        assert resolved.state.players[1].level == 2
+    elif key in {"invisibility_potion", "flask_of_glue"}:
+        g = Game(release)
+        actor = 2 if key == "flask_of_glue" else 1
+        source = g.give(key, actor=actor)
+        monster = g.open("gazebo")
+        g.do(1, "begin_escape")
+        g.reject(actor, "play_card", card_id=source,
+                 target={"player_id": 1} if key == "flask_of_glue" else {}, choices={"attempt_id": "absent"})
+        if key == "invisibility_potion":
+            foreign = Game(release)
+            source = foreign.give(key, actor=2)
+            monster = foreign.open("gazebo")
+            foreign.do(1, "begin_escape")
+            foreign.rng = Dice(1)
+            foreign.do(1, "run_away", monster_id=monster)
+            foreign.reject(2, "play_card", card_id=source, target={},
+                           choices={"attempt_id": foreign.state.combat.escape_roll_ids[(1, monster)]})
+        else:
+            plant = Game(release, level=1)
+            source = plant.give(key, actor=2)
+            monster = plant.open("potted_plant")
+            plant.do(1, "begin_escape")
+            plant.rng = Dice(1)
+            before = plant.rng.getstate()
+            plant.do(1, "run_away", monster_id=monster)
+            assert plant.rng.getstate() == before  # Printed automatic escape.
+            plant.do(2, "play_card", card_id=source, target={"player_id": 1},
+                     choices={"attempt_id": plant.state.combat.escape_roll_ids[(1, monster)]})
+            plant.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=1))
+            assert plant.state.combat is None
+            assert plant.state.players[1].level == 1 and not plant.state.players[1].hand
+    elif key == "instant_wall":
+        g = Game(release)
+        source = g.give(key, actor=3)
+        monster = g.open("net_troll")
+        g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        g.do(2, "accept_help")
+        g.do(1, "begin_escape")
+        g.reject(3, "play_card", card_id=source, target={}, choices={"player_ids": [1, 2, 3]})
+        g.do(3, "play_card", card_id=source, target={}, choices={"player_ids": [1, 2]})
+        g.respond(1, option="accept")
+        g.respond(2, option="decline")
+        assert (2, monster) in g.state.combat.escape_pending
+        assert (1, monster) in g.state.combat.escape_rolls
+        g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=1))
+        g.rng = Dice(6)
+        g.do(2, "run_away", monster_id=monster)
+        g.do(2, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=1))
+        assert g.state.combat is None
+        assert g.state.players[1].level == g.state.players[2].level == 3
+        mixed = Game(release, level=1)
+        armor = mixed.equip("leather_armor")
+        source = mixed.give(key)
+        impossible = mixed.open("crabs")
+        possible = mixed.give("net_troll", actor=2)
+        mixed.play("wandering_monster", actor=2, choices={"monster_card_id": possible})
+        mixed.do(1, "begin_escape")
+        mixed.do(1, "play_card", card_id=source, target={}, choices={"player_ids": [1]})
+        assert (1, possible) in mixed.state.combat.automatic_escapes
+        assert (1, impossible) not in mixed.state.combat.automatic_escapes
+        mixed.do(1, "resolve_escape", monster_id=possible, now=NOW + timedelta(minutes=1))
+        mixed.rng = Dice()
+        before = mixed.rng.getstate()
+        mixed.do(1, "run_away", monster_id=impossible)
+        assert mixed.rng.getstate() == before
+        assert mixed.state.combat is None and armor in mixed.state.treasure_discard
+        assert mixed.state.players[1].level == 1
+
+
+def acquisition_distinctive(release, key):
+    if key == "hoard":
+        g = Game(release, level=9)
+        g.open("net_troll")
+        g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+        g.do(2, "accept_help")
+        g.safe_treasures()
+        source = "hoard:1"
+        g.state.treasure_deck.remove(source)
+        g.state.treasure_deck.append(source)
+        events = g.win()
+        assert len(g.state.players[1].hand) == 5
+        assert all(e.audience == "group" for e in events if e.name in {"treasure.drawn", "card.drawn"})
+        g = Game(release, level=9)
+        g.equip("chainsaw_of_bloody_dismemberment")
+        g.open("net_troll")
+        keep = {"hoard:1", "sleep_potion:1", "pretty_balloons:1", "magic_missile:1"}
+        remainder = [cid for cid in g.state.treasure_deck if cid not in keep]
+        g.state.treasure_deck = ["sleep_potion:1", "pretty_balloons:1", "magic_missile:1", "hoard:1"]
+        g.state.players[3].hand.extend(remainder)
+        assert_zones(g.state, g.catalog)
+        g.win()
+        assert set(g.state.players[1].hand) == keep - {"hoard:1"}
+        assert g.state.treasure_discard.count("hoard:1") == 1
+    elif key == "divine_intervention":
+        g = Game(release, level=3)
+        g.identity("cleric")
+        g.state.phase = "turn.after_door"
+        source = "divine_intervention:1"
+        g.state.door_deck.remove(source)
+        g.state.door_deck.append(source)
+        command = g.command(1, "loot_room")
+        g.state, _ = decide(g.state, command, g.catalog, g.rng)
+        assert_zones(g.state, g.catalog)
+        assert g.state.players[1].level == 4
+        replay, events = decide(g.state, command, g.catalog, g.rng)
+        assert replay == g.state and not events
+
+
+def curse_distinctive(release, key):
+    if key in {"curse_duck_of_doom", "curse_lose_a_level"}:
+        g = Game(release, level=7)
+        source = g.open(key)
+        g.decline_windows()
+        assert g.state.players[1].level == (5 if key == "curse_duck_of_doom" else 6)
+        assert source in g.state.door_discard
+        if key == "curse_lose_a_level":
+            second = g.give(key, actor=2, copy=2)
+            g.do(2, "play_card", card_id=second, target={"player_id": 1})
+            g.decline_windows()
+            assert g.state.players[1].level == 5
+            assert {source, second}.issubset(g.state.door_discard)
+    elif key == "curse_change_sex":
+        g = Game(release, level=8)
+        source = curse(g, key)
+        assert g.state.players[1].character_sex == "female"
+        assert g.state.players[1].next_combat_penalty == -5
+        g.play("wand_of_dowsing", actor=2, target={"card_id": source})
+        g.do(2, "play_card", card_id=source, target={"player_id": 1})
+        g.decline_windows()
+        assert g.state.players[1].character_sex == "male"
+        assert g.state.players[1].next_combat_penalty == -5
+        monster = g.open("net_troll")
+        assert combat_totals(g.state, g.catalog) == (3, 10)
+        g.do(1, "begin_escape")
+        g.rng = Dice(6)
+        g.do(1, "run_away", monster_id=monster)
+        g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=1))
+        assert g.state.players[1].next_combat_penalty == 0
+        # Move through actual turns to the victim's next fight.
+        g.do(1, "end_turn")
+        for actor, door in ((2, "warrior:1"), (3, "wizard:1")):
+            g.state.door_deck.remove(door)
+            g.state.door_deck.append(door)
+            g.do(actor, "open_door")
+            loot = "elf:2" if actor == 2 else "dwarf:2"
+            g.state.door_deck.remove(loot)
+            g.state.door_deck.append(loot)
+            g.do(actor, "loot_room")
+            g.do(actor, "end_turn")
+        g.open("gazebo")
+        assert combat_totals(g.state, g.catalog) == (8, 8)
+        assert g.state.players[1].character_sex == "male"
+    elif key == "curse_malign_mirror":
+        g = Game(release, level=7)
+        g.identity("thief")
+        g.equip("dagger_of_treachery")
+        g.equip("leather_armor")
+        source = curse(g, key)
+        monster = g.open("net_troll")
+        assert combat_totals(g.state, g.catalog) == (8, 10)
+        g.do(1, "begin_escape")
+        g.rng = Dice(6)
+        g.do(1, "run_away", monster_id=monster)
+        g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=1))
+        assert source in g.state.door_discard
+        assert combat_strength(g.state, 1, g.catalog) == 11
+    elif key == "curse_chicken_on_your_head":
+        g = Game(release, level=7)
+        source = curse(g, key)
+        g.lose_to("gazebo", die=5)
+        assert g.state.players[1].level == 4
+        assert source in g.state.players[1].in_play
+    elif key == "curse_income_tax":
+        g = Game(release)
+        source = curse(g, key)
+        assert source in g.state.door_discard
+        assert [g.state.players[i].level for i in (1, 2, 3)] == [3, 3, 3]
+    elif key == "truly_obnoxious_curse":
+        g = Game(release)
+        first, second = g.give("bow_with_ribbons"), g.give("cloak_of_obscurity")
+        for cid in (first, second):
+            g.do(1, "carry_item", card_id=cid)
+        curse(g, key)
+        g.respond(1, card_ids=[second])
+        assert second in g.state.treasure_discard
+        assert first in g.state.players[1].in_play
+
+
+def help_me_distinctive(release):
+    for level, expected in ((9, "already_winning"), (3, "still_losing"), (6, "wins")):
+        g = Game(release, level=level)
+        # Pole occupies both hands and must be discarded to use the +3 Chainsaw.
+        blocker = g.equip("eleven_foot_pole")
+        taken = g.equip("chainsaw_of_bloody_dismemberment", actor=2)
+        source = g.give("help_me_out_here")
+        g.open("gazebo")
+        args = {"card_id": source, "target": {"player_id": 2, "card_id": taken},
+                "choices": {"discard_ids": [blocker]}}
+        if expected == "wins":
+            g.do(1, "play_card", **args)
+            assert blocker in g.state.treasure_discard
+            assert taken in g.state.players[1].equipped
+            assert combat_totals(g.state, g.catalog) == (9, 8)
+        else:
+            g.reject(1, "play_card", **args)
 
 
 @pytest.mark.parametrize("rule_key", sorted(set(EQUIPMENT) | set(BOOSTS) | set(LEVELS) | set(ENHANCERS) | set(MONSTERS) | set(CURSES) | set(CHARACTERS) | set(SPECIAL_LEVELS) | set(SPECIALS) | set(EXCEPTIONAL_ITEMS)))
 def test_classic_definition_behavior(release, rule_key):
     if rule_key in EQUIPMENT:
         equipment_case(release, rule_key)
+        if rule_key == "tuba_of_charm":
+            topology_distinctive(release, rule_key)
     elif rule_key in BOOSTS:
         boost_case(release, rule_key)
     elif rule_key in LEVELS:
@@ -1565,14 +2237,29 @@ def test_classic_definition_behavior(release, rule_key):
     elif rule_key in MONSTERS:
         monster_case(release, rule_key)
         monster_distinctive(release, rule_key)
+        if rule_key == "potted_plant":
+            response_distinctive(release, "flask_of_glue")
     elif rule_key in CURSES:
         curse_case(release, rule_key)
+        curse_distinctive(release, rule_key)
     elif rule_key in CHARACTERS:
         character_case(release, rule_key)
         character_distinctive(release, rule_key)
+        if rule_key == "wizard":
+            topology_distinctive(release, rule_key)
     elif rule_key in SPECIAL_LEVELS:
         special_level_case(release, rule_key)
     elif rule_key in SPECIALS:
         special_case(release, rule_key)
+        if rule_key == "help_me_out_here":
+            help_me_distinctive(release)
+        if rule_key in {"mate", "illusion", "out_to_lunch"}:
+            topology_distinctive(release, rule_key)
+        if rule_key in {"hoard", "divine_intervention"}:
+            acquisition_distinctive(release, rule_key)
     else:
         exceptional_item_case(release, rule_key)
+        if rule_key in {"pollymorph_potion", "magic_lamp", "potion_of_halitosis", "friendship_potion"}:
+            topology_distinctive(release, rule_key)
+        if rule_key in {"loaded_die", "wishing_ring", "invisibility_potion", "flask_of_glue", "instant_wall"}:
+            response_distinctive(release, rule_key)

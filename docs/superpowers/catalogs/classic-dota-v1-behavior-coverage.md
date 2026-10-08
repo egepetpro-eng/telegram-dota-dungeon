@@ -7,10 +7,12 @@ is also recorded with all supporting references in `source-manifest.json`.
 **Status: pending production behavior acceptance.** All 147 names in the final
 column now collect from `tests/test_catalog_behavior.py`. They exercise the
 strict installed release through public commands and literal source expectations.
-The current execution fails during release setup at unimplemented
-`orcs_bad_stuff_die`, before any scenario executes. No row is PASS. The existing
-generic evidence column remains limited synthetic evidence; collection is not
-behavior acceptance. Additional distinctive branches listed below remain work.
+The accepted local base still rejects unfinished Task 6 at release setup. A
+coordinator-authorized read-only diagnostic against the core worker's development
+tree executes all 147 successfully; accepted integration verification is pending.
+No row is PASS yet. The existing generic evidence column remains limited
+synthetic evidence; the explicit supplemental map below names actual distinctive
+cases read and executed, rather than registry/data proxies.
 
 All definitions have compilation coverage through
 `tests/test_card_descriptions.py::test_compilation_preserves_all_verified_facts_and_accepted_mappings`,
@@ -34,38 +36,48 @@ level-card recipients/caps/replay, enhancer reward deltas and Baby floors, all 3
 monster victories, conditional identities, and explicit Bad Stuff families.
 Character abilities, curses, persistent effects and exceptional Items use the
 coordinator's frozen continuation schema. Physical conservation and rejected
-action state/RNG rollback are asserted after public commands. These are written
-assertions, not a claim that the scenarios have run successfully.
+action state/RNG rollback are asserted after public commands. Later read-only
+diagnostics reached **147 passed in 13.14s** on the changing core tree, plus
+**138 passed in 0.63s** across its C4/C5/C6 focused supplemental files. These are
+not accepted release results. See the adjacent Task 7 report for the exact
+command, initial RED, fixture corrections and core defects found.
 
-Known distinctive gaps still to finish (and then execute against accepted core):
+The previously named residual branches now execute: dual Change Class/Race
+replaces all matching identities with the nearest single discarded identity (or
+none), Wall preserves impossible-foe consequences, Potted Plant retains its Glue
+opportunity, and Platycore permits empty-hand/floor outcomes. Current extensions
+also cover enhanced Mate/independent escape/Illusion, explicit random selections,
+helper-only bonuses, mixed Tuba success, actual-turn Halfling sale reset and
+reactive roll contexts. The latest complete diagnostic is **147 passed in
+14.80s**. Final promotion still requires accepted-core synchronization and a
+fresh run; no diagnostic PASS is presented as release acceptance.
 
-- Equipment: Tuba multi-monster/helper whole-fight timing, sex-change re-equipping,
-  every restricted identity-loss case, Item-only death/loss exclusions, and
-  Kneepads level-nine/equal-helper boundaries. Rat Mate and all impossible-foe
-  interactions need completion; pole distraction with Staff remains pending.
-- Enhancers/topology: escaped-combat cleanup and no rewards; Baby stacking;
-  Mate enhanced-source duplication in both orders, potion exclusion and independent
-  source/Mate escape; Illusion with a remaining virtual monster.
-- Monster exceptions: helper-only identity conditions, all slot/no-slot branches,
-  Ghoulfiends helper-level-only and Cleric rejection, Lawyers two-Treasure exchange,
-  Hippogriff blind-hand picks, Net Troll inferred simultaneous receiver ordering,
-  Potted Plant forced Glue, Platycore empty-hand/floor branches, and Squidzilla's
-  low-level Elf/one-race Half-Breed pursuit contrasts. Random transfers currently
-  check actual distinct recipients/cards but still need literal draw-order assertions.
-- Curses: all Door-opening variants, dual Change Class/Race choice, repeated Change
-  Sex and next-combat expiry, Chicken actual die penalty and sale persistence,
-  Income Tax no-item and invalid portfolio paths, tied largest Item choice,
-  hand transfer privacy with six seats, and Mirror expiry in a subsequent combat.
-- Characters: ability limit reset across a second actual combat/attempt, helper
-  Warrior ties, simultaneous Cleric reward resurrection, Halfling sale reset,
-  theft forbidden zones/participants, and multi-monster Wizard deferred/lost rewards.
-- Specials/exceptional Items: multi-monster removal/escape reward entitlements,
-  Transferral modifiers/helper reset/original-owner continuation, Help Me Out Here
-  discard-to-fit plus rejected nonwinning targets, all Wall willingness/impossible
-  foe paths, after-roll stale/foreign IDs, Loaded Die theft/Orcs/Snails continuations,
-  persistent Ring targets and Door cancellation, Hoard public/initial/depleted
-  draws, and Divine initial identity opportunity/replay. Single-case baseline
-  success alone must not promote these rows to PASS.
+## Supplemental distinctive evidence map
+
+These actual collected cases supplement the installed-release node for the named
+row(s). They were read and passed in the 138-case C-worker diagnostic. Some use
+controlled source-derived unit fixtures, so they do not replace the primary
+147 installed-release cases or their physical-zone checks.
+
+| Source rows | Actual supplemental node(s), under `tests/` | Distinctive behavior |
+| --- | --- | --- |
+| `hoard`, `divine_intervention` | `test_card_draw.py::test_initial_hands_all_dealt_before_hoard_and_divine_choice` | All initial hands precede source triggers and Cleric opportunity. |
+| `hoard` | `test_card_draw.py::test_trigger_cannot_reprocess_its_discarded_instance_in_same_draw_chain`; `test_card_draw.py::test_draw_spans_depleted_pile_and_only_recycles_same_deck` | No same-source recursion; partial/depleted correct-deck draw. |
+| `cleric`, `hoard` | `test_card_character.py::test_simultaneous_cleric_rewards_reserve_old_discard_tops_before_both_costs`; `test_card_combat.py::test_cleric_choices_wait_for_both_reward_recipients`; `test_card_combat.py::test_hoard_additional_faceup_draws_offer_resurrection_again` | Reserved pre-cost tops, simultaneous entitlements and additional face-up draw opportunity. |
+| `cleric` | `test_card_character.py::test_cleric_resurrection_rejects_facedown_and_atomic_bad_costs`; `test_card_character.py::test_same_deck_resurrection_takes_old_top_before_discarding_cost` | Legal visibility/cost scope and same-deck ordering. |
+| `warrior`, `wizard` | `test_card_character.py::test_class_and_escape_counters_do_not_leak_between_combats_or_monsters` | New-combat and separate-monster counter scope. |
+| `thief` | `test_card_character.py::test_thief_cannot_steal_from_combat_participant_and_rng_atomic` | Fighting victim prohibited, rejection preserves RNG/state. |
+| `cheat`, `dwarf` | `test_card_equipment.py::test_cheat_can_atomically_carry_second_big_item_from_own_hand`; `test_card_equipment.py::test_cheat_wrong_kind_another_hand_and_self_target_reject_atomically`; `test_card_equipment.py::test_excess_big_items_cannot_discard_while_lowest_player_can_carry_and_dwarf_recipient_unlimited` | Attachment/capacity exceptions and authorized loss resolution. |
+| `amazon`, `curse_change_sex` | `test_card_combat.py::test_amazon_cannot_be_killed_when_helping_fighter_is_female`; `test_card_combat.py::test_change_sex_pending_curse_makes_amazon_leave_without_kill_level` | Mandatory female-participant departure and mid-combat re-evaluation. |
+| `wandering_monster`, `undead_horse`, `mr_bones` | `test_card_combat.py::test_undead_join_without_wandering_card`; `test_card_combat.py::test_wandering_monster_consumes_both_sources_atomically` | Free Undead joining, invalid secondary source rollback, Gazebo helper removal. |
+| `transferral_potion`, `potion_of_halitosis` | `test_card_combat.py::test_transfer_keeps_turn_owner_and_earned_original_rewards`; `test_card_combat.py::test_transfer_preserves_original_helpers_earned_treasure_share` | Earned entitlement stays with original leader/helper and turn flow. |
+| `rat_on_a_stick`, `hireling` | `test_card_character.py::test_automatic_escape_rejects_stored_roll_and_preserves_state_rng` | Pre-roll timing and atomic rejection. |
+| `flask_of_glue`, `invisibility_potion`, `rat_on_a_stick` | `test_card_combat.py::test_automatic_escape_has_last_glue_opportunity`; `test_card_combat.py::test_invisibility_waits_for_failed_attempt_and_preserves_glue_window` | Last-attempt opportunity remains live after automatic escape. |
+| `wand_of_dowsing`, `pollymorph_potion` | `test_card_combat.py::test_dowsing_cannot_retrieve_reserved_monster_or_potion_midfight`; `test_card_combat.py::test_spent_removal_source_is_not_recycled_into_its_own_rewards` | Reservation isolation and source consumption. |
+| `large_angry_chicken`, `staff_of_napalm`, `flaming_poison_potion` | `test_card_combat.py::test_chicken_fire_bonus_uses_helper_weapon_and_fighter_side_only` | Helper fire qualifies; monster-side flame potion does not. |
+| `curse_chicken_on_your_head`, `bigfoot` | `test_card_bad_stuff.py::test_chicken_is_removed_even_when_headgear_loss_finds_no_helmet` | Printed removal even without actual headgear. |
+| `curse_lose_a_small_item` | `test_card_bad_stuff.py::test_victim_selects_small_item_privately_and_mandatory_expiry_rejects` | Authorized private eligibility and no mandatory loss timeout. |
+| Death monsters | `test_card_bad_stuff.py::test_corpse_is_public_and_highest_level_living_player_loots_first`; `test_card_bad_stuff.py::test_dead_player_cannot_receive_draw_trade_or_loot` | Public corpse, ordered looting and dead-player scope. |
 
 The source preparation's Help Me Out Here example incorrectly called Chainsaw
 `+4`; the test uses its accepted printed `+3`, with level 6 becoming strength 9
@@ -73,6 +85,15 @@ against Gazebo 8. A level-9 fighter with a `+1` Item ties Net Troll 10 and canno
 win ordinarily; that equipment scenario asserts the tie strength, then plays an
 actual `+2` potion before claiming victory. These corrections change test setup,
 not source definitions.
+
+Coordinator source review also supersedes old preparation claims: Hireling can
+legally switch its one assigned Item outside combat; identity replacement is
+legal with explicit selection; Change Class(es)/Race(s) replaces all current
+identities of that kind, with no victim selection of a retained identity. Tests
+exercise those corrected rules. Net Troll simultaneous recipient ordering,
+Crabs unqualified in-play Armor scope, Snails shortage fulfillment and Tuba
+mixed-failure reward suppression retain their documented general-rule inference
+labels rather than asserting a nonexistent card-specific primary ruling.
 
 The source callback requirements preserve all argument/cost/limit/phase variants
 in the manifest and the Task 1 report. Task 5 owns conditions/identities/abilities
