@@ -209,3 +209,29 @@ def test_character_describes_identity_ability_cost_and_limits():
     assert "Стоимость" in view.text
     assert "3" in view.text and "1" in view.text
     assert "рук" in view.text.lower()
+
+
+@pytest.mark.parametrize("phase, can_seek", [("turn.after_door", True), ("turn.prepare", False)])
+def test_declared_monster_metadata_preserves_only_lawful_seek_trouble_controls(phase, can_seek):
+    from random import Random
+    from dota_dungeon.core.engine import decide
+    from dota_dungeon.core.model import Command
+    from dota_dungeon.telegram.views import render_selection, render_view
+    state, release = fixture()
+    state.phase = phase
+    state.players[11].hand.append("enemy")
+    release.catalog["enemy"] = CardDef("enemy", "door", "monster", "Roshan", bonus=2, treasures=1,
+                                       levels=1, rule_key="fixture_monster", play_phases=("turn.after_door",), target_rule="self")
+    detail = render_view(state, 11, "card:enemy", release)
+    selection = render_selection(state, 11, "play", {"card_id": "enemy"}, release)
+    selectors = [b for row in detail.rows for b in row if b.action == "choose_card_target"]
+    plays = [b for row in selection.rows for b in row if b.action == "seek_trouble"]
+    assert bool(selectors) is can_seek
+    assert bool(plays) is can_seek
+    if can_seek:
+        assert plays[0].args == {"card_id": "enemy"} and plays[0].actor_id == 11
+        result, _ = decide(state, Command("g", 11, "declared-monster", plays[0].action, plays[0].args), release.catalog, Random(0))
+        assert result.phase == "combat.active"
+        assert result.combat.monster_ids == ["enemy"]
+        assert "enemy" not in result.players[11].hand
+    assert "enemy" in state.players[11].hand

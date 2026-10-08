@@ -354,9 +354,13 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
             args = {"card_id": cid, "target": target}
             if legal_action(state, viewer, "play_card", args, release, now):
                 rows.append([Button(label, "play_card", args, viewer)])
-        # Small legacy fixtures predate declarative play_card metadata.
-        if not card.play_phases:
-            action = "play_identity" if card.kind in {"role", "race"} else "seek_trouble" if card.kind == "monster" else None
+        if card.kind == "monster":
+            args = {"card_id": cid}
+            if legal_action(state, viewer, "seek_trouble", args, release, now):
+                rows.append([Button("Искать неприятности", "seek_trouble", args, viewer)])
+        # Small legacy identity fixtures predate declarative play_card metadata.
+        elif not card.play_phases:
+            action = "play_identity" if card.kind in {"role", "race"} else None
             if action and legal_action(state, viewer, action, {"card_id": cid}, release, now):
                 rows.append([Button("Сыграть", action, {"card_id": cid}, viewer)])
     elif flow == "ability":
