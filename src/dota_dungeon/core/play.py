@@ -109,6 +109,16 @@ def play_card(
         raise RuleError("unknown or dead player")
     if card_id not in catalog:
         raise RuleError("unknown card")
+    from .combat import validate_escape_action
+
+    validate_escape_action(
+        state,
+        actor_id,
+        "play_card",
+        target,
+        catalog,
+        rule_key=catalog[card_id].rule_key,
+    )
     card, owner = catalog[card_id], state.players[actor_id]
     if state.phase not in card.play_phases or state.phase in {"lobby", "game.finished"}:
         raise RuleError("card cannot be played in this phase")
@@ -168,6 +178,8 @@ def play_card(
             (
                 result.door_discard if card.deck == "door" else result.treasure_discard
             ).append(card_id)
+    if carried_shot and not persistent:
+        items.reconcile_possessions(result, actor_id, catalog)
     if result.combat:
         from .combat import restart_reaction
 

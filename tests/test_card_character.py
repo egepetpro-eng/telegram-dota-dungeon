@@ -428,7 +428,9 @@ def test_tuba_draws_one_private_treasure_after_user_escapes_whole_combat():
     s.combat.escape_pending = {(1, "monster"), (1, "lame_goblin")}
     s, _ = combat.run_away(s, 1, "monster", Random(4), c)
     assert len(s.players[1].hand) == 6
-    s, events = combat.run_away(s, 1, "lame_goblin", Random(5), c)
+    s, _ = combat.resolve_escape(s, 1, "monster", c, Random(4))
+    s, _ = combat.run_away(s, 1, "lame_goblin", Random(5), c)
+    s, events = combat.resolve_escape(s, 1, "lame_goblin", c, Random(5))
     assert len(s.players[1].hand) == 7
     assert s.combat is None
     assert any(e.name == "card.drawn" and e.audience == "user:1" for e in events)
@@ -504,6 +506,7 @@ def test_class_and_escape_counters_do_not_leak_between_combats_or_monsters():
     s.combat.escape_pending = {(1, "monster"), (1, "lame_goblin")}
     s, _ = combat.run_away(s, 1, "monster", Random(2), c)
     s, _ = ability(s, c, "wizard_flight", ["cost0"], {"monster_id": "monster"})
+    s, _ = combat.resolve_escape(s, 1, "monster", c, Random(2))
     s, _ = combat.run_away(s, 1, "lame_goblin", Random(2), c)
     s, _ = ability(s, c, "wizard_flight", ["cost1"], {"monster_id": "lame_goblin"})
     assert s.combat.escape_bonuses == {(1, "monster"): 1, (1, "lame_goblin"): 1}
@@ -525,3 +528,113 @@ def test_resurrection_and_costs_preserve_one_physical_zone():
         + out.combat.charmed_monster_ids
     )
     assert len(physical) == len(set(physical))
+
+
+@pytest.mark.parametrize(
+    "key,source",
+    [("rat_on_a_stick_escape", "rat_on_a_stick"), ("hireling_escape", "hireling")],
+)
+def test_automatic_escape_rejects_stored_roll_and_preserves_state_rng(key, source):
+    from copy import deepcopy
+
+    s, c = game("wizard", phase="combat.run_away")
+    s.players[1].in_play.append(source)
+    s.combat.escape_pending = {(1, "monster")}
+    s.combat.escape_rolls[(1, "monster")] = 1
+    before = deepcopy(s)
+    r = Random(2)
+    rngbefore = r.getstate()
+    with pytest.raises(RuleError, match="roll"):
+        ability(s, c, key, [source], {"monster_id": "monster"}, r)
+    assert s == before
+    assert r.getstate() == rngbefore
+
+
+def test_escape_window_does_not_reveal_any_hidden_hand_card():
+    from copy import deepcopy
+
+    states = []
+    for owner, hidden in [
+        (2, []),
+        (2, ["loaded_die"]),
+        (1, ["loaded_die"]),
+        (3, ["flask_of_glue"]),
+    ]:
+        s, c = game(phase="combat.run_away")
+        s.combat.escape_pending = {(1, "monster")}
+        s.players[owner].hand = hidden
+        out, events = combat.run_away(s, 1, "monster", Random(2), c)
+        states.append(
+            (out.phase, out.combat.escape_rolls if out.combat else {}, events)
+        )
+    assert all(value == states[0] for value in states)
+    assert states[0][1] == {(1, "monster"): 1}
+
+
+def test_unresolved_roll_blocks_other_escape_and_unrelated_engine_actions():
+    from copy import deepcopy
+
+    s, c = game("wizard", phase="combat.run_away")
+    s.combat.monster_ids.append("lame_goblin")
+    s.combat.escape_pending = {(1, "monster"), (1, "lame_goblin")}
+    s.combat.escape_rolls[(1, "monster")] = 1
+    before = deepcopy(s)
+    r = Random(2)
+    rngbefore = r.getstate()
+    for command in [
+        Command("g", 1, "next", "run_away", {"monster_id": "lame_goblin"}),
+        Command("g", 1, "discard", "discard_identity", {"card_id": "wizard"}),
+        Command(
+            "g",
+            1,
+            "resurrect",
+            "use_ability",
+            {
+                "ability_key": "cleric_resurrection",
+                "target": {"deck": "treasure"},
+                "cost_ids": ["cost0"],
+                "now": NOW,
+            },
+        ),
+    ]:
+        with pytest.raises(RuleError, match="roll"):
+            decide(s, command, c, r)
+    assert s == before
+    assert r.getstate() == rngbefore
+
+
+def test_after_roll_policy_admits_only_own_class_actions_and_exact_future_card_timing():
+    s, c = game("wizard", phase="combat.run_away")
+    s.combat.escape_pending = {(1, "monster")}
+    s.combat.escape_rolls[(1, "monster")] = 1
+    policy = combat.validate_escape_action
+    for action, key, target in [
+        ("use_ability", "wizard_flight", {"monster_id": "monster"}),
+        ("use_ability", "halfling_escape_retry", {"monster_id": "monster"}),
+        ("play_card", "loaded_die", {}),
+        ("play_card", "invisibility_potion", {}),
+        ("play_card", "magic_lamp", {"monster_id": "monster"}),
+    ]:
+        policy(s, 1, action, target, c, rule_key=key)
+    for actor, action, key, target in [
+        (2, "play_card", "loaded_die", {}),
+        (2, "use_ability", "wizard_flight", {"monster_id": "monster"}),
+        (1, "play_card", "flask_of_glue", {"player_id": 1}),
+        (1, "play_card", "curse_change_sex", {"player_id": 1}),
+    ]:
+        with pytest.raises(RuleError, match="roll"):
+            policy(s, actor, action, target, c, rule_key=key)
+    s.combat.escape_rolls[(1, "monster")] = 6
+    policy(s, 2, "play_card", {"player_id": 1}, c, rule_key="flask_of_glue")
+    for key, target in [
+        ("invisibility_potion", {}),
+        ("magic_lamp", {"monster_id": "monster"}),
+    ]:
+        with pytest.raises(RuleError, match="roll"):
+            policy(s, 1, "play_card", target, c, rule_key=key)
+    from dota_dungeon.core.card_rules import SPECIAL_HANDLERS
+
+    assert all(
+        key not in SPECIAL_HANDLERS
+        for key in ["loaded_die", "invisibility_potion", "magic_lamp", "flask_of_glue"]
+    )

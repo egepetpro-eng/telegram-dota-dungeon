@@ -153,6 +153,19 @@ ACTIVE_PLAYER_COMMANDS = {
 def dispatch(
     state: GameState, command: Command, catalog: Catalog, rng: Random
 ) -> tuple[GameState, list[Event]]:
+    target = command.args.get("target", {})
+    rule_key = None
+    if command.name == "use_ability":
+        rule_key = character.ALIASES.get(
+            command.args.get("ability_key"), command.args.get("ability_key")
+        )
+    elif command.name == "play_card" and command.args.get("card_id") in catalog:
+        rule_key = catalog[command.args["card_id"]].rule_key
+    elif command.name == "resolve_escape":
+        target = {"monster_id": command.args.get("monster_id")}
+    combat.validate_escape_action(
+        state, command.actor_id, command.name, target, catalog, rule_key=rule_key
+    )
     actor = state.players.get(command.actor_id)
     choices = {"resolve_big_items", "resolve_identity_excess"}
     pending = any(
@@ -165,7 +178,11 @@ def dispatch(
         and not actor.pending_identity_excess
         and command.name == "sell"
     )
-    if pending and command.name not in choices and not sale_resolution:
+    if (
+        pending
+        and command.name not in choices | {"resolve_escape"}
+        and not sale_resolution
+    ):
         raise RuleError("resolve mandatory excess choices first")
     handler = HANDLERS.get(command.name)
     if handler is None:

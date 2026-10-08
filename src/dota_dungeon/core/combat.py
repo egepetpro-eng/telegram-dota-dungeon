@@ -558,6 +558,9 @@ def resolve_escape(
     catalog: Catalog,
     rng: Random | None = None,
 ):
+    validate_escape_action(
+        state, actor_id, "resolve_escape", {"monster_id": monster_id}, catalog
+    )
     pair = (actor_id, monster_id)
     if not state.combat or pair not in state.combat.escape_rolls:
         raise RuleError("no stored escape roll")
@@ -583,6 +586,7 @@ def resolve_escape(
 def run_away(
     state: GameState, actor_id: int, monster_id: str, rng: Random, catalog: Catalog
 ) -> tuple[GameState, list[Event]]:
+    validate_escape_action(state, actor_id, "run_away", {}, catalog)
     if state.phase != "combat.run_away" or state.combat is None:
         raise RuleError("no escape in progress")
     pair = (actor_id, monster_id)
@@ -605,17 +609,15 @@ def run_away(
             },
         )
     ]
-    p = result.players[actor_id]
+    # Opportunity timing is public catalog policy, independent of hidden hands.
     after_roll = any(
-        a["key"] in {"wizard_flight", "halfling_escape_retry"}
-        for cid in p.role_ids + p.race_ids
-        for a in catalog[cid].abilities
-    )
-    after_roll |= any(
-        catalog[cid].rule_key
+        card.rule_key
         in {"loaded_die", "invisibility_potion", "magic_lamp", "flask_of_glue"}
-        for q in result.players.values()
-        for cid in q.hand + q.in_play
+        or any(
+            a["key"] in {"wizard_flight", "halfling_escape_retry"}
+            for a in card.abilities
+        )
+        for card in catalog.values()
     )
     if after_roll:
         events.append(
@@ -659,3 +661,46 @@ def loot_corpse(state: GameState, actor_id: int, deceased_id: int,
     return result, [Event("group", "corpse.looted", {"user_id": actor_id,
                                                    "deceased_id": deceased_id,
                                                    "card_id": card_id})]
+
+
+def validate_escape_action(state, actor_id, action, target, catalog, *, rule_key=None):
+    """Only printed after-roll exceptions may precede a stored die's consequences.
+
+    Task 6 registers the future card handlers; admission here never supplies one.
+    Ownership and card-specific operands remain validated by their normal handler.
+    """
+    if not state.combat or not state.combat.escape_rolls:
+        return
+    if not isinstance(target, dict):
+        raise RuleError("invalid stored-roll target")
+    rolls = state.combat.escape_rolls
+    if action in {"resolve_escape", "use_ability"}:
+        pair = (actor_id, target.get("monster_id"))
+        if pair in rolls and (
+            action == "resolve_escape"
+            or rule_key in {"wizard_flight", "halfling_escape_retry"}
+        ):
+            return
+    elif action == "play_card":
+        if rule_key == "flask_of_glue":
+            matching = [pair for pair in rolls if pair[0] == target.get("player_id")]
+        else:
+            matching = [pair for pair in rolls if pair[0] == actor_id]
+        for pair in matching:
+            escaped = (
+                rolls[pair] + escape_modifier(state, pair[0], pair[1], catalog) >= 5
+            )
+            if rule_key == "loaded_die":
+                return
+            if rule_key == "invisibility_potion" and not escaped:
+                return
+            if (
+                rule_key == "magic_lamp"
+                and actor_id == state.active_user_id
+                and target.get("monster_id") == pair[1]
+                and not escaped
+            ):
+                return
+            if rule_key == "flask_of_glue" and escaped:
+                return
+    raise RuleError("resolve stored escape roll before unrelated actions")

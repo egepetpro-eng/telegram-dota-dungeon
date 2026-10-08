@@ -22,10 +22,7 @@ def identities(player, catalog, kind):
         catalog[cid].rule_key
         for cid in (player.role_ids if kind == "role" else player.race_ids)
     }
-    if kind == "race" and (
-        not player.race_ids
-        or (len(player.race_ids) == 1 and has_rule(player, catalog, "half_breed"))
-    ):
+    if kind == "race" and not player.race_ids:
         values.add("human")
     return values
 
@@ -153,6 +150,11 @@ def _validate_ability_target(state, actor, key, target, catalog, source):
         pair = (actor, target["monster_id"])
         if not state.combat or pair not in state.combat.escape_pending:
             raise RuleError("no own escape attempt")
+        if (
+            key in {"hireling_escape", "rat_on_a_stick_escape"}
+            and pair in state.combat.escape_rolls
+        ):
+            raise RuleError("automatic escape must precede the roll")
         if key in {"wizard_flight", "halfling_escape_retry"}:
             if pair not in state.combat.escape_rolls:
                 raise RuleError("ability requires stored die roll")
@@ -187,6 +189,11 @@ def use_ability(
     if actor_id not in state.players or not state.players[actor_id].alive:
         raise RuleError("unknown or dead player")
     key = ALIASES.get(ability_key, ability_key)
+    from .combat import validate_escape_action
+
+    validate_escape_action(
+        state, actor_id, "use_ability", target, catalog, rule_key=key
+    )
     if key not in ABILITY_HANDLERS:
         raise RuleError("unimplemented ability")
     source, descriptor = _ability_descriptor(state, actor_id, key, catalog)

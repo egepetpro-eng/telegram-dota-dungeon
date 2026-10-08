@@ -189,14 +189,14 @@ def test_hireling_escape_discards_assigned_item_and_cannot_discard_other_item_as
     assert set(out.treasure_discard) == {"hireling", "shield_of_ubiquity"}
 
 
-def test_default_human_and_single_halfbreed_can_use_human_items():
+def test_default_human_qualifies_but_single_halfbreed_does_not_for_human_items():
     s, c = game(phase="turn.prepare")
     assert items.can_use(s.players[1], "bad_ass_bandana", c)
     s, c = game(race="elf", phase="turn.prepare")
     assert not items.can_use(s.players[1], "bad_ass_bandana", c)
     s.players[1].hand.append("half_breed")
     s, _ = play_card(s, 1, "half_breed", {}, c, Random(1), NOW)
-    assert items.can_use(s.players[1], "bad_ass_bandana", c)
+    assert not items.can_use(s.players[1], "bad_ass_bandana", c)
 
 
 def test_single_super_munchkin_ignores_class_penalties():
@@ -402,3 +402,17 @@ def test_help_item_transfer_reconciles_cheat_attachment_loss():
     assert "cheat" in out.door_discard
     assert out.players[1].attachments == {}
     assert "shield_of_ubiquity" in out.players[2].in_play
+
+
+def test_hireling_swaps_assigned_item_preserving_old_carried_item_and_capacity():
+    s, c = game(phase="turn.prepare")
+    s.players[1].hand = ["hireling", "shield_of_ubiquity", "huge_rock", "tuba_of_charm"]
+    s, _ = play_card(s, 1, "hireling", {}, c, Random(2), NOW)
+    s, _ = items.assign_hireling(s, 1, "hireling", "shield_of_ubiquity", c)
+    s, _ = items.carry(s, 1, "tuba_of_charm", c)
+    out, _ = items.assign_hireling(s, 1, "hireling", "huge_rock", c)
+    assert out.players[1].hireling_items == {"hireling": "huge_rock"}
+    assert "shield_of_ubiquity" in out.players[1].in_play
+    assert "shield_of_ubiquity" not in out.players[1].equipped
+    assert out.players[1].pending_big_excess == 1
+    assert not out.treasure_discard

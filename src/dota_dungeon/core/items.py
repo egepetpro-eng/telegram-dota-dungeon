@@ -333,8 +333,6 @@ def assign_hireling(
     p = state.players[actor_id]
     if hireling_id not in p.in_play or catalog[hireling_id].rule_key != "hireling":
         raise RuleError("no carried hireling")
-    if hireling_id in p.hireling_items:
-        raise RuleError("hireling already carries an Item")
     if card_id not in p.hand + p.in_play or catalog[card_id].kind != "item":
         raise RuleError("hireling requires owned equipment Item")
     result = deepcopy(state)

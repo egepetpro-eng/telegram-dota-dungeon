@@ -361,3 +361,46 @@ def test_generic_item_carrying_is_allowed_during_other_noncombat_turn(
     result, _ = play(state, catalog, actor=2)
     assert result.players[2].in_play == ["played"]
     assert state == before
+
+
+def test_consuming_cheat_attached_carried_one_shot_discards_attachment():
+    from dota_dungeon.core.model import CombatState
+    from dota_dungeon.core.play import play_card
+    from test_card_character import game
+
+    s, c = game(phase="turn.prepare")
+    s.players[1].hand = ["magic_missile", "cheat"]
+    s, _ = play_card(s, 1, "cheat", {"card_id": "magic_missile"}, c, Random(2), NOW)
+    s.phase = "combat.active"
+    s.combat = CombatState(fighter_ids=[1], monster_ids=["monster"])
+    out, _ = play_card(s, 1, "magic_missile", {"player_id": 1}, c, Random(2), NOW)
+    assert out.players[1].attachments == {}
+    assert "cheat" in out.door_discard
+    assert out.combat.played_card_ids == ["magic_missile"]
+    physical = (
+        out.door_deck
+        + out.treasure_deck
+        + out.door_discard
+        + out.treasure_discard
+        + sum((p.hand + p.in_play for p in out.players.values()), [])
+        + out.combat.monster_ids
+        + out.combat.played_card_ids
+    )
+    assert len(physical) == len(set(physical))
+
+
+def test_unrelated_curse_cannot_interrupt_stored_escape_roll():
+    from dota_dungeon.core.play import play_card
+    from test_card_character import game
+
+    s, c = game("wizard", phase="combat.run_away")
+    s.combat.escape_pending = {(1, "monster")}
+    s.combat.escape_rolls[(1, "monster")] = 1
+    s.players[3].hand = ["curse_change_sex"]
+    before = deepcopy(s)
+    r = Random(2)
+    rngbefore = r.getstate()
+    with pytest.raises(RuleError, match="roll"):
+        play_card(s, 3, "curse_change_sex", {"player_id": 1}, c, r, NOW)
+    assert s == before
+    assert r.getstate() == rngbefore
