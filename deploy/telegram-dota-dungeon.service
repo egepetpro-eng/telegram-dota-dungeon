@@ -1,0 +1,28 @@
+[Unit]
+Description=Dota Munchkin Telegram game bot
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dotadungeon
+Group=dotadungeon
+WorkingDirectory=/opt/telegram-dota-dungeon/current
+EnvironmentFile=/etc/telegram-dota-dungeon.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/telegram-dota-dungeon/current/venv/bin/python -m dota_dungeon.service
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=90
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/telegram-dota-dungeon /var/cache/telegram-dota-dungeon
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SyslogIdentifier=telegram-dota-dungeon
+
+[Install]
+WantedBy=multi-user.target

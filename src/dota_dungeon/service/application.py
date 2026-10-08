@@ -57,7 +57,7 @@ class Application:
     def _membership(self, update, now):
         change = update["my_chat_member"]
         chat = change.get("chat", {})
-        request = f"tg:{update['update_id']}"
+        request = f"telegram:{update['update_id']}"
         if chat.get("type") not in {"group", "supergroup"} or type(chat.get("id")) is not int:
             self.repository.enqueue(request, [])
             return
