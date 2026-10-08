@@ -4,8 +4,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from html import escape
 from random import Random
+from itertools import combinations
 
-from ..core.combat import combat_strength
+from ..core.combat import combat_strength, combat_totals
+from ..core.character import effective_hand_limit
+from ..core.items import is_item_card, ignored_item
 from ..core.engine import HANDLERS, decide
 from ..core.model import Command, GameState
 
@@ -36,6 +39,76 @@ def card_name(release, card_id):
     return escape(presentation.display_name_ru if presentation else release.catalog[card_id].name)
 
 
+ABILITY_LABELS = {
+    "warrior_berserk": "Берсерк", "thief_backstab": "Удар в спину",
+    "thief_theft": "Кража", "wizard_flight": "Полёт", "wizard_charm": "Укрощение",
+    "cleric_resurrection": "Воскрешение", "cleric_turn_undead": "Изгнание нежити",
+    "halfling_escape_retry": "Повторить побег", "hireling_escape": "Пожертвовать наёмником",
+    "rat_on_a_stick_escape": "Пожертвовать крысой",
+}
+
+
+def _price(card):
+    return f"{card.value} золотых" if card.value else "Нет стоимости"
+
+
+def _ability_sources(player, release):
+    seen = set()
+    for cid in dict.fromkeys(player.role_ids + player.race_ids + player.in_play):
+        for descriptor in release.catalog[cid].abilities:
+            if descriptor["key"] not in seen:
+                seen.add(descriptor["key"])
+                yield cid, descriptor
+
+
+def _ability_label(source, descriptor, release):
+    return card_name(release, source) + " · " + ABILITY_LABELS.get(descriptor["key"], "Способность")
+
+
+def _ability_cost_text(ability):
+    cost, limit = ability["cost"], ability["limit"]
+    zone = {"hand": "из руки", "in_play": "из выложенных карт", "either": "из руки или выложенных карт"}[cost["zone"]]
+    count = f"вся рука, минимум {cost['count']}" if cost.get("mode") == "all_hand" else str(cost["count"])
+    scope = {"combat": "за бой", "escape_attempt": "за попытку побега", "turn": "за ход", "unlimited": "без ограничения"}[limit["scope"]]
+    return f"Стоимость: {count} карт {zone}. Лимит: {limit.get('max_uses') or '∞'} {scope}."
+
+
+def _ability_targets(state, actor, key, release):
+    if key in {"warrior_berserk", "cleric_turn_undead"}:
+        return [("Применить", {})]
+    if key == "thief_backstab":
+        return _targets(state, actor, "player", release)
+    if key == "thief_theft":
+        return _targets(state, actor, "open_item", release)
+    if key == "cleric_resurrection":
+        # Simultaneous reward replacements are integrated with Task6 decisions.
+        return [("Воскресить верхнюю дверь", {"deck": "door"})]
+    if key in {"wizard_charm", "wizard_flight", "halfling_escape_retry", "hireling_escape", "rat_on_a_stick_escape"}:
+        return _targets(state, actor, "monster", release)
+    return []
+
+
+def _ability_costs(state, actor, source, descriptor, release):
+    player, cost = state.players[actor], descriptor["cost"]
+    if descriptor["key"] in {"hireling_escape", "rat_on_a_stick_escape"}:
+        return [source]
+    ids = player.hand if cost["zone"] == "hand" else player.in_play if cost["zone"] == "in_play" else player.hand + player.in_play
+    return [cid for cid in ids if (actor, cid) not in state.pending_initial_triggers
+            and not (cid in player.in_play and (cid == source or release.catalog[cid].kind == "curse"))]
+
+
+def _ability_available(state, actor, source, descriptor, release, now):
+    if state.phase not in descriptor.get("phases", []):
+        return False
+    eligible = _ability_costs(state, actor, source, descriptor, release)
+    selections = [state.players[actor].hand] if descriptor["cost"].get("mode") == "all_hand" else combinations(eligible, descriptor["cost"]["count"])
+    for costs in selections:
+        for _, target in _ability_targets(state, actor, descriptor["key"], release):
+            if legal_action(state, actor, "use_ability", {"ability_key": descriptor["key"], "cost_ids": list(costs), "target": target}, release, now):
+                return True
+    return False
+
+
 def _name(user_id, names):
     return escape(names.get(user_id, f"Игрок {user_id}"))
 
@@ -53,28 +126,31 @@ def _profile(state, viewer, user_id, release, names, own):
             f"Сила: {combat_strength(state, user_id, release.catalog)}"]
     for title, ids in [("Класс", player.role_ids), ("Происхождение", player.race_ids)]:
         text.append(title + ": " + (", ".join(card_name(release, cid) for cid in ids) or "нет"))
+    text.append("Пол персонажа: " + {"male": "мужской", "female": "женский", None: "не выбран"}[player.character_sex])
     text.append("<b>Надето</b>")
     text.extend(card_name(release, cid) for cid in player.equipped)
     if not player.equipped:
         text.append("Нет предметов")
-    carried = [cid for cid in player.in_play if cid not in player.equipped and release.catalog[cid].kind == "item"]
+    assigned = set(player.hireling_items.values())
+    if assigned:
+        text.append("<b>Вещи наёмника</b>")
+        text.extend(card_name(release, cid) for cid in assigned)
+    carried = [cid for cid in player.in_play if cid not in set(player.equipped) | assigned and is_item_card(release.catalog[cid])]
     text.append("<b>Переносимые вещи</b>")
     text.extend(card_name(release, cid) for cid in carried)
     if not carried:
         text.append("Нет вещей")
-    persistent = [cid for cid in player.in_play if cid not in set(player.equipped + player.role_ids + player.race_ids + carried)]
+    persistent = [cid for cid in player.in_play if cid not in set(player.equipped + player.role_ids + player.race_ids + carried) | assigned]
     if persistent:
         text.append("<b>Постоянные эффекты</b>")
         text.extend(card_name(release, cid) for cid in persistent)
     if own:
         text.append(f"Карт в руке: {len(player.hand)}")
-        for cid in player.role_ids + player.race_ids:
-            for ability in release.catalog[cid].abilities:
-                cost, limit = ability["cost"], ability["limit"]
-                zone = {"hand": "из руки", "in_play": "из выложенных карт", "either": "из руки или выложенных карт"}[cost["zone"]]
-                count = f"вся рука, минимум {cost['count']}" if cost.get("mode") == "all_hand" else str(cost["count"])
-                scope = {"combat": "за бой", "escape_attempt": "за попытку побега", "turn": "за ход", "unlimited": "без ограничения"}[limit["scope"]]
-                text.append(f"<b>{escape(ability['key'])}</b> · Стоимость: {count} карт {zone}. Лимит: {limit.get('max_uses') or '∞'} {scope}.")
+        text.append(f"Лимит руки: {effective_hand_limit(state, user_id, release.catalog)}")
+        for cid, ability in _ability_sources(player, release):
+            text.append(f"<b>{_ability_label(cid, ability, release)}</b> · {_ability_cost_text(ability)}")
+    for attachment, item in player.attachments.items():
+        text.append(card_name(release, attachment) + " → " + card_name(release, item))
     return View(f"user:{viewer}", "\n".join(text), _main_rows(viewer))
 
 
@@ -97,9 +173,7 @@ def _group(state, viewer, release, names):
         lines.append("<b>Бой</b>")
         for cid in combat.monster_ids:
             lines.append(f"{card_name(release, cid)} — сила {release.catalog[cid].bonus}")
-        fighter_total = sum(combat_strength(state, uid, release.catalog) for uid in combat.fighter_ids)
-        enemy_total = sum(release.catalog[cid].bonus for cid in combat.monster_ids) + combat.monster_strength_bonus
-        enemy_total += sum(release.catalog[cid].bonus for cid in combat.modifier_ids)
+        fighter_total, enemy_total = combat_totals(state, release.catalog)
         lines.append(f"Игроки: {fighter_total} · Противники: {enemy_total}")
         if combat.reaction_deadline:
             lines.append("Окно реакции до " + combat.reaction_deadline.strftime("%H:%M:%S UTC"))
@@ -164,18 +238,23 @@ def _render_view(state: GameState, viewer_id: int, screen: str, release, *, name
         rows = []
         for cid in player.in_play:
             card = release.catalog[cid]
-            if card.kind != "item":
+            if not is_item_card(card):
                 continue
             worn = cid in player.equipped
-            lines.append(f"{'Надето' if worn else 'Переносится'}: {card_name(release, cid)} · {card.value} золотых")
+            status = "У наёмника" if cid in player.hireling_items.values() else "Надето" if worn else "Переносится"
+            lines.append(f"{status}: {card_name(release, cid)} · {_price(card)}")
+            rows.append([_nav(card.name, "card:" + cid, viewer_id)])
             action = "unequip" if worn else "equip"
             rows.append([Button(("Снять " if worn else "Надеть ") + card.name, action, {"card_id": cid}, viewer_id)])
+        for cid in player.in_play:
+            if release.catalog[cid].rule_key == "hireling":
+                rows.append([_selection("Назначить вещь: " + card_name(release, cid), "hireling", {"hireling_id": cid}, viewer_id)])
         return View(f"user:{viewer_id}", "\n".join(lines), rows + [[_nav("Назад", "main", viewer_id)]])
     if screen == "prices":
-        ids = [cid for cid in player.hand + player.in_play if release.catalog[cid].value > 0]
+        ids = [cid for cid in player.hand + player.in_play if is_item_card(release.catalog[cid])]
         total = sum(release.catalog[cid].value for cid in ids)
         lines = ["<b>Стоимость вещей</b>"]
-        lines.extend(f"{card_name(release, cid)}: {release.catalog[cid].value} золотых" for cid in ids)
+        lines.extend(f"{card_name(release, cid)}: {_price(release.catalog[cid])}" for cid in ids)
         lines.append(f"Общая стоимость вещей: {total} золотых")
         lines.append("Продажа на своём ходу вне боя: полные 1000 золотых за уровень, кроме победного. Сдачи нет.")
         return View(f"user:{viewer_id}", "\n".join(lines), [[_nav("Продать вещи", "sell", viewer_id)], [_nav("Назад", "main", viewer_id)]])
@@ -188,8 +267,8 @@ def _render_view(state: GameState, viewer_id: int, screen: str, release, *, name
         lines = [f"<b>{card_name(release, cid)}</b>"]
         if presentation:
             lines.append(escape(presentation.description_ru))
-        if card.value:
-            lines.append(f"Стоимость: {card.value} золотых")
+        if is_item_card(card):
+            lines.append(f"Стоимость: {_price(card)}")
         if card.bonus:
             lines.append(f"{'Сила противника' if card.kind == 'monster' else 'Бонус'}: {card.bonus:+}")
         if card.slots:
@@ -197,8 +276,10 @@ def _render_view(state: GameState, viewer_id: int, screen: str, release, *, name
         if card.size == "big":
             lines.append("Крупная вещь")
         rows = [[Button("Сыграть", "choose_card_target", {"card_id": cid}, viewer_id)]]
-        if card.kind == "item":
+        if is_item_card(card):
+            rows.append([Button("Выложить вещь", "carry_item", {"card_id": cid}, viewer_id)])
             rows.append([Button("Надеть", "equip", {"card_id": cid}, viewer_id)])
+        rows.append([Button("Сбросить класс / происхождение", "discard_identity", {"card_id": cid}, viewer_id)])
         return View(f"user:{viewer_id}", "\n".join(lines), rows + [[_nav("Назад", "hand", viewer_id)]])
     if screen == "trade":
         rows = [[Button(names.get(uid, f"Игрок {uid}"), "trade_partner", {"partner_id": uid}, viewer_id)]
@@ -208,10 +289,10 @@ def _render_view(state: GameState, viewer_id: int, screen: str, release, *, name
     raise ValueError("unknown screen")
 
 
-def legal_action(state, actor, action, args, release, now=None):
+def _action_result(state, actor, action, args, release, now=None):
     """Ask the core on disposable state/RNG copies; never commit a menu probe."""
     if action not in HANDLERS:
-        return False
+        return None
     now = now or datetime.now(timezone.utc)
     args = deepcopy(args)
     if action in {"declare_win", "play_combat_card", "play_card", "use_ability", "accept_trade", "offer_trade"}:
@@ -219,10 +300,14 @@ def legal_action(state, actor, action, args, release, now=None):
     if action == "offer_trade":
         args["expires_at"] = now + timedelta(seconds=120)
     try:
-        decide(deepcopy(state), Command(state.game_id, actor, "menu-probe", action, args), release.catalog, Random(0))
+        result, _ = decide(deepcopy(state), Command(state.game_id, actor, "menu-probe", action, args), release.catalog, Random(0))
     except (ValueError, KeyError, TypeError):
-        return False
-    return True
+        return None
+    return result
+
+
+def legal_action(state, actor, action, args, release, now=None):
+    return _action_result(state, actor, action, args, release, now) is not None
 
 
 def _selection(label, flow, data, actor):
@@ -258,9 +343,9 @@ def _targets(state, actor, rule, release):
         return [(f"Игрок {uid}", {"player_id": uid}) for uid in state.combat.fighter_ids] + [
             (release.catalog[cid].name, {"monster_id": cid}) for cid in state.combat.monster_ids]
     if rule in {"open_item", "identity"}:
-        kinds = {"item"} if rule == "open_item" else {"role", "race"}
         return [(f"Игрок {uid}: {release.catalog[cid].name}", {"player_id": uid, "card_id": cid})
-                for uid in state.order for cid in state.players[uid].in_play if release.catalog[cid].kind in kinds]
+                for uid in state.order for cid in state.players[uid].in_play
+                if (is_item_card(release.catalog[cid]) if rule == "open_item" else release.catalog[cid].kind in {"role", "race"})]
     if rule == "discard":
         return [(release.catalog[cid].name, {"card_id": cid}) for cid in state.door_discard + state.treasure_discard]
     raise ValueError("unknown target rule")
@@ -275,16 +360,18 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
     data = {k: deepcopy(v) for k, v in data.items() if k != "flow"}
     rows, lines = [], []
     if flow == "sell":
-        eligible = [cid for cid in player.hand + player.in_play if release.catalog[cid].kind == "item" and release.catalog[cid].value > 0]
+        eligible = [cid for cid in player.hand + player.in_play if is_item_card(release.catalog[cid])]
         selected = _selected(data, "selected", eligible)
         total = sum(release.catalog[cid].value for cid in selected)
-        lines = ["<b>Продажа вещей</b>", f"Выбрано: {total} золотых · уровней: {total // 1000}", "Сдачи нет. Подтвердите выбранные вещи."]
+        lines = ["<b>Продажа вещей</b>", f"Печатная стоимость выбранных вещей: {total} золотых", "Сдачи нет. Подтвердите выбранные вещи."]
         rows = _toggle_rows(eligible, selected, data, "selected", flow, viewer, release)
         args = {"card_ids": selected}
-        if legal_action(state, viewer, "sell", args, release, now):
+        preview = _action_result(state, viewer, "sell", args, release, now)
+        if preview is not None:
+            lines.append(f"Получите уровней: {preview.players[viewer].level - player.level}")
             rows.append([Button("Продать выбранные", "sell", args, viewer)])
     elif flow == "charity":
-        excess = max(0, len(player.hand) - 5)
+        excess = max(0, len(player.hand) - effective_hand_limit(state, viewer, release.catalog))
         selected = _selected(data, "selected", player.hand)
         if len(selected) > excess:
             raise ValueError("too many charity cards")
@@ -308,8 +395,8 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
         partner = data.get("partner_id")
         if partner not in state.players or partner == viewer:
             raise ValueError("invalid partner")
-        offered = [cid for cid in player.in_play if release.catalog[cid].kind == "item"]
-        requested = [cid for cid in state.players[partner].in_play if release.catalog[cid].kind == "item"]
+        offered = [cid for cid in player.in_play if is_item_card(release.catalog[cid])]
+        requested = [cid for cid in state.players[partner].in_play if is_item_card(release.catalog[cid])]
         offer_ids = _selected(data, "offered_ids", offered)
         request_ids = _selected(data, "requested_ids", requested)
         data.update(partner_id=partner, offered_ids=offer_ids, requested_ids=request_ids)
@@ -331,7 +418,7 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
         else:
             if helper not in state.players or helper == viewer:
                 raise ValueError("invalid helper")
-            eligible = [cid for cid in player.in_play if release.catalog[cid].kind == "item"]
+            eligible = [cid for cid in player.in_play if is_item_card(release.catalog[cid])]
             selected = _selected(data, "item_ids", eligible)
             count = data.get("treasure_count", 0)
             available = sum(release.catalog[cid].treasures for cid in combat.monster_ids)
@@ -350,7 +437,11 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
             raise ValueError("card not owned")
         card = release.catalog[cid]
         lines = ["<b>Выберите цель</b>", card_name(release, cid)]
-        for label, target in _targets(state, viewer, card.target_rule, release):
+        targets = _targets(state, viewer, card.target_rule, release)
+        if card.rule_key == "cheat":
+            targets += [(release.catalog[item].name, {"player_id": viewer, "card_id": item})
+                        for item in player.hand if is_item_card(release.catalog[item])]
+        for label, target in targets:
             args = {"card_id": cid, "target": target}
             if legal_action(state, viewer, "play_card", args, release, now):
                 rows.append([Button(label, "play_card", args, viewer)])
@@ -365,29 +456,62 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
                 rows.append([Button("Сыграть", action, {"card_id": cid}, viewer)])
     elif flow == "ability":
         key = data.get("ability_key")
-        descriptor = next((ability for cid in player.role_ids + player.race_ids for ability in release.catalog[cid].abilities if ability["key"] == key), None)
-        if descriptor is None:
+        owned = next(((cid, ability) for cid, ability in _ability_sources(player, release) if ability["key"] == key), None)
+        if owned is None:
             raise ValueError("ability not owned")
+        source, descriptor = owned
         cost = descriptor["cost"]
-        eligible = player.hand if cost["zone"] == "hand" else player.in_play if cost["zone"] == "in_play" else player.hand + player.in_play
+        eligible = _ability_costs(state, viewer, source, descriptor, release)
         selected = _selected(data, "cost_ids", eligible)
         if cost.get("mode") == "all_hand":
             selected = player.hand.copy()
-        lines = ["<b>Способность</b>", escape(key), f"Стоимость: {len(selected)} / {cost['count']} карт"]
-        if cost.get("mode") != "all_hand":
+        automatic = key in {"hireling_escape", "rat_on_a_stick_escape"}
+        if automatic:
+            selected = [source]
+        lines = ["<b>Способность</b>", _ability_label(source, descriptor, release), _ability_cost_text(descriptor), f"Выбрано: {len(selected)} карт"]
+        if key == "cleric_resurrection" and state.door_discard:
+            lines.append("Верхняя дверь в сбросе: " + card_name(release, state.door_discard[-1]))
+        if cost.get("mode") != "all_hand" and not automatic:
             rows = _toggle_rows(eligible, selected, {**data, "ability_key": key}, "cost_ids", flow, viewer, release)
         if len(selected) == cost["count"] or cost.get("mode") == "all_hand":
-            # Closed target objects are checked by the ability handler before commit.
-            targets = [("Без цели", {}), ("Себя", {"player_id": viewer})] + _targets(state, viewer, "player", release)
-            if state.combat:
-                targets += _targets(state, viewer, "monster", release)
-                targets += [(f"Игрок {uid}: {release.catalog[cid].name}", {"player_id": uid, "monster_id": cid})
-                            for uid, cid in sorted(state.combat.escape_pending)]
-            targets += _targets(state, viewer, "open_item", release)
-            for label, target in targets:
+            for label, target in _ability_targets(state, viewer, key, release):
                 args = {"ability_key": key, "cost_ids": selected, "target": target}
                 if legal_action(state, viewer, "use_ability", args, release, now):
                     rows.append([Button("Применить: " + label, "use_ability", args, viewer)])
+    elif flow == "hireling":
+        hireling = data.get("hireling_id")
+        if hireling not in player.in_play or release.catalog[hireling].rule_key != "hireling":
+            raise ValueError("hireling is not owned")
+        lines = ["<b>Вещь наёмника</b>", card_name(release, hireling)]
+        for cid in player.hand + player.in_play:
+            args = {"hireling_id": hireling, "card_id": cid}
+            if legal_action(state, viewer, "assign_hireling", args, release, now):
+                rows.append([Button(card_name(release, cid), "assign_hireling", args, viewer)])
+    elif flow in {"identity_excess", "big_excess"}:
+        identity = flow == "identity_excess"
+        if (identity and not player.pending_identity_excess) or (not identity and not player.pending_big_excess):
+            raise ValueError("no mandatory excess")
+        eligible = player.role_ids + player.race_ids if identity else [cid for cid in player.in_play
+                    if is_item_card(release.catalog[cid]) and release.catalog[cid].size == "big" and not ignored_item(player, cid)]
+        selected = _selected(data, "selected", eligible)
+        lines = ["<b>Обязательный выбор</b>"]
+        if identity:
+            lines += [f"Лишних классов: {player.pending_identity_excess.get('role', 0)}",
+                      f"Лишних происхождений: {player.pending_identity_excess.get('race', 0)}"]
+        else:
+            lines.append(f"Лишних крупных вещей: {player.pending_big_excess}")
+        rows = _toggle_rows(eligible, selected, data, "selected", flow, viewer, release)
+        action = "resolve_identity_excess" if identity else "resolve_big_items"
+        args = {"card_ids": selected}
+        if legal_action(state, viewer, action, args, release, now):
+            rows.append([Button("Сбросить выбранные", action, args, viewer)])
+        if not identity:
+            for uid in state.order:
+                transfer = {**args, "recipient_id": uid}
+                if legal_action(state, viewer, action, transfer, release, now):
+                    rows.append([Button(f"Передать: Игрок {uid}", action, transfer, viewer)])
+            if state.active_user_id == viewer and state.combat is None:
+                rows.append([_nav("Продать вещи", "sell", viewer)])
     else:
         raise ValueError("unknown selection")
     return View(f"user:{viewer}", "\n".join(lines), rows + [[_nav("Отмена", "main", viewer)]])
@@ -396,7 +520,24 @@ def render_selection(state, viewer, flow, data, release, *, now=None, names=None
 def _context_rows(state, viewer, release, now):
     rows = []
     combat = state.combat
-    if state.phase == "turn.charity" and state.active_user_id == viewer and len(state.players[viewer].hand) > 5:
+    player = state.players[viewer]
+    if any(p.pending_identity_excess or p.pending_big_excess for p in state.players.values()):
+        if player.pending_identity_excess:
+            rows.append([_selection("Выбрать лишние классы / происхождения", "identity_excess", {}, viewer)])
+        if player.pending_big_excess:
+            rows.append([_selection("Выбрать лишние крупные вещи", "big_excess", {}, viewer)])
+            if state.active_user_id == viewer and state.combat is None and not player.pending_identity_excess:
+                rows.append([_nav("Продать вещи", "sell", viewer)])
+        # Stored escape resolution is still permitted by the core during excess.
+        if combat:
+            for uid, cid in sorted(combat.escape_rolls):
+                if uid == viewer:
+                    rows.append([Button("Разрешить побег от " + release.catalog[cid].name, "resolve_escape", {"monster_id": cid}, viewer)])
+        return rows
+    if state.phase == "lobby":
+        rows.append([Button(label, "set_character_sex", {"character_sex": sex}, viewer)
+                     for label, sex in (("Мужской", "male"), ("Женский", "female"), ("Случайный", None))])
+    if state.phase == "turn.charity" and state.active_user_id == viewer and len(player.hand) > effective_hand_limit(state, viewer, release.catalog):
         rows.append([_selection("Милостыня", "charity", {}, viewer)])
     if combat:
         if state.phase == "combat.active" and state.active_user_id == viewer and combat.helper_id is None and combat.pending_help is None:
@@ -407,13 +548,17 @@ def _context_rows(state, viewer, release, now):
             rows.append([Button("Пас", "pass_reaction", {}, viewer)])
         for uid, cid in sorted(combat.escape_pending):
             if uid == viewer:
-                rows.append([Button("Бежать от " + release.catalog[cid].name, "run_away", {"monster_id": cid}, viewer)])
+                stored = (uid, cid) in combat.escape_rolls
+                rows.append([Button(("Разрешить побег от " if stored else "Бросить кубик: ") + release.catalog[cid].name,
+                                    "resolve_escape" if stored else "run_away", {"monster_id": cid}, viewer)])
     if state.corpse:
         rows.append([_nav("Добыча погибших", "corpses", viewer)])
-    for cid in state.players[viewer].role_ids + state.players[viewer].race_ids:
-        for ability in release.catalog[cid].abilities if "use_ability" in HANDLERS else []:
-            if state.phase in ability.get("phases", []):
-                rows.append([_selection("Способность: " + ability["key"], "ability", {"ability_key": ability["key"]}, viewer)])
+    for cid in player.in_play:
+        if cid in player.role_ids + player.race_ids or release.catalog[cid].rule_key in {"half_breed", "super_munchkin"}:
+            rows.append([Button("Сбросить " + card_name(release, cid), "discard_identity", {"card_id": cid}, viewer)])
+    for cid, ability in _ability_sources(player, release):
+        if _ability_available(state, viewer, cid, ability, release, now):
+            rows.append([_selection(_ability_label(cid, ability, release), "ability", {"ability_key": ability["key"]}, viewer)])
     return rows
 
 
@@ -437,6 +582,10 @@ def render_view(state: GameState, viewer_id: int, screen: str, release, *, names
                 rows.append([Button("Взять закрытую карту", "loot_hidden_corpse", {"deceased_id": deceased}, viewer_id)])
         return View(f"user:{viewer_id}", "\n".join(lines), rows + [[_nav("Назад", "main", viewer_id)]])
     view = _render_view(state, viewer_id, screen, release, names=names)
+    if screen == "equipment":
+        view.rows = [[b for b in row if b.args.get("flow") != "hireling"
+                      or any(option.action == "assign_hireling" for options in render_selection(
+                          state, viewer_id, "hireling", b.args, release, now=now).rows for option in options)] for row in view.rows]
     if screen.startswith("card:"):
         cid = screen.removeprefix("card:")
         options = render_selection(state, viewer_id, "play", {"card_id": cid}, release, now=now)
@@ -448,6 +597,13 @@ def render_view(state: GameState, viewer_id: int, screen: str, release, *, names
     if screen in {"main", "character"}:
         view.rows = _context_rows(state, viewer_id, release, now) + view.rows
         combat = state.combat
+        player = state.players[viewer_id]
+        if player.pending_identity_excess or player.pending_big_excess:
+            view.text += "\n<b>Сначала разрешите обязательный выбор лишних карт.</b>"
+        if combat:
+            for (uid, cid), die in sorted(combat.escape_rolls.items()):
+                if uid == viewer_id:
+                    view.text += f"\n{card_name(release, cid)} · Бросок: {die}. Выберите способность или разрешите побег."
         if combat and combat.pending_help and combat.pending_help[0] == viewer_id:
             _, count, ids = combat.pending_help
             view.text += f"\n<b>Предложена помощь</b>\nСокровищ: {count}\nВещи: " + (", ".join(card_name(release, cid) for cid in ids) or "нет")
@@ -461,7 +617,7 @@ def render_view(state: GameState, viewer_id: int, screen: str, release, *, names
     if screen == "group" and state.combat:
         for uid in state.order:
             for row in _context_rows(state, uid, release, now):
-                public = [b for b in row if b.action in {"run_away", "pass_reaction"}]
+                public = [b for b in row if b.action in {"run_away", "resolve_escape", "pass_reaction"}]
                 if public:
                     view.rows.append(public)
     if screen != "group" or state.phase != "lobby":
