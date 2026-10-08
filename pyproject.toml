@@ -6,10 +6,14 @@ build-backend = "setuptools.build_meta"
 name = "telegram-dota-dungeon"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["psycopg[binary]>=3.2,<4"]
 
 [project.optional-dependencies]
 test = ["pytest>=8,<9"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.setuptools.package-data]
+"dota_dungeon.service" = ["schema.sql"]
+"dota_dungeon.cards" = ["data/**/*.json"]
