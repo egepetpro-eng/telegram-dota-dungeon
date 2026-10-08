@@ -1,0 +1,18 @@
+{
+  "version": "synthetic-contract-v1",
+  "definitions": {
+    "fixture_item": {
+      "presentation": {"display_name_ru": "Тестовый предмет", "description_ru": "Синтетическая карта для проверки загрузчика: бонус +2, стоимость 300.", "dota_entity_id": "fixture:item", "source_refs": ["fixture:synthetic"]},
+      "mechanics": {"deck": "treasure", "kind": "item", "value": 300, "bonus": 2, "slots": "one_hand", "size": "small", "play_phases": ["turn.prepare"], "target_rule": "self"}
+    },
+    "fixture_level": {
+      "presentation": {"display_name_ru": "Тестовый уровень", "description_ru": "Синтетическая карта: получите уровень, кроме победного.", "dota_entity_id": "fixture:level", "source_refs": ["fixture:synthetic"]},
+      "mechanics": {"deck": "treasure", "kind": "level_up", "effects": [{"op": "gain_level", "amount": 1}], "play_phases": ["turn.prepare", "turn.after_door", "turn.charity"], "target_rule": "self"}
+    },
+    "fixture_monster": {
+      "presentation": {"display_name_ru": "Тестовый противник", "description_ru": "Синтетический монстр силы 2, награда: один уровень и одно сокровище.", "dota_entity_id": "fixture:monster", "source_refs": ["fixture:synthetic"]},
+      "mechanics": {"deck": "door", "kind": "monster", "bonus": 2, "treasures": 1, "levels": 1, "bad_stuff": [{"op": "lose_level", "amount": 1}], "play_phases": ["turn.after_door"], "target_rule": "self"}
+    }
+  },
+  "instances": {"fixture_item:1": "fixture_item", "fixture_item:2": "fixture_item", "fixture_level:1": "fixture_level", "fixture_monster:1": "fixture_monster"}
+}
