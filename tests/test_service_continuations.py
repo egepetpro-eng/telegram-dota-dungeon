@@ -65,6 +65,34 @@ def test_pending_curse_source_and_timeout_survive_restart_once(repository):
     one_zone(result.state, release.catalog)
 
 
+def test_deferred_combat_curse_restarts_persisted_reaction_after_reload(repository):
+    state, release = setup(repository)
+    monster = "lame_goblin:1"
+    state.door_deck.remove(monster)
+    state.phase = "combat.active"
+    state.combat = CombatState(leader_id=1, fighter_ids=[1], monster_ids=[monster])
+    hand(state, "curse_lose_a_level:1", 2)
+    repository.create(state, Random(42), {"last_action_at": NOW.isoformat()})
+    apply(repository, release, "declare_win", seconds=60)
+    apply(repository, release, "play_card", 2, now=NOW + timedelta(seconds=20),
+        card_id="curse_lose_a_level:1", target={"player_id": 1})
+    repo, app = restart(repository, release, NOW + timedelta(seconds=50))
+    queued = repo.get("acceptance").state.resolution_queue
+    assert {"kind": "reaction", "was_reacting": True} in queued
+    assert app.tick_timers() == 1
+    saved = repo.get("acceptance").state
+    assert saved.players[1].level == 4
+    assert saved.combat.reaction_deadline == NOW + timedelta(seconds=110)
+    assert not saved.resolution_queue
+    repo, app = restart(repo, release, NOW + timedelta(seconds=110))
+    assert app.tick_timers() == 1 and app.tick_timers() == 0
+    result = repo.get("acceptance").state
+    assert result.players[1].level == 5 and result.combat is None
+    assert result.door_discard.count(monster) == 1
+    assert result.door_discard.count("curse_lose_a_level:1") == 1
+    one_zone(result, release.catalog)
+
+
 def test_mandatory_item_loss_pauses_without_selection_then_resumes_owned_choice(repository):
     state, release = setup(repository)
     hand(state, "curse_lose_a_small_item:1", 2)
