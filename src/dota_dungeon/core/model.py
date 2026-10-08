@@ -24,6 +24,13 @@ class CardDef:
     treasures: int = 0
     levels: int = 1
     bad_stuff: list[dict[str, Any]] = field(default_factory=list)
+    rule_key: str | None = None
+    play_phases: tuple[str, ...] = ()
+    target_rule: str = "none"
+    restrictions: dict[str, Any] = field(default_factory=dict)
+    trigger: dict[str, Any] | None = None
+    conditions: list[dict[str, Any]] = field(default_factory=list)
+    abilities: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CardDef":
@@ -35,6 +42,10 @@ class CardDef:
             tags=tuple(data.get("tags", [])),
             treasures=data.get("treasures", 0), levels=data.get("levels", 1),
             bad_stuff=list(data.get("bad_stuff", [])),
+            rule_key=data.get("rule_key"), play_phases=tuple(data.get("play_phases", [])),
+            target_rule=data.get("target_rule", "none"),
+            restrictions=dict(data.get("restrictions", {})), trigger=data.get("trigger"),
+            conditions=list(data.get("conditions", [])), abilities=list(data.get("abilities", [])),
         )
 
 
@@ -82,6 +93,7 @@ class CombatState:
     temporary_strength: dict[int, int] = field(default_factory=dict)
     monster_strength_bonus: int = 0
     prevented_bad_stuff: set[tuple[int, str]] = field(default_factory=set)
+    played_card_ids: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -110,6 +122,8 @@ class GameState:
     card_decks: dict[str, str] = field(default_factory=dict)
     corpse_looted_by: dict[int, set[int]] = field(default_factory=dict)
     corpse_hand: dict[int, set[str]] = field(default_factory=dict)
+    catalog_version: str | None = None
+    catalog_digest: str | None = None
 
 
 @dataclass(frozen=True)
