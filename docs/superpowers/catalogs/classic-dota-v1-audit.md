@@ -1,6 +1,7 @@
 # Classic Dota v1 factual source audit
 
-Verified on 2026-10-08. This is a factual research manifest, not a runnable catalog release.
+Verified on 2026-10-08. The compiled data release preserves this factual manifest;
+runtime release acceptance still requires Task 5/6 handlers and behavior tests.
 
 ## Scope and evidence standard
 
@@ -194,7 +195,21 @@ Mappings are thematic replacements only. Original prices, bonuses, rewards, sour
 
 ## Remaining work and precise limits
 
-No factual record remains unresolved. This does **not** mean runtime support is complete: named special effects, conditions, triggers and abilities are proposed source descriptors whose real handlers and closed argument validators must be implemented and tested before production. The source manifest has no Russian original descriptions; those belong to the later release task. The catalog is intentionally not a playable release file. Publisher facts are recorded separately from any claim that code implements them.
+No factual record remains unresolved. `catalog.json` now contains all 147 definitions,
+original Russian descriptions, the accepted Dota mappings and 168 physical IDs in
+`rule_key:copy_number` form. All 17 mechanics fields are copied exactly from each
+verified source record. No callback key, number, condition or cost was changed to
+accommodate absent runtime support.
+
+The data compilation is complete; runtime support is not. Named special effects,
+conditions, triggers and abilities still require real handlers, closed validators
+and behavior tests before production acceptance. On the compilation branch based
+on `316af736bf2b6eec29737df203cbf2e860e79692`, all four registries are empty and the
+release loader correctly rejects `3_872_orcs.bad_stuff[0]` for unimplemented
+`orcs_bad_stuff_die`. The exact dependent callback inventory below remains the
+Task 5/6 handoff. The definition-keyed [behavior coverage ledger](classic-dota-v1-behavior-coverage.md)
+identifies existing generic test evidence and explicitly pending real-catalog
+scenarios for every card; pending names are proposals, not tests claimed to pass.
 
 Older face evidence was reconciled with known publisher changes, but there is no publisher-hosted comprehensive current face archive. Re-inspection of an owned contemporary physical deck would improve source stability and edition assurance. Third-party image hosts may disappear; per-record URLs identify the exact face inspected. No card artwork was copied into this repository.
 
@@ -223,3 +238,15 @@ Older face evidence was reconciled with known publisher changes, but there is no
 ## Verification
 
 TDD red: four missing-manifest failures; numeric-evidence failure for Net Troll; price-evidence failure for Magic Missile; Rat ability regression failed because it was an equip effect; GUAL recipient regression failed because Boil an Anthill was self-only. Green manifest suite: 8 passed. Full suite: 78 passed. Tests verify independent per-card copy counts, totals, evidence completeness, fixed factual examples, naming isolation, conditional escape representation and ordinary GUAL recipient eligibility.
+
+Task 7 compilation checks in `tests/test_card_descriptions.py` first failed with
+36 missing-catalog assertions. A subsequent timing regression failed when the
+Magic Lamp description incorrectly said outside combat. Final compilation suite:
+37 passed. These tests check factual compilation and presentation; they do not
+substitute for actual card behavior coverage or assert that the release loads.
+
+Fresh full suite on the compilation branch: `python -m pytest -q` — 343 passed,
+16 skipped (real PostgreSQL integration requires `TEST_DATABASE_URL`). CLI
+validation exits 1 for the expected unimplemented `orcs_bad_stuff_die`; there is
+no runnable-release or wheel-install success claim at this stage. Canonical
+compiled digest: `8ec08a4b28f273ba6149e2c6436baa4e7308c1f7a32e721fdb8c8f86343c49e8`.
