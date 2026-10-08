@@ -43,8 +43,9 @@ def open_door(state: GameState, actor_id: int, catalog: Catalog,
                 result, effect_events = apply_effects(result, actor_id, card.effects, catalog,
                     choices={"played_card_id": drawn, "actor_id": actor_id}, rng=transition_rng)
                 events.extend(effect_events)
-                result.players[actor_id].hand.remove(drawn)
-                result.door_discard.append(drawn)
+                if drawn in result.players[actor_id].hand:
+                    result.players[actor_id].hand.remove(drawn)
+                    result.door_discard.append(drawn)
                 events.append(Event("group", "curse.applied", {"card_id": drawn, "target_id": actor_id}))
     if rng is not None:
         rng.setstate(transition_rng.getstate())

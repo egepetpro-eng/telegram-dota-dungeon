@@ -340,3 +340,27 @@ def test_divine_all_active_clerics_can_win_without_revealing_hidden_cards():
     assert {e.data['user_id'] for e in events if e.name == 'game.won'} == {1,2}
     assert not any('cleric:3' in str(e.data) for e in events if e.audience == 'group')
     zones(result, catalog)
+
+
+def test_opened_persistent_curse_remains_in_play_in_one_zone():
+    state, catalog = fixture()
+    cid = 'curse_chicken_on_your_head:1'
+    catalog[cid] = replace(catalog[cid], kind='curse', effects=[{'op': 'persistent'}])
+    top(state, 'door', [cid])
+    before = deepcopy(state)
+    rng = Random(3)
+    rng_before = rng.getstate()
+
+    result, events = open_door(state, 1, catalog, rng)
+
+    assert result.phase == 'turn.after_door'
+    assert result.players[1].in_play == [cid]
+    assert cid not in result.players[1].hand
+    assert cid not in result.door_discard
+    assert any(e.name == 'door.revealed' and e.audience == 'group'
+               and e.data['card_id'] == cid for e in events)
+    assert any(e.name == 'curse.applied' and e.audience == 'group'
+               and e.data == {'card_id': cid, 'target_id': 1} for e in events)
+    assert state == before
+    assert rng.getstate() == rng_before
+    zones(result, catalog)
