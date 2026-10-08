@@ -147,3 +147,39 @@ def test_invisibility_potion_only_rescues_its_user_after_their_failed_roll():
     for phrase in ("своего неудачного броска", "автоматически", "только тебя", "всех монстров"):
         assert phrase in description
     assert "одному игроку" not in description
+
+
+def test_snails_describes_individual_losses_from_items_and_hand_combined():
+    description = compiled()["definitions"]["snails_on_speed"]["presentation"]["description_ru"].lower()
+    for phrase in ("сколько выпало", "сам выбираешь отдельные карты", "выложенных вещей и карт в руке", "сочетать", "если карт меньше", "все доступные"):
+        assert phrase in description
+    assert "всю руку" not in description
+    assert "если вещей меньше" not in description
+
+
+def test_tuba_describes_one_private_treasure_to_user_after_whole_combat_escape():
+    description = compiled()["definitions"]["tuba_of_charm"]["presentation"]["description_ru"].lower()
+    for phrase in ("успешного побега из всего боя", "1 сокровище закрыто", "используешь эту вещь", "помощник", "один раз за бой"):
+        assert phrase in description
+    assert "после успешного побега от монстра" not in description
+
+
+def test_net_troll_describes_party_maximum_and_other_players_public_item_choices():
+    description = compiled()["definitions"]["net_troll"]["presentation"]["description_ru"].lower()
+    for phrase in ("среди всех игроков, включая тебя", "каждый другой игрок", "на этом уровне", "выбирает", "1 твоей выложенной вещи", "единственный", "никто"):
+        assert phrase in description
+
+
+def test_ordinary_items_allow_play_outside_combat_during_other_players_turns():
+    for key, definition in compiled()["definitions"].items():
+        if definition["mechanics"]["kind"] != "item":
+            continue
+        description = definition["presentation"]["description_ru"].lower()
+        assert "выкладывай вне боя, в том числе на чужом ходу" in description, key
+        assert "выкладывай на своём ходу" not in description, key
+
+
+def test_identity_cards_retain_their_own_turn_play_restriction():
+    for key in ("warrior", "wizard", "cleric", "thief", "elf", "dwarf", "halfling", "half_breed", "super_munchkin"):
+        description = compiled()["definitions"][key]["presentation"]["description_ru"].lower()
+        assert "разыгрывай только на своём ходу" in description, key

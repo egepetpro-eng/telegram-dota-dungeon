@@ -2583,7 +2583,7 @@
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf",
           "https://i.ebayimg.com/images/g/GeYAAeSwZjlqMPgP/s-l1600.webp"
         ],
-        "description_ru": "Уровень 10. За победу: сокровищ: 3, уровней: 1. Непотребство: Каждый другой игрок с наибольшим уровнем выбирает и забирает по 1 твоей вещи. Можно искать неприятности из руки после безопасно открытой двери."
+        "description_ru": "Уровень 10. За победу: сокровищ: 3, уровней: 1. Непотребство: Определи наибольший уровень среди всех игроков, включая тебя. Каждый другой игрок на этом уровне выбирает и забирает по 1 твоей выложенной вещи. Если ты единственный на наибольшем уровне, никто ничего не забирает. Можно искать неприятности из руки после безопасно открытой двери."
       },
       "mechanics": {
         "deck": "door",
@@ -2954,7 +2954,7 @@
           "https://i.ebayimg.com/images/g/GeYAAeSwZjlqMPgP/s-l1600.webp",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Уровень 4. За победу: сокровищ: 2, уровней: 1. −2 к броску побега. Непотребство: Брось кубик и сбрось столько вещей, сколько выпало. Если вещей меньше, сбрось все вещи и всю руку. Можно искать неприятности из руки после безопасно открытой двери."
+        "description_ru": "Уровень 4. За победу: сокровищ: 2, уровней: 1. −2 к броску побега. Непотребство: Брось кубик и сбрось столько карт, сколько выпало. Сам выбираешь отдельные карты из выложенных вещей и карт в руке; можно сочетать обе группы. Если карт меньше, сбрось все доступные. Можно искать неприятности из руки после безопасно открытой двери."
       },
       "mechanics": {
         "deck": "door",
@@ -3774,7 +3774,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; голова. Использовать может только: человек. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; голова. Использовать может только: человек. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -3857,7 +3857,7 @@
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf",
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; обувь. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; обувь. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -3892,7 +3892,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +0. Малая вещь; обувь. +2 к броску побега. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +0. Малая вещь; обувь. +2 к броску побега. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -3934,7 +3934,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 800 золотых. Бонус к силе: +4. Малая вещь; 2 руки. Использовать может только: эльф (Виндренджер). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 800 золотых. Бонус к силе: +4. Малая вещь; 2 руки. Использовать может только: эльф (Виндренджер). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4016,7 +4016,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Только для персонажа женского пола. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Только для персонажа женского пола. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4053,7 +4053,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; 1 рука. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; 1 рука. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4088,7 +4088,7 @@
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf",
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Большая вещь; 2 руки. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Большая вещь; 2 руки. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4123,7 +4123,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Использовать может только: клирик (Омникнайт). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Использовать может только: клирик (Омникнайт). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4162,7 +4162,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Малая вещь; без слота. Использовать может только: вор (Рики). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Малая вещь; без слота. Использовать может только: вор (Рики). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4282,7 +4282,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Использовать может только: вор (Рики). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Использовать может только: вор (Рики). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4403,7 +4403,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; 2 руки. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; 2 руки. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4438,7 +4438,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; броня. Источник огня или пламени. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; броня. Источник огня или пламени. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4641,7 +4641,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Только для персонажа мужского пола. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Только для персонажа мужского пола. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4678,7 +4678,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Малая вещь; 1 рука. Использовать может только: дварф (Снайпер). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Малая вещь; 1 рука. Использовать может только: дварф (Снайпер). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4717,7 +4717,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; голова. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; голова. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4867,7 +4867,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +1. Малая вещь; голова. Дополнительно +2 к силе, если ты эльф (Виндренджер). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +1. Малая вещь; голова. Дополнительно +2 к силе, если ты эльф (Виндренджер). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -4913,7 +4913,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 0 золотых. Бонус к силе: +3. Большая вещь; 2 руки. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 0 золотых. Бонус к силе: +3. Большая вещь; 2 руки. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5130,7 +5130,7 @@
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf",
           "https://miro.medium.com/v2/resize%3Afit%3A1200/1%2Atw3zt0WlLZZ1jDYJ8JsyIQ.jpeg"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +0. Малая вещь; без слота. Нельзя использовать: клирик (Омникнайт). Можно заставить помогать игрока, чей уровень строго выше твоего. Нельзя заставить помочь получить твой победный уровень. Клирик использовать не может. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +0. Малая вещь; без слота. Нельзя использовать: клирик (Омникнайт). Можно заставить помогать игрока, чей уровень строго выше твоего. Нельзя заставить помочь получить твой победный уровень. Клирик использовать не может. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5177,7 +5177,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; броня. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; броня. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5212,7 +5212,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; без слота. Использовать может только: халфлинг (Мипо). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; без слота. Использовать может только: халфлинг (Мипо). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5300,7 +5300,7 @@
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf",
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Малая вещь; 1 рука. Использовать может только: клирик (Омникнайт). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Малая вещь; 1 рука. Использовать может только: клирик (Омникнайт). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5423,7 +5423,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Большая вещь; броня. Нельзя использовать: волшебник (Кристал Мейден). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Большая вещь; броня. Нельзя использовать: волшебник (Кристал Мейден). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5549,7 +5549,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Малая вещь; без слота. Нельзя использовать: воин (Акс). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Малая вещь; без слота. Нельзя использовать: воин (Акс). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5588,7 +5588,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; голова. Использовать может только: волшебник (Кристал Мейден). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; голова. Использовать может только: волшебник (Кристал Мейден). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5832,7 +5832,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Использовать может только: эльф (Виндренджер). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +3. Малая вещь; 1 рука. Использовать может только: эльф (Виндренджер). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5872,7 +5872,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 0 золотых. Бонус к силе: +1. Малая вещь; 1 рука. Сбросить для побега можно даже когда вещь не надета, против монстра уровня 8 или ниже. При побеге сбросить эту выложенную вещь можно ради автоматического побега от одного монстра; один раз за попытку. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 0 золотых. Бонус к силе: +1. Малая вещь; 1 рука. Сбросить для побега можно даже когда вещь не надета, против монстра уровня 8 или ниже. При побеге сбросить эту выложенную вещь можно ради автоматического побега от одного монстра; один раз за попытку. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -5968,7 +5968,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 700 золотых. Бонус к силе: +0. Малая вещь; обувь. Защищает от проклятий, открытых при выбивании двери; проклятия из чужой руки действуют. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 700 золотых. Бонус к силе: +0. Малая вещь; обувь. Защищает от проклятий, открытых при выбивании двери; проклятия из чужой руки действуют. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6008,7 +6008,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-1.jpg",
           "https://i.ebayimg.com/images/g/y4oAAeSw9SNqMPcw/s-l1600.webp"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Большая вещь; 1 рука. Использовать может только: воин (Акс). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Большая вещь; 1 рука. Использовать может только: воин (Акс). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6047,7 +6047,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; броня. Использовать может только: дварф (Снайпер). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Малая вещь; броня. Использовать может только: дварф (Снайпер). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6086,7 +6086,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; без слота. Нельзя использовать: вор (Рики). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; без слота. Нельзя использовать: вор (Рики). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6163,7 +6163,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; броня. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; броня. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6198,7 +6198,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; 1 рука. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +2. Малая вещь; 1 рука. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6233,7 +6233,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; без слота. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 200 золотых. Бонус к силе: +1. Малая вещь; без слота. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6268,7 +6268,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 800 золотых. Бонус к силе: +5. Малая вещь; 1 рука. Использовать может только: волшебник (Кристал Мейден). Источник огня или пламени. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 800 золотых. Бонус к силе: +5. Малая вещь; 1 рука. Использовать может только: волшебник (Кристал Мейден). Источник огня или пламени. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6356,7 +6356,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Большая вещь; без слота. Использовать может только: халфлинг (Мипо). Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 400 золотых. Бонус к силе: +3. Большая вещь; без слота. Использовать может только: халфлинг (Мипо). Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6395,7 +6395,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Большая вещь; 2 руки. Использовать может только: человек. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 600 золотых. Бонус к силе: +4. Большая вещь; 2 руки. Использовать может только: человек. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6478,7 +6478,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 300 золотых. Бонус к силе: +0. Большая вещь; 1 рука. +3 к побегу. После успешного побега от монстра возьми 1 сокровище. Выкладывай на своём ходу вне боя; бонус действует, пока вещь используется."
+        "description_ru": "Цена: 300 золотых. Бонус к силе: +0. Большая вещь; 1 рука. +3 к побегу, пока используешь эту вещь. После успешного побега из всего боя возьми 1 сокровище закрыто, даже если ты помощник; это твоя награда один раз за бой. Выкладывай вне боя, в том числе на чужом ходу; бонус действует, пока вещь используется."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6862,5 +6862,5 @@
     "wishing_ring:2": "wishing_ring",
     "yuppie_water:1": "yuppie_water"
   },
-  "digest": "32d2dedf9a6d1efc1cf415ce580baaa17eaa87cdeea4f062d985ebf9e2da14f1"
+  "digest": "8bf556a9ff3ba28a7fb0c116432c8ba076d5183702634a9e56ec53c111593a76"
 }

@@ -39,6 +39,26 @@ Non-item value zero is a nonapplicable contract default, not a printed sale valu
 - King Tut / Wight Brothers charge two levels when fleeing even on successful escape; their low-level no-pursuit exception remains separate. Floating Nose and Crabs cannot be outrun.
 - Original fire/flame names supply stable source tags for the Chicken bonus; Dota presentation names never control these rules.
 
+## Compiled description clarifications, 2026-10-08
+
+The accepted monster photograph, Treasure face grid and official FAQ listed above
+resolve four player-facing prose corrections without changing source descriptors:
+Snails on Speed lets the victim choose individual losses from the combined pool of
+Items in play and hand cards, up to the die count; it has no entire-hand fallback.
+Tuba grants its user, including a helper, one face-down Treasure after successful
+escape from the whole combat, once per combat. Net Troll calculates the maximum
+Level across all players including the victim; only other players at that maximum
+choose one of the victim's public in-play Items each. Ordinary Items can be put in
+play outside combat during other players' turns; identity cards keep their own-turn
+restriction. The Tuba mixed-success edge and generic shortage interpretation remain
+the expressly labelled evidence limits in the Task 6 source clarification report.
+
+These are compiled Russian description changes only. Mechanics, numeric values,
+physical copies, source references, entity mappings and source-manifest facts are
+unchanged. This compilation check does not establish production runtime readiness;
+Task 5/6 handler acceptance remains outstanding. The media owner must repin the
+media catalog digest separately after review.
+
 ## Accepted Dota mappings
 
 Mappings are thematic replacements only. Original prices, bonuses, rewards, source identity keys and conditions remain classic. Four classes map to distinct heroes (Axe, Riki, Omniknight, Crystal Maiden). Neutral/lane creep opponents include melee creep, Kobold, Harpy Stormcrafter and Mud Golem; Plutonium Dragon maps to Roshan. Magic Lamp maps to Smoke of Deceit. Repeated physical copies share one mapping. Media evidence belongs to the separate media audit.
