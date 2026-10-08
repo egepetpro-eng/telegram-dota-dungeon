@@ -23,7 +23,8 @@ def refresh_timers(snapshot: Snapshot, mutation: Mutation, now: datetime) -> Mut
     state = mutation.state
     if status != "active" or state.phase == "game.finished":
         return mutation
-    metadata["last_action_at"] = now.isoformat()
+    if mutation.activity or "last_action_at" not in metadata:
+        metadata["last_action_at"] = now.isoformat()
 
     def add(kind, suffix, due, args=None):
         mutation.timers.append({"timer_id": f"{state.game_id}:{kind}:{suffix}", "kind": kind,
@@ -48,7 +49,7 @@ def refresh_timers(snapshot: Snapshot, mutation: Mutation, now: datetime) -> Mut
         if trade.status == "pending":
             add("trade", trade.id, trade.expires_at, {"trade_id": trade.id})
     if state.phase != "lobby":
-        add("idle", "current", now + timedelta(seconds=300))
+        add("idle", "current", datetime.fromisoformat(metadata["last_action_at"]) + timedelta(seconds=300))
     return mutation
 
 

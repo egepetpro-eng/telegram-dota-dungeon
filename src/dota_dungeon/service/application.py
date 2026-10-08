@@ -169,6 +169,7 @@ class Application:
                     state, events = decide(snapshot.state, Command(snapshot.state.game_id, actor_id,
                                            request, command_name, args), self.release.catalog, snapshot.rng)
                     mutation = Mutation(state, snapshot.rng, events)
+                    mutation.activity = timer["kind"] == "reaction"
                 metadata = snapshot.metadata if mutation.metadata is None else mutation.metadata
                 mutation.messages, mutation.callbacks = self.router.mutation_messages(
                     mutation.state, snapshot.version + 1, metadata, mutation.events, now,

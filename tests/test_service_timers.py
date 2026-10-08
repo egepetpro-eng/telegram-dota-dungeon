@@ -59,3 +59,12 @@ def test_paused_game_never_schedules_or_resets_deadlines():
     saved.status = "paused"
     changed = refresh_timers(saved, Mutation(saved.state, saved.rng, [], status="paused"), NOW)
     assert changed.timers == []
+
+
+def test_automatic_trade_timeout_does_not_extend_required_action_idle_deadline():
+    saved = snapshot()
+    saved.metadata["last_action_at"] = NOW.isoformat()
+    mutation = Mutation(saved.state, saved.rng, [])
+    mutation.activity = False
+    changed = refresh_timers(saved, mutation, NOW + timedelta(seconds=120))
+    assert next(t for t in changed.timers if t["kind"] == "idle")["due_at"] == NOW + timedelta(seconds=300)

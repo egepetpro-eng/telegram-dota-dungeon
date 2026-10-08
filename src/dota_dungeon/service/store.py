@@ -42,6 +42,7 @@ class Mutation:
     metadata: dict | None = None
     status: str | None = None
     callbacks: list = field(default_factory=list)
+    activity: bool = True
 
 
 @dataclass(frozen=True)
