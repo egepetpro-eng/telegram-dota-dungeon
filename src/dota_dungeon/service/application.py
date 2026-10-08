@@ -251,6 +251,7 @@ def run_service(config: Config):
         {"command": "start", "description": "Открыть личное меню"},
         {"command": "newgame", "description": "Собрать партию в группе"},
         {"command": "game", "description": "Текущая партия"},
+        {"command": "endgame", "description": "Завершить партию с подтверждением"},
         {"command": "pause", "description": "Поставить партию на паузу"},
         {"command": "resume", "description": "Продолжить партию"}]})
     router = Router(repository, release, identity["username"], media=media)
