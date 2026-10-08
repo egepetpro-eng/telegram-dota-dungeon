@@ -23,6 +23,7 @@ def open_door(
     rng: Random | None = None,
     *,
     resurrection_ids: list[str] | None = None,
+    now=None,
 ) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.prepare")
     transition_rng = deepcopy(rng) if rng is not None else Random()
@@ -57,9 +58,24 @@ def open_door(
                 result.phase = "combat.active"
                 result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[drawn])
                 start_character_combat(result, catalog)
+                from .combat import settle_mandatory_monsters
+
+                result, ev = settle_mandatory_monsters(
+                    result, catalog, transition_rng, now
+                )
+                events.extend(ev)
                 from .trade import cancel_trades_for_combat
 
                 events.extend(cancel_trades_for_combat(result, actor_id))
+            elif card.kind == "curse" and any(
+                c.rule_key == "wishing_ring" for c in catalog.values()
+            ):
+                from .decisions import start_curse
+
+                result, ev = start_curse(
+                    result, actor_id, actor_id, drawn, catalog, now, door=True
+                )
+                events.extend(ev)
             elif card.kind == "curse":
                 # Reserve the exposed source while its effects draw cards.
                 result, effect_events = apply_effects(
@@ -87,7 +103,13 @@ def open_door(
 
 
 def seek_trouble(
-    state: GameState, actor_id: int, card_id: str, catalog: Catalog
+    state: GameState,
+    actor_id: int,
+    card_id: str,
+    catalog: Catalog,
+    *,
+    now=None,
+    rng=None,
 ) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.after_door")
     if (
@@ -110,15 +132,30 @@ def seek_trouble(
         )
     ]
     events.extend(cancel_trades_for_combat(result, actor_id))
-    return result, events
+    from .combat import settle_mandatory_monsters
+
+    result, ev = settle_mandatory_monsters(result, catalog, rng or Random(), now)
+    return result, events + ev
 
 
-def loot_room(state: GameState, actor_id: int, rng: Random | None = None,
-              *, catalog: Catalog | None = None) -> tuple[GameState, list[Event]]:
+def loot_room(
+    state: GameState,
+    actor_id: int,
+    rng: Random | None = None,
+    *,
+    catalog: Catalog | None = None,
+) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.after_door")
     transition_rng = deepcopy(rng) if rng is not None else Random()
-    result, events = draw_cards(state, actor_id, "door", 1, False,
-                               catalog if catalog is not None else legacy_catalog(state), transition_rng)
+    result, events = draw_cards(
+        state,
+        actor_id,
+        "door",
+        1,
+        False,
+        catalog if catalog is not None else legacy_catalog(state),
+        transition_rng,
+    )
     if result.phase != "game.finished":
         result.phase = "turn.charity"
     events.append(Event("group", "room.looted", {"user_id": actor_id}))
@@ -147,7 +184,7 @@ def give_charity(
         if any(assignments.values()):
             raise RuleError("no excess cards")
         return result, []
-    minimum = min(p.level for p in result.players.values())
+    minimum = min(p.level for p in result.players.values() if p.alive)
     if player.level == minimum:
         if any(assignments.values()):
             raise RuleError("lowest level discards excess")
@@ -163,7 +200,9 @@ def give_charity(
         return result, [
             Event("group", "charity.discarded", {"user_id": actor_id, "count": excess})
         ]
-    recipients = {u for u, p in result.players.items() if p.level == minimum}
+    recipients = {
+        u for u, p in result.players.items() if p.alive and p.level == minimum
+    }
     if set(assignments) != recipients:
         raise RuleError("charity must go to lowest-level players")
     cards = [card_id for group in assignments.values() for card_id in group]
@@ -222,6 +261,7 @@ def end_turn(
             )
         result.corpse_looted_by.pop(next_player.user_id, None)
         result.corpse_hand.pop(next_player.user_id, None)
+        result.corpse_loot_order.pop(next_player.user_id, None)
         next_player.alive = True
         for deck in ("door", "treasure"):
             result, drawn_events = draw_cards(

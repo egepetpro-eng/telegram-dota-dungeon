@@ -133,6 +133,8 @@ def test_thief_steals_small_carried_shot_without_equip_bonus():
         {"player_id": 2, "card_id": "magic_missile"},
         Random(5),
     )
+    from tests.test_card_bad_stuff import respond
+    s, _ = respond(s,c)
     assert "magic_missile" in s.players[1].in_play
     assert not s.players[2].in_play
 
@@ -329,6 +331,8 @@ def test_theft_failure_loses_level_and_pays_cost():
         {"player_id": 2, "card_id": "magic_missile"},
         Random(2),
     )
+    from tests.test_card_bad_stuff import respond
+    out, _ = respond(out,c)
     assert out.players[1].level == 2
     assert "cost0" in out.treasure_discard
     assert out.players[2].in_play == ["magic_missile"]
@@ -635,6 +639,6 @@ def test_after_roll_policy_admits_only_own_class_actions_and_exact_future_card_t
     from dota_dungeon.core.card_rules import SPECIAL_HANDLERS
 
     assert all(
-        key not in SPECIAL_HANDLERS
+        key in SPECIAL_HANDLERS
         for key in ["loaded_die", "invisibility_potion", "magic_lamp", "flask_of_glue"]
     )

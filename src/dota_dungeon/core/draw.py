@@ -161,7 +161,11 @@ def draw_cards(
     resurrection_plan: dict[int, tuple[int, str]] | None = None,
 ) -> tuple[GameState, list[Event]]:
     """Acquire up to count cards; exhausted piles preserve a partial acquisition."""
-    if user_id not in state.players or deck not in {"door", "treasure"}:
+    if (
+        user_id not in state.players
+        or not state.players[user_id].alive
+        or deck not in {"door", "treasure"}
+    ):
         raise RuleError("invalid draw recipient or deck")
     if type(count) is not int or count < 0 or type(face_up) is not bool:
         raise RuleError("invalid draw count or visibility")
@@ -181,7 +185,8 @@ def draw_cards(
         resurrection_plan,
     )
     chain.finish()
-    rng.setstate(transition_rng.getstate())
+    if hasattr(rng, "setstate"):
+        rng.setstate(transition_rng.getstate())
     return chain.state, chain.events
 
 
@@ -195,11 +200,19 @@ def resolve_initial_deal(state: GameState, catalog: Catalog, rng: Random):
             chain.trigger(user_id, card_id, False, initial=True)
         else:
             chain.state.pending_initial_triggers.append((user_id, card_id))
-            chain.events.append(Event("group", "initial_trigger.pending", {
-                "card_id": card_id, "recipient_id": user_id,
-                "may_play_cleric_from_initial_hand": True,
-                "resolves_before_first_door": True,
-                "instruction": "All players may play a Cleric from their initial hand before this resolves at the first door."}))
+            chain.events.append(
+                Event(
+                    "group",
+                    "initial_trigger.pending",
+                    {
+                        "card_id": card_id,
+                        "recipient_id": user_id,
+                        "may_play_cleric_from_initial_hand": True,
+                        "resolves_before_first_door": True,
+                        "instruction": "All players may play a Cleric from their initial hand before this resolves at the first door.",
+                    },
+                )
+            )
     chain.finish()
     return chain.state, chain.events
 
@@ -217,4 +230,7 @@ def resolve_pending_initial_triggers(state: GameState, catalog: Catalog, rng: Ra
 
 def legacy_catalog(state: GameState) -> Catalog:
     """Old direct callers omit catalog; engine always supplies the real one."""
-    return {cid: CardDef(cid, deck, "special", cid) for cid, deck in state.card_decks.items()}
+    return {
+        cid: CardDef(cid, deck, "special", cid)
+        for cid, deck in state.card_decks.items()
+    }

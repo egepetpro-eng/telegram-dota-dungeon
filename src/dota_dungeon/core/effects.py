@@ -95,24 +95,42 @@ def apply_effects(
     result = deepcopy(state)
     transition_rng = deepcopy(rng) if rng is not None else Random()
     events = []
-    for effect in effects:
+    for effect_index, effect in enumerate(effects):
         player = result.players[target_id]
         op, amount = effect["op"], effect.get("amount", 1)
         if op == "gain_level":
+            source = catalog.get(choices.get("played_card_id"))
+            level_target = (
+                choices["actor_id"]
+                if source and source.rule_key == "kill_the_hireling"
+                else target_id
+            )
+            player = result.players[level_target]
+            if not player.alive:
+                continue
             if player.level + amount >= 10 and not effect.get("can_win", False):
                 raise RuleError("effect cannot grant winning level")
             player.level = min(10, player.level + amount)
             if player.level == 10:
                 result.phase = "game.finished"
-                events.append(Event("group", "game.won", {"user_id": target_id}))
+                events.append(Event("group", "game.won", {"user_id": level_target}))
         elif op == "lose_level":
             player.level = max(1, player.level - amount)
         elif op == "add_strength":
-            if result.combat:
-                if target_id not in result.combat.fighter_ids:
+            if result.combat and choices.get("played_card_id"):
+                result.combat.card_sides[choices["played_card_id"]] = choices.get(
+                    "side", "fighters"
+                )
+            if result.combat and choices.get("side") == "monsters":
+                result.combat.monster_strength_bonus += amount
+            elif result.combat:
+                from .combat import leader_id
+
+                strength_target = choices.get("player_id", leader_id(result))
+                if strength_target not in result.combat.fighter_ids:
                     raise RuleError("strength target is not a fighter")
-                result.combat.temporary_strength[target_id] = (
-                    result.combat.temporary_strength.get(target_id, 0) + amount
+                result.combat.temporary_strength[strength_target] = (
+                    result.combat.temporary_strength.get(strength_target, 0) + amount
                 )
             else:
                 player.strength_bonus += amount
@@ -121,7 +139,18 @@ def apply_effects(
         elif op == "monster_modifier":
             if not result.combat:
                 raise RuleError("no active combat")
-            result.combat.monster_strength_bonus += amount
+            if choices.get("monster_id"):
+                from .combat import add_enhancer
+
+                add_enhancer(
+                    result,
+                    choices["monster_id"],
+                    amount,
+                    effect.get("treasures", 0),
+                    card_id=choices.get("played_card_id"),
+                )
+            else:
+                result.combat.monster_strength_bonus += amount
         elif op in {"prevent_bad_stuff", "kill_monster", "remove_monster"}:
             monster_id = effect["monster_id"]
             if monster_id == "$target":
@@ -133,8 +162,20 @@ def apply_effects(
                     raise RuleError("target is not a fighter")
                 result.combat.prevented_bad_stuff.add((target_id, monster_id))
             else:
-                result.combat.monster_ids.remove(monster_id)
-                result.door_discard.append(monster_id)
+                from .combat import remove_foe, monster_rewards
+
+                levels, treasures = monster_rewards(result, monster_id, catalog)
+                result, outcome_events = remove_foe(
+                    result,
+                    monster_id,
+                    catalog,
+                    transition_rng,
+                    outcome="kill" if op == "kill_monster" else "removal",
+                    levels=levels if op == "kill_monster" else 0,
+                    treasures=treasures if op == "kill_monster" else 0,
+                    now=choices.get("_now"),
+                )
+                events.extend(outcome_events)
         elif op == "remove_item":
             cid = _selected_card(
                 result, target_id, effect, catalog, choices, transition_rng
@@ -172,6 +213,8 @@ def apply_effects(
                 source_player = result.players.get(choices.get("actor_id", target_id))
                 if source_player and cid in source_player.hand:
                     source_player.hand.remove(cid)
+                elif cid in result.resolving_card_ids:
+                    result.resolving_card_ids.remove(cid)
                 elif cid in result.door_discard:
                     result.door_discard.remove(cid)
                 elif cid in result.treasure_discard:
@@ -199,6 +242,18 @@ def apply_effects(
         events.append(
             Event("group", "effect.applied", {"target_id": target_id, "op": op})
         )
-    if rng is not None:
+        if result.pending_decision:
+            if effects[effect_index + 1 :]:
+                result.resolution_queue.insert(
+                    0,
+                    dict(
+                        kind="effects",
+                        target=target_id,
+                        effects=deepcopy(effects[effect_index + 1 :]),
+                        context=deepcopy(choices),
+                    ),
+                )
+            break
+    if rng is not None and hasattr(rng, "setstate"):
         rng.setstate(transition_rng.getstate())
     return result, events

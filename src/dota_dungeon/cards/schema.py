@@ -96,9 +96,13 @@ def validate_operation(effect: Any, path: str) -> None:
             allowed.add("can_win")
         if op == "draw":
             allowed.add("deck")
+        if op == "monster_modifier":
+            allowed.add("treasures")
         object_fields(effect, allowed, {"op"}, path)
         integer(effect.get("amount", 1), f"{path}.amount",
                 1 if op in {"gain_level", "lose_level", "draw"} else None)
+        if op == "monster_modifier" and "treasures" in effect:
+            integer(effect["treasures"], f"{path}.treasures")
         if op == "gain_level" and type(effect.get("can_win", False)) is not bool:
             raise ValueError(f"{path}.can_win: expected boolean")
         if op == "draw":

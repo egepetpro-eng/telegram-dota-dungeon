@@ -111,7 +111,11 @@ def _validate_ability_target(state, actor, key, target, catalog, source):
     ):
         raise RuleError("ability requires combat participant")
     if key == "cleric_turn_undead" and not any(
-        "undead" in catalog[cid].tags for cid in state.combat.monster_ids
+        "undead"
+        in __import__("dota_dungeon.core.combat", fromlist=["monster_card"])
+        .monster_card(state, cid, catalog)
+        .tags
+        for cid in state.combat.monster_ids
     ):
         raise RuleError("no Undead monster")
     if key == "wizard_charm" and target["monster_id"] not in state.combat.monster_ids:
@@ -167,7 +171,16 @@ def _validate_ability_target(state, actor, key, target, catalog, source):
                     >= 5
                 ):
                     raise RuleError("retry requires failed roll")
-        if key == "rat_on_a_stick_escape" and catalog[pair[1]].bonus > 8:
+        from .combat import monster_card, escape_possible
+
+        if key in {"hireling_escape", "rat_on_a_stick_escape"} and not escape_possible(
+            state, pair[1], catalog
+        ):
+            raise RuleError("monster forbids escape")
+        if (
+            key == "rat_on_a_stick_escape"
+            and monster_card(state, pair[1], catalog).bonus > 8
+        ):
             raise RuleError("monster level exceeds Rat limit")
     if key == "cleric_resurrection" and target["deck"] not in {"door", "treasure"}:
         raise RuleError("invalid resurrection deck")
@@ -250,7 +263,22 @@ def use_ability(
     elif scope == "escape_attempt":
         result.combat.escape_uses[escape_usage] = uses + 1
     result, events = ABILITY_HANDLERS[key].handler(
-        result, actor_id, target, catalog, transition_rng
+        result,
+        actor_id,
+        target,
+        catalog,
+        transition_rng,
+        **(
+            {"now": now}
+            if key
+            in {
+                "thief_theft",
+                "hireling_escape",
+                "rat_on_a_stick_escape",
+                "wizard_charm",
+            }
+            else {}
+        ),
     )
     if result.combat and result.phase == "combat.active":
         from .combat import restart_reaction
@@ -294,7 +322,20 @@ def backstab(state, actor, target, catalog, rng):
     return state, []
 
 
-def theft(state, actor, target, catalog, rng):
+def theft(state, actor, target, catalog, rng, *, now=None):
+    if any(c.rule_key == "loaded_die" for c in catalog.values()):
+        from .loss_rules import die_opportunity
+
+        return die_opportunity(
+            state,
+            actor,
+            "thief_theft",
+            catalog,
+            rng,
+            now,
+            victim=target["player_id"],
+            card_id=target["card_id"],
+        )
     die = rng.randint(1, 6)
     cid = target["card_id"]
     victim = target["player_id"]
@@ -343,21 +384,20 @@ def retry_escape(state, actor, target, catalog, rng):
     ]
 
 
-def automatic_escape(state, actor, target, catalog, rng):
-    from .combat import finish_escape_attempt
+def automatic_escape(state, actor, target, catalog, rng, *, now=None):
+    from .combat import offer_automatic_escape
 
-    return finish_escape_attempt(state, actor, target["monster_id"], True, catalog, rng)
+    return offer_automatic_escape(state, actor, target["monster_id"], catalog, rng, now)
 
 
-def charm(state, actor, target, catalog, rng):
-    cid = target["monster_id"]
-    state.combat.monster_ids.remove(cid)
-    state.combat.charmed_monster_ids.append(cid)
-    if not state.combat.monster_ids:
-        from .combat import resolve_rewards
+def charm(state, actor, target, catalog, rng, *, now=None):
+    from .combat import remove_foe, monster_rewards
 
-        return resolve_rewards(state, catalog, rng)
-    return state, []
+    mid = target["monster_id"]
+    treasures = monster_rewards(state, mid, catalog)[1]
+    return remove_foe(
+        state, mid, catalog, rng, outcome="charm", treasures=treasures, now=now
+    )
 
 
 def resurrection_handler(

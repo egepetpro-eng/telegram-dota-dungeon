@@ -18,11 +18,17 @@ def validate_cost(player: Player, cost: dict, cost_ids: list[str]) -> None:
         raise RuleError("invalid cost")
     if mode not in {"exact", "all_hand"} or (mode == "all_hand" and zone != "hand"):
         raise RuleError("invalid cost mode")
-    if not isinstance(cost_ids, list) or any(not isinstance(cid, str) for cid in cost_ids):
+    if not isinstance(cost_ids, list) or any(
+        not isinstance(cid, str) for cid in cost_ids
+    ):
         raise RuleError("invalid cost selection")
     if len(cost_ids) != len(set(cost_ids)):
         raise RuleError("duplicate cost card")
-    eligible = player.hand if zone == "hand" else player.in_play if zone == "in_play" else player.hand + player.in_play
+    eligible = (
+        player.hand
+        if zone == "hand"
+        else player.in_play if zone == "in_play" else player.hand + player.in_play
+    )
     if not set(cost_ids).issubset(eligible):
         raise RuleError("cost card is not owned in required zone")
     if mode == "all_hand":
@@ -84,9 +90,16 @@ def _target(
         ) or cid not in catalog:
             raise RuleError("target is not an open owned card")
         kinds = {"item"} if rule == "open_item" else {"role", "race"}
-        if (rule == "open_item" and not items.is_item_card(catalog[cid])) or (
-            rule != "open_item" and catalog[cid].kind not in kinds
-        ):
+        hireling_target = (
+            played_card_id in catalog
+            and catalog[played_card_id].rule_key == "kill_the_hireling"
+            and catalog[cid].rule_key == "hireling"
+        )
+        if (
+            rule == "open_item"
+            and not items.is_item_card(catalog[cid])
+            and not hireling_target
+        ) or (rule != "open_item" and catalog[cid].kind not in kinds):
             raise RuleError("invalid target card kind")
     if (
         rule == "discard"
@@ -104,6 +117,8 @@ def play_card(
     catalog: Catalog,
     rng: Random,
     now: datetime,
+    *,
+    choices: dict | None = None,
 ) -> tuple[GameState, list[Event]]:
     if actor_id not in state.players or not state.players[actor_id].alive:
         raise RuleError("unknown or dead player")
@@ -120,6 +135,24 @@ def play_card(
         rule_key=catalog[card_id].rule_key,
     )
     card, owner = catalog[card_id], state.players[actor_id]
+    from .combat_rules import CHOICES as COMBAT_CHOICES
+    from .response_rules import CHOICES as RESPONSE_CHOICES
+
+    CHOICES = {**COMBAT_CHOICES, **RESPONSE_CHOICES}
+    allowed = set().union(
+        *(CHOICES.get(e.get("rule_key"), set()) for e in card.effects)
+    )
+    if card.kind in {"role", "race"}:
+        allowed.add("replace_identity_id")
+    if any(e["op"] == "add_strength" for e in card.effects):
+        allowed.add("side")
+    if choices is not None and (
+        not isinstance(choices, dict) or set(choices) - allowed
+    ):
+        raise RuleError("invalid choices operands")
+    choices = choices or {}
+    if "side" in choices and choices["side"] not in {"fighters", "monsters"}:
+        raise RuleError("invalid combat side")
     if state.phase not in card.play_phases or state.phase in {"lobby", "game.finished"}:
         raise RuleError("card cannot be played in this phase")
     carried_shot = card.kind == "one_shot" and card_id in owner.in_play
@@ -132,7 +165,13 @@ def play_card(
         if target_id != actor_id:
             raise RuleError("possessions require self target")
         if card.kind in {"role", "race"}:
-            return items.play_identity(state, actor_id, card_id, catalog)
+            return items.play_identity(
+                state,
+                actor_id,
+                card_id,
+                catalog,
+                replace_id=choices.get("replace_identity_id"),
+            )
         return items.carry(state, actor_id, card_id, catalog)
     if card.kind not in {"level_up", "one_shot", "curse", "modifier", "special"}:
         raise RuleError("card cannot be played directly")
@@ -149,10 +188,39 @@ def play_card(
             deepcopy(state), actor_id, target_id, catalog, deepcopy(condition["args"])
         ):
             raise RuleError("card condition not met")
+    if card.kind == "curse" and any(
+        c.rule_key == "wishing_ring" for c in catalog.values()
+    ):
+        if choices:
+            raise RuleError("curse loss is selected by victim")
+        from .decisions import start_curse
+
+        return start_curse(deepcopy(state), actor_id, target_id, card_id, catalog, now)
     result = deepcopy(state)
     transition_rng = deepcopy(rng)
     was_reacting = bool(result.combat and result.combat.reaction_deadline)
-    choices = {**target, "played_card_id": card_id, "actor_id": actor_id}
+    choices = {
+        **choices,
+        **target,
+        "played_card_id": card_id,
+        "actor_id": actor_id,
+        "_now": now,
+    }
+    persistent_rule = card.rule_key in {
+        "really_impressive_title",
+        "hireling",
+        "half_breed",
+        "super_munchkin",
+        "cheat",
+        "curse_chicken_on_your_head",
+        "curse_malign_mirror",
+    } or any(e["op"] == "persistent" for e in card.effects)
+    reserved = bool(result.combat and not persistent_rule)
+    if reserved:
+        items.remove_owned_card(result.players[actor_id], card_id)
+        result.combat.played_card_ids.append(card_id)
+        if card.kind == "modifier":
+            result.combat.modifier_ids.append(card_id)
     if card.rule_key == "really_impressive_title":
         result.players[actor_id].hand.remove(card_id)
         result.players[actor_id].in_play.append(card_id)
@@ -168,7 +236,7 @@ def play_card(
         )
     owner = result.players[actor_id]
     persistent = card_id in result.players[target_id].in_play and not carried_shot
-    if not persistent:
+    if not persistent and not reserved:
         items.remove_owned_card(owner, card_id)
         if result.combat:
             result.combat.played_card_ids.append(card_id)

@@ -35,17 +35,26 @@ class CardDef:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "CardDef":
         return cls(
-            id=data["id"], deck=data["deck"], kind=data["kind"],
-            name=data["name"], value=data.get("value", 0),
-            bonus=data.get("bonus", 0), slots=data.get("slots"),
-            size=data.get("size", "small"), effects=list(data.get("effects", [])),
+            id=data["id"],
+            deck=data["deck"],
+            kind=data["kind"],
+            name=data["name"],
+            value=data.get("value", 0),
+            bonus=data.get("bonus", 0),
+            slots=data.get("slots"),
+            size=data.get("size", "small"),
+            effects=list(data.get("effects", [])),
             tags=tuple(data.get("tags", [])),
-            treasures=data.get("treasures", 0), levels=data.get("levels", 1),
+            treasures=data.get("treasures", 0),
+            levels=data.get("levels", 1),
             bad_stuff=list(data.get("bad_stuff", [])),
-            rule_key=data.get("rule_key"), play_phases=tuple(data.get("play_phases", [])),
+            rule_key=data.get("rule_key"),
+            play_phases=tuple(data.get("play_phases", [])),
             target_rule=data.get("target_rule", "none"),
-            restrictions=dict(data.get("restrictions", {})), trigger=data.get("trigger"),
-            conditions=list(data.get("conditions", [])), abilities=list(data.get("abilities", [])),
+            restrictions=dict(data.get("restrictions", {})),
+            trigger=data.get("trigger"),
+            conditions=list(data.get("conditions", [])),
+            abilities=list(data.get("abilities", [])),
         )
 
 
@@ -87,8 +96,24 @@ class Trade:
 
 @dataclass
 class CombatState:
+    leader_id: int | None = None
+    virtual_monsters: dict[str, str] = field(default_factory=dict)
+    monster_modifiers: dict[str, list[dict]] = field(default_factory=dict)
+    entry_processed: set[tuple[int, str]] = field(default_factory=set)
+    enhancer_groups: dict[str, str] = field(default_factory=dict)
+    retired_monster_ids: list[str] = field(default_factory=list)
+    pending_rewards: list[dict] = field(default_factory=list)
+    reward_state: dict = field(default_factory=dict)
+    reaction_seconds: int = 30
+    double_strength: bool = False
+    original_may_loot: bool = False
+    escape_deadline: datetime | None = None
+    escape_roll_ids: dict[tuple[int, str], str] = field(default_factory=dict)
+    escape_no_pursuit: set[tuple[int, str]] = field(default_factory=set)
+    automatic_escapes: set[tuple[int, str]] = field(default_factory=set)
     fighter_ids: list[int] = field(default_factory=list)
     helper_id: int | None = None
+    forced_helper: bool = False
     monster_ids: list[str] = field(default_factory=list)
     modifier_ids: list[str] = field(default_factory=list)
     passes: set[int] = field(default_factory=set)
@@ -101,6 +126,7 @@ class CombatState:
     monster_strength_bonus: int = 0
     prevented_bad_stuff: set[tuple[int, str]] = field(default_factory=set)
     played_card_ids: list[str] = field(default_factory=list)
+    card_sides: dict[str, str] = field(default_factory=dict)
     ability_uses: dict[tuple[int, str, int | None], int] = field(default_factory=dict)
     escape_outcomes: dict[tuple[int, str], bool] = field(default_factory=dict)
     tuba_rewarded: set[int] = field(default_factory=set)
@@ -114,6 +140,16 @@ class CombatState:
 @dataclass(frozen=True)
 class CombatDecision:
     outcome: Literal["provisional_win", "must_run_away"]
+
+
+@dataclass
+class PendingDecision:
+    id: str
+    kind: str
+    chooser_ids: list[int]
+    deadline: datetime
+    payload: dict = field(default_factory=dict)
+    responses: dict[int, dict] = field(default_factory=dict)
 
 
 @dataclass
@@ -136,10 +172,16 @@ class GameState:
     turn_number: int = 0
     card_decks: dict[str, str] = field(default_factory=dict)
     corpse_looted_by: dict[int, set[int]] = field(default_factory=dict)
+    corpse_loot_order: dict[int, list[int]] = field(default_factory=dict)
     corpse_hand: dict[int, set[str]] = field(default_factory=dict)
     catalog_version: str | None = None
     catalog_digest: str | None = None
     # References to source cards still reserved in their initial owner's hand.
+    resolving_card_ids: list[str] = field(default_factory=list)
+    resolution_queue: list[dict] = field(default_factory=list)
+    pending_decision: PendingDecision | None = None
+    decision_seq: int = 0
+    after_combat: bool = False
     pending_initial_triggers: list[tuple[int, str]] = field(default_factory=list)
 
 

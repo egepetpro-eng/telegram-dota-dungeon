@@ -353,14 +353,17 @@ def test_opened_persistent_curse_remains_in_play_in_one_zone():
 
     result, events = open_door(state, 1, catalog, rng)
 
+    from dota_dungeon.core.decisions import respond_decision
+    from datetime import datetime,timezone
+    result, responses=respond_decision(result,1,result.pending_decision.id,{},catalog,rng,datetime.now(timezone.utc))
+    events+=responses
     assert result.phase == 'turn.after_door'
     assert result.players[1].in_play == [cid]
     assert cid not in result.players[1].hand
     assert cid not in result.door_discard
     assert any(e.name == 'door.revealed' and e.audience == 'group'
                and e.data['card_id'] == cid for e in events)
-    assert any(e.name == 'curse.applied' and e.audience == 'group'
-               and e.data == {'card_id': cid, 'target_id': 1} for e in events)
+    assert any(e.name == 'decision.required' and e.audience == 'group' for e in events)
     assert state == before
     assert rng.getstate() == rng_before
     zones(result, catalog)

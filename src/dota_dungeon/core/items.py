@@ -85,7 +85,9 @@ def can_use(player: Player, card_id: str, catalog: Catalog) -> bool:
 
 
 def reconcile_equipment(player: Player, catalog: Catalog) -> None:
-    player.equipped[:] = [cid for cid in player.equipped if can_use(player, cid, catalog)]
+    player.equipped[:] = [
+        cid for cid in player.equipped if can_use(player, cid, catalog)
+    ]
 
 
 def carry(
@@ -153,17 +155,26 @@ def equip(
     ]
 
 
-def unequip(state: GameState, actor_id: int, card_id: str) -> tuple[GameState, list[Event]]:
+def unequip(
+    state: GameState, actor_id: int, card_id: str
+) -> tuple[GameState, list[Event]]:
     _outside_combat(state)
     if actor_id not in state.players or card_id not in state.players[actor_id].equipped:
         raise RuleError("item is not equipped")
     result = deepcopy(state)
     result.players[actor_id].equipped.remove(card_id)
-    return result, [Event("group", "item.unequipped", {"user_id": actor_id, "card_id": card_id})]
+    return result, [
+        Event("group", "item.unequipped", {"user_id": actor_id, "card_id": card_id})
+    ]
 
 
 def play_identity(
-    state: GameState, actor_id: int, card_id: str, catalog: Catalog
+    state: GameState,
+    actor_id: int,
+    card_id: str,
+    catalog: Catalog,
+    *,
+    replace_id: str | None = None,
 ) -> tuple[GameState, list[Event]]:
     if (
         actor_id not in state.players
@@ -189,7 +200,18 @@ def play_identity(
     result = deepcopy(state)
     player = result.players[actor_id]
     active = player.role_ids if card.kind == "role" else player.race_ids
-    if any(catalog[cid].rule_key == card.rule_key for cid in active) and card.rule_key:
+    if replace_id is not None and (
+        not isinstance(replace_id, str) or replace_id not in active
+    ):
+        raise RuleError("replacement must name own active identity of same kind")
+    if (
+        any(
+            catalog[cid].rule_key == card.rule_key
+            for cid in active
+            if cid != replace_id
+        )
+        and card.rule_key
+    ):
         raise RuleError("duplicate identity")
     limit = (
         2
@@ -198,8 +220,9 @@ def play_identity(
         )
         else 1
     )
-    if len(active) >= limit:
-        old_id = active.pop()
+    if replace_id is not None or len(active) >= limit:
+        old_id = replace_id if replace_id is not None else active[-1]
+        active.remove(old_id)
         player.in_play.remove(old_id)
         result.door_discard.append(old_id)
     player.hand.remove(card_id)

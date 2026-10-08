@@ -115,7 +115,7 @@ def condition(key):
             return "halfling" in character.identities(p, catalog, "race")
         if key in {"hireling_carry_item", "hireling_in_play"}:
             return (
-                character.has_rule(p, catalog, "hireling")
+                character.has_rule(state.players[target], catalog, "hireling")
                 if key == "hireling_in_play"
                 else not character.has_rule(p, catalog, "hireling")
             )

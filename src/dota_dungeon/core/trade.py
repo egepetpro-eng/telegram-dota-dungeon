@@ -9,8 +9,14 @@ from .items import is_item_card, big_limit, big_count, reconcile_possessions
 
 
 def _ensure_trade_allowed(state: GameState, actor_id: int, partner_id: int) -> None:
-    if actor_id == partner_id or actor_id not in state.players or partner_id not in state.players:
+    if (
+        actor_id == partner_id
+        or actor_id not in state.players
+        or partner_id not in state.players
+    ):
         raise RuleError("invalid trade partner")
+    if not state.players[actor_id].alive or not state.players[partner_id].alive:
+        raise RuleError("dead players cannot trade")
     if state.combat is not None or state.phase.startswith("combat."):
         raise RuleError("cannot trade during combat")
 
@@ -145,8 +151,9 @@ def accept_trade(
     ]
 
 
-def expire_trade(state: GameState, trade_id: str,
-                 now: datetime) -> tuple[GameState, list[Event]]:
+def expire_trade(
+    state: GameState, trade_id: str, now: datetime
+) -> tuple[GameState, list[Event]]:
     if trade_id not in state.trades:
         raise RuleError("unknown trade")
     trade = state.trades[trade_id]
@@ -154,36 +161,64 @@ def expire_trade(state: GameState, trade_id: str,
         raise RuleError("trade is not ready to expire")
     result = deepcopy(state)
     result.trades[trade_id].status = "expired"
-    return result, [Event(f"user:{trade.sender_id}", "trade.expired", {"trade_id": trade_id}),
-                    Event(f"user:{trade.receiver_id}", "trade.expired", {"trade_id": trade_id})]
+    return result, [
+        Event(f"user:{trade.sender_id}", "trade.expired", {"trade_id": trade_id}),
+        Event(f"user:{trade.receiver_id}", "trade.expired", {"trade_id": trade_id}),
+    ]
 
 
 def cancel_trades_for_combat(state: GameState, fighter_id: int) -> list[Event]:
     events = []
     for trade in state.trades.values():
-        if trade.status == "pending" and fighter_id in {trade.sender_id, trade.receiver_id}:
+        if trade.status == "pending" and fighter_id in {
+            trade.sender_id,
+            trade.receiver_id,
+        }:
             trade.status = "cancelled"
-            events.append(Event(f"user:{trade.receiver_id}", "trade.cancelled", {"trade_id": trade.id}))
-            events.append(Event(f"user:{trade.sender_id}", "trade.cancelled", {"trade_id": trade.id}))
+            events.append(
+                Event(
+                    f"user:{trade.receiver_id}",
+                    "trade.cancelled",
+                    {"trade_id": trade.id},
+                )
+            )
+            events.append(
+                Event(
+                    f"user:{trade.sender_id}", "trade.cancelled", {"trade_id": trade.id}
+                )
+            )
     return events
 
 
 def cancel_trades_for_cards(state: GameState, card_ids: list[str]) -> None:
     changed = set(card_ids)
     for trade in state.trades.values():
-        if trade.status == "pending" and changed.intersection(trade.offered_ids + trade.requested_ids):
+        if trade.status == "pending" and changed.intersection(
+            trade.offered_ids + trade.requested_ids
+        ):
             trade.status = "cancelled"
 
 
-def cancel_trade(state: GameState, actor_id: int, trade_id: str) -> tuple[GameState, list[Event]]:
-    if state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"} or state.combat:
+def cancel_trade(
+    state: GameState, actor_id: int, trade_id: str
+) -> tuple[GameState, list[Event]]:
+    if (
+        state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}
+        or state.combat
+    ):
         raise RuleError("cannot cancel trade in this phase")
     offer = state.trades.get(trade_id)
-    if actor_id not in state.players or offer is None or actor_id not in {offer.sender_id, offer.receiver_id}:
+    if (
+        actor_id not in state.players
+        or offer is None
+        or actor_id not in {offer.sender_id, offer.receiver_id}
+    ):
         raise RuleError("trade is not available to this player")
     if offer.status != "pending":
         raise RuleError("trade is no longer available")
     result = deepcopy(state)
     result.trades[trade_id].status = "cancelled"
-    return result, [Event(f"user:{uid}", "trade.cancelled", {"trade_id": trade_id})
-                    for uid in (offer.sender_id, offer.receiver_id)]
+    return result, [
+        Event(f"user:{uid}", "trade.cancelled", {"trade_id": trade_id})
+        for uid in (offer.sender_id, offer.receiver_id)
+    ]

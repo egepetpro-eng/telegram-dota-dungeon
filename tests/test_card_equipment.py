@@ -125,6 +125,8 @@ def test_carried_rat_escape_does_not_require_equipping():
     s, _ = ability(
         s, c, "rat_on_a_stick_escape", ["rat_on_a_stick"], {"monster_id": "monster"}
     )
+    from dota_dungeon.core.combat import resolve_escape
+    s, _ = resolve_escape(s,1,"monster",c,Random(1),NOW)
     assert s.combat is None
     assert "rat_on_a_stick" in s.treasure_discard
 
@@ -185,6 +187,8 @@ def test_hireling_escape_discards_assigned_item_and_cannot_discard_other_item_as
             s, c, "hireling_escape", ["shield_of_ubiquity"], {"monster_id": "monster"}
         )
     out, _ = ability(s, c, "hireling_escape", ["hireling"], {"monster_id": "monster"})
+    from dota_dungeon.core.combat import resolve_escape
+    out, _ = resolve_escape(out,1,"monster",c,Random(1),NOW)
     assert out.combat is None
     assert set(out.treasure_discard) == {"hireling", "shield_of_ubiquity"}
 
