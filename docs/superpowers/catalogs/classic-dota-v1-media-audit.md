@@ -1,6 +1,6 @@
-# Classic Dota v1 — M2 artwork selection draft
+# Classic Dota v1 — verified artwork selection
 
-Research and inspection date: 2026-10-08. Worktree base: `a81b337678ecee459a5240edd3a2000b144b7a0f`. This delivers verified selections and complete **draft** definition bindings. `media.json` has `media_version: classic-dota-v1-draft-2` and `catalog_digest: null`. It is deliberately invalid for production acceptance until the coordinator supplies and pins the final playable catalog digest. Source facts remain A’s separate research task; media coverage does not imply mechanically verified cards.
+Research and inspection date: 2026-10-08. Worktree base: `a81b337678ecee459a5240edd3a2000b144b7a0f`. Complete verified definition bindings are pinned as `media_version: classic-dota-v1-media-v1` to catalog digest `8bf556a9ff3ba28a7fb0c116432c8ba076d5183702634a9e56ec53c111593a76`. The coordinator checked all 147 definitions, 168 copies and 127 selected entities after the source prose clarification; description and media checks passed (52 tests). Source mechanics and engine execution have separate acceptance gates.
 
 ## Coverage and selection
 
@@ -48,13 +48,13 @@ QA copies/contact sheets are temporary inspection aids, not repository/runtime a
 
 Missing mapped entities or original sources: **none**. All 48 M1 item gaps and five chosen creep entities are covered. General unrequested inventory species remain outside selected deck scope. Unconfirmed Shadow Fiend artist set acceptance remains an explicit candidate gap but does not affect any binding.
 
-Outstanding production step: coordinator must reconcile against final release definitions, set the actual catalog digest and approved media version, then run production media validation. `null` is intentional and must fail that final gate. No fabricated digest, final release acceptance or playable-catalog claim is made.
+Media metadata and digest reconciliation are complete. Installed release validation still requires all source rules to be executable; the media check alone does not establish gameplay acceptance.
 
-Fresh verification: strict UTF-8 JSON parsing; Media v1 asset fields/status/kinds/HTTPS provenance; exact 147 rule-key coverage and same-entity selected-verified matching; 168-copy manifest count; 127 selected image fetch/decode plus visual small-size inspection; diff whitespace checks. Engine tests are not applicable to these metadata-only changes; production media validation is intentionally pending digest finalization.
+Verification: strict UTF-8 JSON parsing; Media v1 asset fields/status/kinds/HTTPS provenance; exact 147 rule-key coverage and same-entity selected-verified matching; 168-copy manifest count; 127 selected image fetch/decode plus visual small-size inspection; final digest pin and metadata regression checks. The source research below is retained as historical M1 evidence; its original inventory gaps were closed by M2.
 
 ---
 
-# Classic Dota v1 вЂ” M1 media source audit
+# Historical M1 media source audit
 
 Research date: 2026-10-08. Base: `902c7f52d66401e429ddd8e51441cdcd8147d101`. Scope: M1 source inventory, not M2 selections/bindings. Entity IDs follow the coordinator's canonical `hero:`, `item:`, `creep:` convention from contract update `afc773c`.
 
@@ -72,8 +72,8 @@ Verified means the image was visually inspected and its attributable primary pub
 | [Axe hero page](https://www.dota2.com/hero/axe) | Inspected original Axe render in page and portrait URL. Gallery portrait is recorded; render itself is not a separately verified asset. |
 | [Dueling Fates 7.07](https://www.dota2.com/duelingfates) | Read exact item image URLs and inspected published icons adjacent to entity names in three long screenshots from Aether Lens through Spirit Vessel. Recorded 38 icons. Historical Dota item stats were not imported into mechanics. Nullifier/Kaya URLs also appeared but were not fully inspected, so are not recorded as verified. |
 | [TI2019 Battle Pass](https://www.dota2.com/international2019/battlepass/) | Read AxeExclusive and KidInvoker primary sections and exact CSS backgrounds; opened and inspected originals. Recorded Axe Unleashed and Young Invoker promos. Persona/cosmetic identity is explicit. |
-| [Mistwoods](https://www.dota2.com/mistwoods?l=english) | Read original WALLPAPERS links; opened and inspected 3840Г—2160 Hoodwink wallpaper 1. Legacy item patch rendering displays unresolved placeholders here, so no icons are attributed to it. |
-| [Jonathan Lee: Battletrap](https://dawndrop.artstation.com/projects/Lqxbv) | Read author's statement that this is a Clockwerk loading screen for a set currently in game. Inspected linked large 712Г—1024 original. Credits: Jonathan Lee for concept/model/illustration and Valve for character. Verified with creator's in-game statement; strong vertical composition. |
+| [Mistwoods](https://www.dota2.com/mistwoods?l=english) | Read original WALLPAPERS links; opened and inspected 3840×2160 Hoodwink wallpaper 1. Legacy item patch rendering displays unresolved placeholders here, so no icons are attributed to it. |
+| [Jonathan Lee: Battletrap](https://dawndrop.artstation.com/projects/Lqxbv) | Read author's statement that this is a Clockwerk loading screen for a set currently in game. Inspected linked large 712×1024 original. Credits: Jonathan Lee for concept/model/illustration and Valve for character. Verified with creator's in-game statement; strong vertical composition. |
 | [Matt Cristello: Murder of Souls](https://mattcristello.artstation.com/projects/1VQ1G) | Read creator and collaborator credits; inspected full page and original animated loading image. Candidate only: artist describes a set, but this primary publication does not establish Valve acceptance or in-game release. |
 | [Steam Dota news archive: Diretide](https://store.steampowered.com/news/posts/?appids=570&enddate=1352228437) | Read publisher's Diretide announcement and its original full-image link. Opened HTTPS original on media.steampowered.com. Roshan dominates illustrated poster, recognizable head/wings/orange eye. Recorded official illustration; seasonal pumpkin prop must be acknowledged in later selection. Archive contains third-party news too; evidence here is the Dota team's own Diretide entry. |
 | [Diretide 2020](https://www.dota2.com/diretide?l=english) | Read official page and original howtoplay-3 image URL; inspected Roshan game-model instructional composite. Recorded promo fallback. Large empty lower region and numbered bubble make it inferior to 2012 artwork. The lore-right2 image depicts a stuffed puppet; it was inspected but not selected as a recognizable creep fallback. |
