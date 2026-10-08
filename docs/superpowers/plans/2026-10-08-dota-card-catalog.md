@@ -32,6 +32,7 @@
 - Приоритет правил: [официальные правила](https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf), [FAQ](https://munchkin.game/gameplay/faq/), [исправления](https://munchkin.game/gameplay/errata/).
 - Источник каждого числа и специального условия — соответствующая оригинальная карта с поправками издателя. Для каждого определения записываются источник и дата проверки; полный текст карты не копируется в репозиторий.
 - Названия героев сверяются с [официальным сайтом Dota 2](https://www.dota2.com/heroes). Названия предметов и существ фиксируются вместе с источником Valve либо ссылкой на первичный игровой материал. Изображения и их использование рассматриваются перед публичным выпуском.
+- Оформление использует также официальные арты, загрузочные экраны, обои и промоматериалы. Искать их можно в Steam, официальных каналах, портфолио авторов официальных работ и на других площадках с подтверждаемым происхождением изображения. В аудите фиксируются `image_url`, `original_publication_url`, `credit` и `asset_kind`; узнаваемость и читаемость проверяются в размере Telegram-карточки.
 
 ## Review Focus
 
@@ -70,6 +71,7 @@
 - [ ] Write `test_source_manifest_has_168_physical_cards` with assertions that summed copies are 168 and deck totals are 95/73; write `test_manifest_preserves_official_copy_counts`, comparing every source-name count to a separately captured official checklist, not to the production JSON itself.
 - [ ] Run `python -m pytest tests/test_card_manifest.py -q`; verify failure because the manifest does not exist.
 - [ ] Create the complete factual manifest and Dota mapping. Verify prices, printed bonuses, rewards and conditions from original cards and publisher corrections. Keep original card names only as audit identifiers; runtime display uses Dota names. Map the four class types to distinct heroes, including Axe for the warrior role and Riki for the thief role. Repeated copies share one definition and preserve the same mechanics.
+- [ ] Add image-candidate rows to the audit with `image_url`, `original_publication_url`, `credit` and `asset_kind` (`portrait`, `icon`, `official_art`, `loading_screen`, `wallpaper`, `promo`). Search beyond dota2.com and record the primary publication even when the image file comes from a different host. Missing images remain explicit audit gaps for the media stage; they never change mechanical card mappings.
 - [ ] Add `test_every_definition_has_verified_evidence` and `test_dota_names_do_not_control_mechanical_keys`: all records have evidence, positive copy counts and unique keys; changing a display name leaves the mechanical fingerprint unchanged.
 - [ ] Run the manifest tests and commit `feat: verify classic card manifest and Dota mapping`.
 
