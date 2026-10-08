@@ -235,17 +235,43 @@ original Russian descriptions, the accepted Dota mappings and 168 physical IDs i
 verified source record. No callback key, number, condition or cost was changed to
 accommodate absent runtime support.
 
-The data compilation is complete; runtime support is not. Named special effects,
-conditions, triggers and abilities still require real handlers, closed validators
-and behavior tests before production acceptance. On the compilation branch based
-on `316af736bf2b6eec29737df203cbf2e860e79692`, all four registries are empty and the
-release loader correctly rejects `3_872_orcs.bad_stuff[0]` for unimplemented
-`orcs_bad_stuff_die`. The exact dependent callback inventory below remains the
-Task 5/6 handoff. The definition-keyed [behavior coverage ledger](classic-dota-v1-behavior-coverage.md)
-identifies existing generic test evidence and explicitly pending real-catalog
-scenarios for every card; pending names are proposals, not tests claimed to pass.
+The compiled release now has implemented handlers and closed validators for all
+57 special-effect keys, 38 conditions, 10 abilities and two triggers. Installed
+validation succeeds for all 168 cards and the matching media release. The current
+catalog digest is `8bf556a9ff3ba28a7fb0c116432c8ba076d5183702634a9e56ec53c111593a76`.
+The definition-keyed [behavior coverage ledger](classic-dota-v1-behavior-coverage.md)
+records executed original-card scenarios and their acceptance status; PENDING
+rows are not release claims. Final behavioral review, packaging and deployment
+checks remain separate gates.
+
+Historical compilation evidence: on the branch based on
+`316af736bf2b6eec29737df203cbf2e860e79692`, the four registries were empty and the
+loader correctly rejected `3_872_orcs.bad_stuff[0]` for unimplemented
+`orcs_bad_stuff_die`. That rejection was resolved through actual handlers and
+behavior tests, with no validator bypass or source-data adjustment.
 
 Older face evidence was reconciled with known publisher changes, but there is no publisher-hosted comprehensive current face archive. Re-inspection of an owned contemporary physical deck would improve source stability and edition assurance. Third-party image hosts may disappear; per-record URLs identify the exact face inspected. No card artwork was copied into this repository.
+
+### Explicit interpretations of uncommon combinations
+
+- Potted Plant gives one extra Treasure if either fighter is an Elf, including
+  a helper, without stacking for two Elves. This is an interpretation of its
+  [original wording](https://i.ebayimg.com/images/g/GeYAAeSwZjlqMPgP/s-l1600.webp)
+  and joint combat, not a card-specific publisher ruling.
+- Tuba rewards a wearer, including a helper, once after successfully escaping
+  the whole fight, while still in use. Net Troll's tied receivers use injected
+  dice for order. Snails loses the available eligible cards if fewer than the
+  rolled count exist. Crabs loses open Armor and actually worn mapped items below
+  the waist. These edge cases follow the inspected printed wording and general
+  resolution rules; they are identified as interpretations rather than extra
+  text printed on the cards.
+- Leperchaun skips a dead immediate neighbor's receipt, preserving the other
+  printed neighbor's obligation. It does not substitute another player. The
+  [official FAQ](https://munchkin.game/gameplay/faq/) prohibits card receipt
+  while dead.
+- A forced helper leaves if a later legal intervention makes the leader's fight
+  a winning one; a voluntary helper remains. This is directly required by the
+  July 2018 update in the [official FAQ](https://munchkin.game/gameplay/faq/).
 
 ## Named runtime callbacks required by source
 
