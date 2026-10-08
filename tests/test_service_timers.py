@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from random import Random
 
+import pytest
+
 from dota_dungeon.core.model import CombatState, GameState, Player, Trade
 from dota_dungeon.service.store import Mutation, Snapshot
 from dota_dungeon.service.timers import refresh_timers, pause_game, resume_game
@@ -118,3 +120,32 @@ def test_pause_resume_preserves_pending_choice_and_escape_time():
     assert resumed.state.pending_decision.deadline == NOW + timedelta(hours=1, seconds=20)
     assert resumed.state.combat.escape_deadline == NOW + timedelta(hours=1, seconds=15)
     assert saved.state.pending_decision.deadline == NOW + timedelta(seconds=30)
+
+
+@pytest.mark.parametrize("status", ["active", "paused"])
+def test_host_can_archive_unfinished_match_without_awarding_victory(status):
+    from dota_dungeon.service.timers import finish_game
+    saved = snapshot()
+    saved.status = status
+    ended = finish_game(saved, 11, NOW)
+    assert ended.status == "finished"
+    assert ended.state.phase == "game.finished"
+    assert ended.state.trades["trade"].status == "cancelled"
+    assert ended.state.players[11].level == 1
+    assert ended.state.combat == saved.state.combat  # Preserve archival card zones.
+    assert [(event.audience, event.name, event.data) for event in ended.events] == [
+        ("group", "game.ended", {"user_id": 11})]
+    assert ended.metadata["ended_at"] == NOW.isoformat()
+    assert ended.timers == []
+    assert saved.state.phase == "combat.active"
+    assert saved.state.trades["trade"].status == "pending"
+
+
+def test_nonhost_cannot_archive_another_players_match():
+    from dota_dungeon.service.timers import finish_game
+    saved = snapshot()
+    before_rng = saved.rng.getstate()
+    with pytest.raises(ValueError, match="host"):
+        finish_game(saved, 22, NOW)
+    assert saved.state.phase == "combat.active"
+    assert saved.rng.getstate() == before_rng

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import json
 
 from .store import Mutation, Snapshot
+from ..core.model import Event
 
 
 def _help_key(state):
@@ -68,6 +69,24 @@ def pause_game(snapshot: Snapshot, now: datetime) -> Mutation:
     metadata["paused_at"] = now.isoformat()
     return Mutation(deepcopy(snapshot.state), deepcopy(snapshot.rng), [], metadata=metadata,
                     status="paused")
+
+
+def finish_game(snapshot: Snapshot, actor_id: int, now: datetime) -> Mutation:
+    """Archive a host-ended match without inventing a winner or changing cards."""
+    if actor_id != snapshot.state.host_id:
+        raise ValueError("only host can finish game")
+    if snapshot.status == "finished" or now.utcoffset() is None:
+        raise ValueError("game is finished or timestamp is invalid")
+    state = deepcopy(snapshot.state)
+    state.phase = "game.finished"
+    for trade in state.trades.values():
+        if trade.status == "pending":
+            trade.status = "cancelled"
+    metadata = deepcopy(snapshot.metadata)
+    metadata.update(ended_by=actor_id, ended_at=now.isoformat())
+    return Mutation(state, deepcopy(snapshot.rng),
+                    [Event("group", "game.ended", {"user_id": actor_id})],
+                    metadata=metadata, status="finished")
 
 
 def resume_game(snapshot: Snapshot, now: datetime) -> Mutation:
