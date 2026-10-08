@@ -221,6 +221,8 @@ class GameRepository:
                 return TransactionResult(_snapshot(row), duplicate=True)
             if row["version"] != expected_version:
                 raise StaleAction("game has changed")
+            if row["status"] == "finished":
+                raise ValueError("game is finished")
             if row["status"] == "paused" and not allow_paused:
                 raise ValueError("game is paused")
             snapshot = _snapshot(row)

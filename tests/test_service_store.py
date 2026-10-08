@@ -128,6 +128,22 @@ def test_finished_state_has_durable_finished_status_and_releases_lobby(repositor
     assert restarted.active_group(state.group_id).state.game_id == "next-party"
 
 
+def test_finished_match_replay_is_safe_but_new_mutation_is_rejected(repository):
+    from dota_dungeon.service.store import Mutation
+    create(repository)
+
+    def finish(snapshot):
+        snapshot.state.phase = "game.finished"
+        return Mutation(snapshot.state, snapshot.rng, [])
+
+    repository.apply("game", 0, "tg:finish", finish)
+    assert repository.apply("game", 0, "tg:finish", finish).duplicate
+    with pytest.raises(ValueError, match="finished"):
+        repository.apply("game", 1, "tg:after-finish", level_up, allow_paused=True)
+    assert repository.get("game").state.players[11].level == 1
+    assert not repository.update_seen("tg:after-finish")
+
+
 def test_invalid_outbox_message_rolls_back_move(repository):
     from dota_dungeon.service.store import Mutation
     create(repository)
