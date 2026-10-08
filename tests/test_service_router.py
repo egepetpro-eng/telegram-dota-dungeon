@@ -93,8 +93,9 @@ def message(uid, chat, text, update_id, chat_type=None):
 
 
 def press(intent, uid, update_id, *, chat=None):
+    chat_id = intent.chat_id if chat is None else chat
     return {"update_id": update_id, "callback_query": {"id": f"q{update_id}", "from": {"id": uid},
-            "message": {"chat": {"id": intent.chat_id if chat is None else chat}}, "data": intent.token}}
+            "message": {"chat": {"id": chat_id, "type": "private" if chat_id > 0 else "supergroup"}}, "data": intent.token}}
 
 
 def button(repo, action, *, actor=None, game=None, **args):

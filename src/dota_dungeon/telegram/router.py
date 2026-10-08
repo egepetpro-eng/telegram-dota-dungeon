@@ -347,6 +347,12 @@ class Router:
         self._check_release(state)
         authorize_callback(intent, telegram_user_id=uid, chat_id=chat, now=now, current_version=snapshot.version,
                            member_ids=set(state.players), phase=state.phase, host_id=state.host_id)
+        chat_type = query["message"]["chat"].get("type")
+        if intent.chat_id == state.group_id:
+            if chat_type not in {"group", "supergroup"}:
+                raise ValueError("group callback requires a group chat")
+        elif intent.chat_id != self.repository.private_chat(uid) or chat_type != "private":
+            raise ValueError("private callback requires the linked private chat")
         if intent.action in {"confirm_endgame", "cancel_endgame"}:
             if (uid != state.host_id or chat != state.group_id
                     or query["message"]["chat"].get("type") not in {"group", "supergroup"}
