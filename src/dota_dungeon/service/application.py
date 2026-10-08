@@ -46,10 +46,40 @@ class Application:
             raise ValueError("invalid Telegram update id")
         if update_id < self.offset:
             return
-        self.router.route_update(update, now=self.clock())
+        if "my_chat_member" in update:
+            self._membership(update, self.clock())
+        else:
+            self.router.route_update(update, now=self.clock())
         # Router returns only after commit (or a durably recorded rejection).
         self.repository.set_setting("poll_offset", update_id + 1)
         self.offset = update_id + 1
+
+    def _membership(self, update, now):
+        change = update["my_chat_member"]
+        chat = change.get("chat", {})
+        request = f"tg:{update['update_id']}"
+        if chat.get("type") not in {"group", "supergroup"} or type(chat.get("id")) is not int:
+            self.repository.enqueue(request, [])
+            return
+        snapshot = self.repository.active_group(chat["id"])
+        membership = change.get("new_chat_member", {})
+        present = membership.get("status") in {"member", "administrator"} or (
+            membership.get("status") == "restricted" and membership.get("is_member") is True)
+        if snapshot is None:
+            self.repository.enqueue(request, [])
+            return
+        if not present and snapshot.status == "active":
+
+            def transition(current):
+                return pause_game(current, now)
+
+            self.repository.apply(snapshot.state.game_id, snapshot.version, request, transition)
+        else:
+            messages = []
+            if present and snapshot.status == "paused":
+                messages = [{"method": "sendMessage", "payload": {"chat_id": chat["id"],
+                    "text": "Бот снова в группе. Партия сохранена и остаётся на паузе. Ведущий может продолжить через /resume."}}]
+            self.repository.enqueue(request, messages, game_id=snapshot.state.game_id)
 
     def _pause_unavailable(self, entry, now):
         chat_id = entry["payload"].get("chat_id")

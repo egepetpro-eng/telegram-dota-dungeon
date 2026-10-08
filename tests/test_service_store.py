@@ -200,3 +200,52 @@ def test_replayed_start_does_not_reenable_blocked_private_chat(repository):
     repository.unavailable_private(11)
     assert not repository.enqueue("tg:start", [message], private_link=(11, 11))
     assert repository.private_chat(11) is None
+
+
+@pytest.mark.parametrize("kind", ["reaction", "help", "trade"])
+def test_restart_executes_persisted_timeout_once_without_repeated_reward(repository, kind):
+    from types import SimpleNamespace
+    from dota_dungeon.core.model import CardDef, CombatState, Trade
+    from dota_dungeon.service.application import Application
+    from dota_dungeon.service.store import GameRepository, Mutation
+    now = datetime.now(timezone.utc)
+    catalog = {"m": CardDef("m", "door", "monster", "creep", bonus=0, treasures=1),
+               "t": CardDef("t", "treasure", "item", "item")}
+    state = create(repository)
+    state.card_decks = {"m": "door", "t": "treasure"}
+    if kind != "trade":
+        state.phase = "combat.active"
+        state.combat = CombatState(fighter_ids=[11], monster_ids=["m"])
+        if kind == "reaction":
+            state.combat.reaction_deadline = now - timedelta(seconds=1)
+            state.treasure_deck = ["t"]
+        else:
+            state.combat.pending_help = (22, 0, [])
+    else:
+        state.trades["offer"] = Trade("offer", 11, 22, [], [], now - timedelta(seconds=1))
+
+    def schedule(snapshot):
+        args = {"helper_id": 22} if kind == "help" else {"trade_id": "offer"} if kind == "trade" else {}
+        return Mutation(state, snapshot.rng, [], timers=[{"timer_id": "deadline", "kind": kind,
+                        "args": args, "due_at": now}])
+
+    repository.apply("game", 0, "schedule", schedule)
+    restarted = GameRepository(repository.database_url, schema=repository.schema)
+
+    class Panels:
+        def mutation_messages(self, state, *args, **kwargs):
+            return [{"method": "sendMessage", "payload": {"chat_id": state.group_id, "text": "timeout resolved"}}], []
+
+    application = Application(restarted, None, Panels(), SimpleNamespace(catalog=catalog), clock=lambda: now)
+    assert application.tick_timers(now) == 1
+    assert application.tick_timers(now) == 0
+    result = restarted.get("game").state
+    if kind == "reaction":
+        assert result.players[11].level == 2
+        assert result.players[11].hand == ["t"]
+        assert result.combat is None
+    elif kind == "help":
+        assert result.combat.pending_help is None
+    else:
+        assert result.trades["offer"].status == "expired"
+    assert len(restarted.pending_outbox()) == 1

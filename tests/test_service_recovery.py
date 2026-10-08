@@ -1,5 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from random import Random
+
+from dota_dungeon.core.model import GameState, Player
+from dota_dungeon.service.store import Snapshot, TransactionResult
 
 from dota_dungeon.service.application import Application, Config
 from dota_dungeon.telegram.client import BotAPIError
@@ -43,6 +47,15 @@ class Store:
     def enqueue(self, *args, **kwargs):
         return True
 
+    def active_group(self, group_id):
+        return self.snapshot if self.snapshot.state.group_id == group_id else None
+
+    def apply(self, game_id, version, request_id, transition, **kwargs):
+        mutation = transition(self.snapshot)
+        self.snapshot = Snapshot(mutation.state, mutation.rng, version + 1,
+                                 mutation.metadata or self.snapshot.metadata, mutation.status or self.snapshot.status)
+        return TransactionResult(self.snapshot)
+
 
 class Bot:
     def __init__(self, replies):
@@ -66,6 +79,9 @@ class Router:
         if self.fail:
             raise RuntimeError("crash before durable receipt")
         self.handled.append(update["update_id"])
+
+    def mutation_messages(self, *args, **kwargs):
+        return [], []
 
 
 def app(store, bot, router=None):
@@ -119,3 +135,22 @@ def test_rate_limit_persists_next_attempt_instead_of_losing_message():
 def test_configuration_repr_and_errors_do_not_expose_secrets():
     config = Config.from_env({"BOT_TOKEN": "secret-token", "DATABASE_URL": "postgres://secret-db", "CATALOG_VERSION": "classic-dota-v1"})
     assert "secret" not in repr(config)
+
+
+def test_removing_bot_pauses_game_and_readding_requires_explicit_host_resume():
+    store = Store()
+    state = GameState("g", -100, 11, "turn.prepare", 11, [11, 22], {11: Player(11), 22: Player(22)})
+    store.snapshot = Snapshot(state, Random(0), 0)
+    worker = app(store, Bot([]))
+
+    def membership(update_id, status):
+        return {"update_id": update_id, "my_chat_member": {"chat": {"id": -100, "type": "supergroup"},
+                "new_chat_member": {"status": status}}}
+
+    worker.handle_update(membership(1, "left"))
+    assert store.snapshot.status == "paused"
+    assert store.snapshot.metadata["paused_at"] == NOW.isoformat()
+    worker.handle_update(membership(2, "member"))
+    assert store.snapshot.status == "paused"
+    assert store.snapshot.state.players[11].level == 1
+    assert store.setting("poll_offset") == 3
