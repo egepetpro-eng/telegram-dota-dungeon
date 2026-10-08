@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from random import Random
 
+import pytest
+
 from dota_dungeon.core.model import GameState, Player
 from dota_dungeon.service.store import Snapshot, TransactionResult
 from dota_dungeon.service.store import StaleAction
@@ -158,6 +160,43 @@ def test_removing_bot_pauses_game_and_readding_requires_explicit_host_resume():
     assert store.snapshot.status == "paused"
     assert store.snapshot.state.players[11].level == 1
     assert store.setting("poll_offset") == 3
+
+
+@pytest.mark.parametrize("kind, command_name, operands", [
+    ("decision", "expire_decision", {"decision_id": "decision:7"}),
+    ("escape", "expire_escape", {"player_id": 22, "monster_id": "foe", "roll_id": "roll:5"}),
+])
+def test_continuation_timer_uses_trusted_actor_clock_and_closed_identifiers(monkeypatch, kind, command_name, operands):
+    import dota_dungeon.service.application as module
+    calls = []
+
+    class TimedStore(Store):
+        def due_timers(self, **kwargs):
+            return [{"timer_id": "current", "game_id": "g", "expected_version": 4,
+                     "kind": kind, "args": {**operands, "now": "untrusted", "actor_id": 999}}]
+
+        def cancel_timer(self, *args):
+            raise AssertionError("legal continuation should not be cancelled")
+
+        def apply(self, game_id, version, request_id, transition, **kwargs):
+            mutation = transition(self.snapshot)
+            assert mutation.activity is False
+            return TransactionResult(Snapshot(mutation.state, mutation.rng, version + 1))
+
+    def capture(state, command, catalog, rng):
+        calls.append(command)
+        return state, []
+
+    monkeypatch.setattr(module, "decide", capture)
+    store = TimedStore()
+    state = GameState("g", -100, 11, "combat.run_away", 11, [11, 22],
+                      {11: Player(11), 22: Player(22)})
+    store.snapshot = Snapshot(state, Random(42), 4)
+    assert app(store, Bot([])).tick_timers(NOW) == 1
+    assert len(calls) == 1
+    assert calls[0].name == command_name
+    assert calls[0].actor_id == 11
+    assert calls[0].args == {**operands, "now": NOW}
 
 
 def test_blocked_private_delivery_keeps_durable_retry_when_pause_version_races():

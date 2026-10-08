@@ -167,6 +167,13 @@ class Application:
                         command_name = "expire_trade"
                         args["trade_id"] = timer["args"]["trade_id"]
                         actor_id = snapshot.state.trades[args["trade_id"]].sender_id
+                    elif timer["kind"] == "decision":
+                        command_name = "expire_decision"
+                        args["decision_id"] = timer["args"]["decision_id"]
+                    elif timer["kind"] == "escape":
+                        command_name = "expire_escape"
+                        for name in ("player_id", "monster_id", "roll_id"):
+                            args[name] = timer["args"][name]
                     else:
                         raise RuleError("unknown timer kind")
                     state, events = decide(snapshot.state, Command(snapshot.state.game_id, actor_id,

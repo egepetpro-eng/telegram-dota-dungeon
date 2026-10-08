@@ -31,7 +31,15 @@ def refresh_timers(snapshot: Snapshot, mutation: Mutation, now: datetime) -> Mut
                                 "args": args or {}, "due_at": due})
 
     combat = state.combat
-    if combat and combat.reaction_deadline:
+    decision = getattr(state, "pending_decision", None)
+    if decision and decision.kind != "loss_choice":
+        add("decision", decision.id, decision.deadline, {"decision_id": decision.id})
+    if combat and not decision and getattr(combat, "escape_deadline", None):
+        for (user_id, monster_id), roll_id in combat.escape_roll_ids.items():
+            if (user_id, monster_id) in combat.escape_rolls:
+                add("escape", roll_id, combat.escape_deadline,
+                    {"player_id": user_id, "monster_id": monster_id, "roll_id": roll_id})
+    if combat and not decision and combat.reaction_deadline:
         eligible = set(state.order) - set(combat.fighter_ids)
         deadline = now if eligible.issubset(combat.passes) else combat.reaction_deadline
         add("reaction", "current", deadline)
@@ -76,6 +84,11 @@ def resume_game(snapshot: Snapshot, now: datetime) -> Mutation:
 
     if state.combat and state.combat.reaction_deadline:
         state.combat.reaction_deadline = shifted(state.combat.reaction_deadline)
+    if state.combat and getattr(state.combat, "escape_deadline", None):
+        state.combat.escape_deadline = shifted(state.combat.escape_deadline)
+    decision = getattr(state, "pending_decision", None)
+    if decision:
+        decision.deadline = shifted(decision.deadline)
     for trade in state.trades.values():
         if trade.status == "pending":
             trade.expires_at = shifted(trade.expires_at)
