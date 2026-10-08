@@ -140,3 +140,10 @@ def test_special_timing_does_not_contradict_printed_eligibility():
     assert "вне боя" not in lamp
     after = definitions["mutilate_the_bodies"]["presentation"]["description_ru"].lower()
     assert "в любой игровой фазе" not in after
+
+
+def test_invisibility_potion_only_rescues_its_user_after_their_failed_roll():
+    description = compiled()["definitions"]["invisibility_potion"]["presentation"]["description_ru"].lower()
+    for phrase in ("своего неудачного броска", "автоматически", "только тебя", "всех монстров"):
+        assert phrase in description
+    assert "одному игроку" not in description

@@ -4991,7 +4991,7 @@
           "https://worksheets.clipart-library.com/images2/printable-munchkin-cards/printable-munchkin-cards-0.jpg",
           "https://munchkin.game/site-munchkin/assets/files/1138/munchkin_rules-1.pdf"
         ],
-        "description_ru": "Цена: 200 золотых. Одноразовая малая вещь, без слота; после применения сбрасывается. После неудачного броска обеспечь автоматический побег одному игроку. Применяй при побеге."
+        "description_ru": "Цена: 200 золотых. Одноразовая малая вещь, без слота; после применения сбрасывается. После своего неудачного броска автоматически убеги от всех монстров: действие спасает только тебя. Применяй при побеге."
       },
       "mechanics": {
         "deck": "treasure",
@@ -6862,5 +6862,5 @@
     "wishing_ring:2": "wishing_ring",
     "yuppie_water:1": "yuppie_water"
   },
-  "digest": "8ec08a4b28f273ba6149e2c6436baa4e7308c1f7a32e721fdb8c8f86343c49e8"
+  "digest": "32d2dedf9a6d1efc1cf415ce580baaa17eaa87cdeea4f062d985ebf9e2da14f1"
 }

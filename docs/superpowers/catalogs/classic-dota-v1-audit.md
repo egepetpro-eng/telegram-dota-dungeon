@@ -250,3 +250,12 @@ Fresh full suite on the compilation branch: `python -m pytest -q` — 343 passed
 validation exits 1 for the expected unimplemented `orcs_bad_stuff_die`; there is
 no runnable-release or wheel-install success claim at this stage. Canonical
 compiled digest: `8ec08a4b28f273ba6149e2c6436baa4e7308c1f7a32e721fdb8c8f86343c49e8`.
+
+Task 7 review correction clarifies that Invisibility Potion applies after the
+user's own failed escape and automatically rescues only that user from all
+monsters. Mechanics and accepted mappings remain exact. The recipient wording
+regression failed before correction (1 failed, 37 passed); corrected description
+suite: 38 passed. Current compiled digest after this presentation correction:
+`32d2dedf9a6d1efc1cf415ce580baaa17eaa87cdeea4f062d985ebf9e2da14f1`.
+Fresh full suite after the correction: 344 passed, 16 PostgreSQL integration
+tests skipped for the same missing `TEST_DATABASE_URL` fixture requirement.
