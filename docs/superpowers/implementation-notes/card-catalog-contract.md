@@ -40,6 +40,16 @@ CardDef gains defaulted `rule_key`, `play_phases`, `target_rule`, `restrictions`
 
 Lifecycle commands: `leave_lobby` (no args; started party/host leaving rejected), `decline_help` (no args, invited helper only), `cancel_trade` (`trade_id`, sender/receiver only). Special effect handler calling contract is `handler(state, target_id, args, catalog, *, choices, rng) -> (state, events)`; conditional checker is `handler(state, actor_id, target_id, catalog, args) -> bool`. Task 6's context-rich dispatcher adapts to these contracts, rather than changing handlers silently.
 
+### Accepted draw pipeline (Task 4)
+
+`draw_cards(state, user_id, deck, count, face_up, catalog, rng)` is shared by initial dealing, doors, room loot, rebirth, rewards and draw effects. An exhausted pile recycles only its own discard. If both are empty, the action keeps any cards already drawn and emits `draw_unavailable` for the missing count. A trigger's source remains reserved until its acquisition chain completes, so it cannot be recycled into that same chain.
+
+Hidden `card.drawn` events use `user:<recipient_id>`; public acquisition and compulsory public triggers use the group audience. Hoard enlarges the shared face-up reward pool before an agreed helper share is allocated. Initial dealing completes every base hand before additional acquisition draws. `pending_initial_triggers: list[tuple[int, str]]` contains references to cards held in their owners' hands, rather than a second physical zone. Initial Divine Intervention is announced for preparation and resolves before the first door is drawn; unrelated hands stay hidden.
+
+### Item classification and ability names
+
+Source ability keys with underscores are canonical (for example `warrior_berserk`). Dotted names mentioned by the implementation plan may be compatibility aliases; they never change manifest fingerprints. Cards bearing a printed Gold Piece value, including No Value, are Items: valued and zero-value one-shot Items can be carried, traded and discarded by Item effects. Their physical `kind` remains unchanged, and carrying them grants no permanent equipment bonus. A shared source-aware Item predicate must serve the engine and Telegram menus.
+
 ## Media v1
 
 Candidates: `{schema_version: 1, assets: dict[str, Asset]}`. Asset fields: `dota_entity_id`, `image_url`, `original_publication_url`, `credit`, `asset_kind`, `verified_on`, `status`, `notes`, all strings. `asset_kind`: `portrait | icon | official_art | loading_screen | wallpaper | promo`; status: `candidate | verified | rejected`. HTTPS source URLs required. Verification means inspected image and attributable primary publication, not just a working URL or a fan-art search result.
