@@ -337,6 +337,9 @@ def assign_hireling(
         raise RuleError("hireling requires owned equipment Item")
     result = deepcopy(state)
     p = result.players[actor_id]
+    former_item = p.hireling_items.get(hireling_id)
+    if former_item in p.equipped:
+        p.equipped.remove(former_item)
     if card_id in p.hand:
         p.hand.remove(card_id)
         p.in_play.append(card_id)

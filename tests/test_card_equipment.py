@@ -416,3 +416,27 @@ def test_hireling_swaps_assigned_item_preserving_old_carried_item_and_capacity()
     assert "shield_of_ubiquity" not in out.players[1].equipped
     assert out.players[1].pending_big_excess == 1
     assert not out.treasure_discard
+
+
+def test_hireling_swap_removes_former_assigned_equipped_item_without_slot_conflict():
+    from dota_dungeon.core.combat import combat_strength
+
+    s, c = game(phase="turn.prepare")
+    s.players[1].hand = [
+        "hireling",
+        "eleven_foot_pole",
+        "swiss_army_polearm",
+        "horny_helmet",
+    ]
+    s, _ = play_card(s, 1, "hireling", {}, c, Random(2), NOW)
+    s, _ = items.assign_hireling(s, 1, "hireling", "eleven_foot_pole", c)
+    s, _ = items.equip(s, 1, "swiss_army_polearm", c)
+    s, _ = items.equip(s, 1, "eleven_foot_pole", c)
+    assert set(s.players[1].equipped) == {"swiss_army_polearm", "eleven_foot_pole"}
+    out, _ = items.assign_hireling(s, 1, "hireling", "horny_helmet", c)
+    assert out.players[1].equipped == ["swiss_army_polearm"]
+    assert "eleven_foot_pole" in out.players[1].in_play
+    assert out.players[1].hireling_items == {"hireling": "horny_helmet"}
+    assert out.players[1].pending_big_excess == 0
+    assert combat_strength(out, 1, c) == 9
+    assert set(s.players[1].equipped) == {"swiss_army_polearm", "eleven_foot_pole"}
