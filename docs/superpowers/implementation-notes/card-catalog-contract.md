@@ -50,6 +50,49 @@ Hidden `card.drawn` events use `user:<recipient_id>`; public acquisition and com
 
 Source ability keys with underscores are canonical (for example `warrior_berserk`). Dotted names mentioned by the implementation plan may be compatibility aliases; they never change manifest fingerprints. Cards bearing a printed Gold Piece value, including No Value, are Items: valued and zero-value one-shot Items can be carried, traded and discarded by Item effects. Their physical `kind` remains unchanged, and carrying them grants no permanent equipment bonus. A shared source-aware Item predicate must serve the engine and Telegram menus.
 
+## Continuation and exceptional combat handoff (Task 6)
+
+`GameState.pending_decision` is an optional `PendingDecision(id, kind, chooser_ids,
+deadline, payload, responses)` dataclass. The private payload is internal state;
+the UI uses `card_rules.decision_options(state, user_id, catalog)` and never
+renders raw payload or responses. Unauthorized or already-responded users receive
+no selectable cards. `respond_decision {decision_id, choices, now}` is limited to
+an actual chooser. Optional `curse_response`, `die_response`, `reward_draw` and
+`wall_consent` stages default after 30 seconds through `expire_decision` by the
+original active player. Mandatory `loss_choice` never expires into an automatic
+card selection; inactivity pauses the party. Partial responses persist.
+
+`resolving_card_ids` is a physical zone for reserved source cards;
+`resolution_queue` contains references. Combat physical zones additionally include
+`retired_monster_ids` and `charmed_monster_ids`. `virtual_monsters` maps a Mate
+reference to its original card definition; it is not another physical copy.
+`combat.monster_card(state, reference, catalog)` resolves both forms. Reward
+entitlement metadata records original leader/helper terms before transfer; Hoard
+stays reserved through the shared acquisition chain.
+
+`CombatState.leader_id` can change while `state.active_user_id` remains the original
+turn owner. `forced_helper` distinguishes compulsory help from voluntary help.
+`reaction_seconds` is supplied by trusted metadata as 15/30/60, and legal combat
+interventions preserve that configured duration. A later leader-winning combat
+releases a forced helper without penalty.
+
+Stored escape dice use `escape_rolls`, `escape_roll_ids` and `escape_deadline`.
+`expire_escape {player_id, monster_id, roll_id, now}` binds the exact current
+opportunity; it cannot apply an old roll. Own Loaded Die and other printed
+responses are selected via `reactive_card_options(..., now=trusted_render_time)`.
+Optional deadlines are preserved on reload and shifted by pause/resume.
+
+Special operands are separate `play_card.choices`: own monster card for Wandering
+Monster, own replacement for Illusion, exact roll/result for Loaded Die, exact
+escape attempt for Invisibility/Glue, selected willing fighter IDs for Wall,
+pending effect or continuing curse for Ring. `monster_action_options` exposes
+lawful printed alternatives to fighting. `monster_action`, `join_undead` and
+`force_help` validate those actions through the same command boundary.
+
+`play_identity {card_id, replace_id?}` supports explicit owned same-kind atomic
+replacement. Corpse contents become public on death; `corpse_loot_order` specifies
+the current authorized looter, with injected dice resolving equal-level order.
+
 ## Media v1
 
 Candidates: `{schema_version: 1, assets: dict[str, Asset]}`. Asset fields: `dota_entity_id`, `image_url`, `original_publication_url`, `credit`, `asset_kind`, `verified_on`, `status`, `notes`, all strings. `asset_kind`: `portrait | icon | official_art | loading_screen | wallpaper | promo`; status: `candidate | verified | rejected`. HTTPS source URLs required. Verification means inspected image and attributable primary publication, not just a working URL or a fan-art search result.

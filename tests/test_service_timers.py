@@ -73,10 +73,9 @@ def test_automatic_trade_timeout_does_not_extend_required_action_idle_deadline()
 
 
 def continuation(saved, kind="curse_response"):
-    # Test the frozen adapter contract independently of unfinished core effects.
-    from types import SimpleNamespace
-    saved.state.pending_decision = SimpleNamespace(
-        id="decision:7", kind=kind, deadline=NOW + timedelta(seconds=30))
+    from dota_dungeon.core.model import PendingDecision
+    saved.state.pending_decision = PendingDecision(
+        "decision:7", kind, [11], NOW + timedelta(seconds=30))
     return saved
 
 

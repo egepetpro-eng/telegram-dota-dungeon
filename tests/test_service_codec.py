@@ -73,6 +73,46 @@ def test_pending_identity_and_big_item_selections_roundtrip_as_owned_choices():
     assert not restored.players[22].pending_identity_excess
 
 
+@pytest.mark.parametrize("kind", ["curse_response", "die_response", "loss_choice",
+                                  "reward_draw", "wall_consent"])
+def test_private_continuation_and_virtual_combat_metadata_survive_json_restart(kind):
+    import json
+    from dota_dungeon.core.model import PendingDecision
+    state = rich_state()
+    state.pending_decision = PendingDecision("decision:3", kind, [11, 22],
+        state.combat.reaction_deadline,
+        {"maximum": {11: 2, 22: 1}, "card_ids": ["secret"], "target_id": 11},
+        {22: {"card_ids": ["secret-helper-cost"]}})
+    state.decision_seq = 3
+    state.resolving_card_ids = ["hoard"]
+    state.resolution_queue = [{"kind": "source", "card_id": "hoard"}]
+    state.corpse_loot_order = {22: [11]}
+    state.after_combat = True
+    combat = state.combat
+    combat.leader_id = 22
+    combat.forced_helper = True
+    combat.virtual_monsters = {"mate:3": "creep"}
+    combat.monster_modifiers = {"mate:3": [{"amount": 10}]}
+    combat.entry_processed = {(22, "creep")}
+    combat.retired_monster_ids = ["retired"]
+    combat.pending_rewards = [{"beneficiary": 11, "helper_id": 22,
+        "helper_item_ids": ["axe"], "helper_treasure_count": 1}]
+    combat.reward_state = {"held": ["hoard"], "batches": [{"owner": 11}]}
+    combat.escape_deadline = combat.reaction_deadline
+    combat.escape_roll_ids = {(11, "creep"): "escape:9"}
+    combat.escape_no_pursuit = {(22, "creep")}
+    combat.automatic_escapes = {(11, "creep")}
+    combat.card_sides = {"potion": "monsters"}
+    restored = decode_state(json.loads(json.dumps(encode_state(state))))
+    assert restored == state
+    assert type(restored.pending_decision) is PendingDecision
+    assert restored.pending_decision.responses[22]["card_ids"] == ["secret-helper-cost"]
+    assert restored.combat.escape_roll_ids[(11, "creep")] == "escape:9"
+    assert restored.combat.virtual_monsters["mate:3"] == "creep"
+    restored.pending_decision.responses[22]["card_ids"].clear()
+    assert state.pending_decision.responses[22]["card_ids"] == ["secret-helper-cost"]
+
+
 def test_combat_trade_and_death_survive_json_roundtrip():
     import json
     state = rich_state()
