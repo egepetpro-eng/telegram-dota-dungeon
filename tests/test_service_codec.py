@@ -25,6 +25,54 @@ def rich_state():
     )
 
 
+def test_character_choices_and_unresolved_escape_survive_restart():
+    import json
+    from dota_dungeon.core.engine import decide
+    from dota_dungeon.core.model import CardDef, Command
+    state = rich_state()
+    state.phase = "combat.run_away"
+    state.combat.fighter_ids = [11]
+    state.combat.helper_id = None
+    state.combat.pending_help = None
+    state.combat.escape_rolls = {(11, "creep"): 6}
+    state.combat.escape_uses = {(11, "creep", "wizard_flight"): 1}
+    state.combat.escape_bonuses = {(11, "creep"): 1}
+    state.combat.ability_uses = {(11, "thief_backstab", 22): 1}
+    state.combat.charmed_monster_ids = ["charmed"]
+    state.players[11].character_sex = "female"
+    state.players[11].attachments = {"cheat": "axe"}
+    state.players[11].hireling_items = {"hireling": "carried"}
+    state.players[11].in_play = ["axe", "cheat", "hireling", "carried"]
+    catalog = {key: CardDef(key, "door", "monster", key, bonus=1)
+               for key in ("creep", "charmed")}
+    catalog.update({key: CardDef(key, "treasure", "item", key)
+                    for key in ("axe", "carried")})
+    catalog.update({key: CardDef(key, "treasure", "special", key)
+                    for key in ("cheat", "hireling")})
+    state.card_decks.update({key: "door" for key in catalog})
+    restored = decode_state(json.loads(json.dumps(encode_state(state))))
+    assert restored == state
+    result, _ = decide(restored, Command("persisted", 11, "finish-die", "resolve_escape",
+                                      {"monster_id": "creep"}), catalog, Random(42))
+    assert result.combat is None
+    assert result.phase == "turn.charity"
+    assert set(result.door_discard) == {"creep", "charmed"}
+    assert result.players[11].attachments == {"cheat": "axe"}
+    assert result.players[11].hireling_items == {"hireling": "carried"}
+
+
+def test_pending_identity_and_big_item_selections_roundtrip_as_owned_choices():
+    import json
+    state = rich_state()
+    state.players[11].pending_big_excess = 2
+    state.players[11].pending_identity_excess = {"race": 1, "role": 1}
+    restored = decode_state(json.loads(json.dumps(encode_state(state))))
+    assert restored.players[11].pending_big_excess == 2
+    assert restored.players[11].pending_identity_excess == {"race": 1, "role": 1}
+    assert restored.players[22].pending_big_excess == 0
+    assert not restored.players[22].pending_identity_excess
+
+
 def test_combat_trade_and_death_survive_json_roundtrip():
     import json
     state = rich_state()
