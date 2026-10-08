@@ -110,14 +110,7 @@ class Game:
             selected = args.get("target", {}).get("card_id")
             if selected in before.door_discard + before.treasure_discard:
                 public_cards.add(selected)
-        public_recipients = set()
-        if before.combat:
-            c = before.combat
-            if c.helper_id is not None:
-                public_recipients.update(c.fighter_ids)
-            for reward in c.pending_rewards:
-                if reward["helper_id"] is not None:
-                    public_recipients.update((reward["beneficiary"], reward["helper_id"]))
+        public_recipients = public_reward_recipients(before, action, args)
         self.public_hand_ids = assert_hand_privacy(
             before, self.state, events, known_public=self.public_hand_ids,
             public_cards=public_cards, public_draw_recipients=public_recipients)
@@ -230,6 +223,40 @@ def strings_in(value):
     return set()
 
 
+def public_reward_recipients(before, action, args):
+    """Only combat settlement earns public Treasures for helped fighters.
+
+    Escape rewards from Tuba are private, even for a helper. Escape settlement
+    may also deliver an earlier fighter's earned rewards after Transferral;
+    those entitlements retain their original helper and public visibility.
+    """
+    recipients = set()
+    c = before.combat
+    if c is None:
+        return recipients
+    pending = before.pending_decision
+    reward_response = (action in {"respond_decision", "expire_decision"}
+                       and pending is not None and pending.kind == "reward_draw")
+    removal = (action == "play_card" and args.get("card_id", "").split(":")[0]
+               in {"magic_lamp", "pollymorph_potion", "potion_of_halitosis", "out_to_lunch"})
+    monster_reward = (action == "monster_action"
+                      and args.get("choices", {}).get("option") in {"peaceful", "chase_away"})
+    charm = action == "use_ability" and args.get("ability_key") == "wizard_charm"
+    settlement = action == "close_reaction" or removal or monster_reward or charm or reward_response
+    if settlement and c.helper_id is not None:
+        recipients.update(c.fighter_ids)
+    # These entries are already earned, not a prospective victory inferred from
+    # helper presence. During escape the current leader forfeits their rewards.
+    escape_resolution = (before.phase == "combat.run_away"
+                         and action in {"run_away", "resolve_escape", "respond_decision",
+                                        "expire_decision", "monster_action", "play_card"})
+    for reward in c.pending_rewards:
+        survives_escape = escape_resolution and reward["beneficiary"] != c.fighter_ids[0]
+        if (settlement or survives_escape) and reward["helper_id"] is not None:
+            recipients.update((reward["beneficiary"], reward["helper_id"]))
+    return recipients
+
+
 def assert_hand_privacy(before, after, events, *, known_public=(), public_cards=(),
                         public_draw_recipients=()):
     """Protect every post-transition private card, including new acquisitions.
@@ -249,8 +276,11 @@ def assert_hand_privacy(before, after, events, *, known_public=(), public_cards=
             cid = event.data["card_id"]
             if event.audience.startswith("user:"):
                 private_draws.add(cid)
-            elif (event.audience == "group"
+            elif (event.name == "treasure.drawn"
                   and event.data["recipient_id"] in public_draw_recipients):
+                # Combat settlement uses this event; independent Item/room
+                # draws use card.drawn and never inherit its visibility. The
+                # audience under test is not evidence of permission to reveal.
                 public.add(cid)
         # The printed Divine Intervention is revealed even on a private draw.
         if event.name in {"card.triggered", "initial_trigger.pending"}:
@@ -295,6 +325,69 @@ def test_privacy_oracle_retains_lawful_public_door_acquisition(release):
     assert_hand_privacy(g.state, g.state,
                         [Event("group", "known.card", {"text": f"Previously revealed {revealed}"})],
                         known_public=g.public_hand_ids)
+
+
+def test_privacy_oracle_rejects_group_tuba_draw_after_helped_escape(release):
+    g = Game(release)
+    g.equip("tuba_of_charm", actor=2)
+    monster = g.open("net_troll")
+    g.do(1, "ask_help", helper_id=2, treasure_count=0, item_ids=[])
+    g.do(2, "accept_help")
+    g.do(1, "begin_escape")
+    g.safe_treasures()
+    g.rng = Dice(6, 2)
+    g.do(1, "run_away", monster_id=monster)
+    g.do(1, "resolve_escape", monster_id=monster, now=NOW + timedelta(minutes=10))
+    g.do(2, "run_away", monster_id=monster)
+    before = deepcopy(g.state)
+    args = {"monster_id": monster, "now": NOW + timedelta(minutes=10)}
+    events = g.do(2, "resolve_escape", **args)
+    draws = [e for e in events if e.name == "card.drawn"]
+    assert len(draws) == 1
+    assert draws[0].audience == "user:2"
+    assert draws[0].data["card_id"] in g.state.players[2].hand
+    assert g.state.combat is None
+    # Change only the audience of the real Tuba draw, not its cause or payload.
+    leaked = [Event("group", e.name, e.data) if e is draws[0] else e for e in events]
+    with pytest.raises(AssertionError):
+        assert_hand_privacy(
+            before, g.state, leaked,
+            public_draw_recipients=public_reward_recipients(before, "resolve_escape", args))
+
+
+def test_privacy_oracle_separates_tuba_from_earned_transferred_public_rewards(release):
+    g = Game(release)
+    g.equip("tuba_of_charm", actor=3)
+    removed = g.open("floating_nose")
+    survivor = g.give("net_troll", actor=3)
+    g.play("wandering_monster", actor=3, choices={"monster_card_id": survivor})
+    g.do(1, "ask_help", helper_id=2, treasure_count=1, item_ids=[])
+    g.do(2, "accept_help")
+    g.play("potion_of_halitosis", target={"monster_id": removed})
+    g.play("transferral_potion", target={"player_id": 3})
+    g.do(3, "begin_escape")
+    g.safe_treasures()
+    g.rng = Dice(2)
+    g.do(3, "run_away", monster_id=survivor)
+    before = deepcopy(g.state)
+    args = {"monster_id": survivor, "now": NOW + timedelta(minutes=10)}
+    events = g.do(3, "resolve_escape", **args)
+    assert g.state.combat is None
+    private = [e for e in events if e.name == "card.drawn"]
+    public = [e for e in events if e.name == "treasure.drawn"]
+    assert len(private) == 1 and private[0].audience == "user:3"
+    assert len(public) == 3 and all(e.audience == "group" for e in public)
+    public_ids = {e.data["card_id"] for e in public}
+    secret = private[0].data["card_id"]
+    assert g.public_hand_ids == public_ids
+    assert secret in g.state.players[3].hand and secret not in public_ids
+    assert len(g.state.players[1].hand) == 2
+    assert len(g.state.players[2].hand) == len(g.state.players[3].hand) == 1
+    leaked = [Event("group", e.name, e.data) if e is private[0] else e for e in events]
+    with pytest.raises(AssertionError):
+        assert_hand_privacy(
+            before, g.state, leaked,
+            public_draw_recipients=public_reward_recipients(before, "resolve_escape", args))
 
 
 # Printed bonus; prerequisite; incompatible identity/trait; printed slot/size.

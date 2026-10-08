@@ -49,8 +49,12 @@ opportunity, and Platycore permits empty-hand/floor outcomes. Current extensions
 also cover enhanced Mate/independent escape/Illusion, explicit random selections,
 helper-only bonuses, mixed Tuba success, actual-turn Halfling sale reset and
 reactive roll contexts. The final pre-review diagnostic was **147 passed in
-15.20s**. The latest round-1 diagnostic is **151 passed in 20.36s** (147 definition
+15.20s**. The round-1 diagnostic was **151 passed in 20.36s** (147 definition
 nodes plus four privacy-oracle nodes), against development core `333e062`.
+The latest round-2 diagnostic is **153 passed in 19.64s**, using the coordinator's
+accepted integration source at `4f5d083` read-only. It includes the unchanged 147
+definition cases and six privacy-oracle cases; own-branch synchronization and
+scoped test review remain pending.
 Final promotion still requires accepted-core synchronization and a
 fresh run; no diagnostic PASS is presented as release acceptance.
 
@@ -82,6 +86,28 @@ fresh run; no diagnostic PASS is presented as release acceptance.
 - Fresh own-branch `python -m pytest tests/test_catalog_behavior.py -q -x
   --tb=short` remains **1 setup error in 0.25s**, rejecting the unfinished
   `orcs_bad_stuff_die` handler. No accepted-core result or row promotion is claimed.
+
+### Review round 2: Tuba privacy exception (all rows still PENDING)
+
+Helper presence no longer grants permission for arbitrary group draw events.
+The shared oracle limits public combat draws to actual settlement commands,
+named removal/reward sources or reward continuations; an escape preserves only
+earlier fighters' earned Transferral entitlements. Item/room `card.drawn` events
+cannot inherit combat `treasure.drawn` visibility. The event audience under test
+does not grant public permission.
+
+`test_privacy_oracle_rejects_group_tuba_draw_after_helped_escape` makes a real
+helped Net Troll escape with Tuba worn by the last escaping helper, then changes
+only that actual private draw event's audience to group. Before the correction
+it failed with `DID NOT RAISE AssertionError` (**1 failed, 151 deselected in
+0.51s**); the corrected oracle rejects the leak.
+`test_privacy_oracle_separates_tuba_from_earned_transferred_public_rewards`
+checks a single final escape command delivering both one private Tuba Treasure
+and three lawful public Treasures earned before Transferral, including the
+original helper's share. Public hand knowledge contains exactly those three
+public IDs; a Tuba audience-only mutation still rejects. All six privacy checks
+passed together (**6 passed, 147 deselected in 0.35s**) before the complete
+153-case diagnostic above.
 
 ## Supplemental distinctive evidence map
 
