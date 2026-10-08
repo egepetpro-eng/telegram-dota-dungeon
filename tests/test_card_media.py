@@ -1,5 +1,7 @@
 from copy import deepcopy
 from types import SimpleNamespace
+from pathlib import Path
+import json
 
 import pytest
 
@@ -39,3 +41,20 @@ def test_media_rejects_unpinned_incomplete_foreign_or_unverified_assets(change):
     if change == "unknown": raw["bindings"]["extra"] = "axe"
     with pytest.raises(ValueError):
         validate_media(raw, release())
+
+
+def test_shipped_artwork_matches_every_exact_presentation_and_payload_digest():
+    from dota_dungeon.cards.validation import canonical_digest
+    folder = Path(__file__).resolve().parents[1] / "src/dota_dungeon/cards/data/classic-dota-v1"
+    raw = json.loads((folder / "catalog.json").read_text(encoding="utf-8"))
+    artwork = json.loads((folder / "media.json").read_text(encoding="utf-8"))
+    # This tests artwork metadata only; production startup still uses strict load_release.
+    bundle = SimpleNamespace(version=raw["version"], digest=canonical_digest(raw), catalog={}, presentations={})
+    for card_id, key in raw["instances"].items():
+        bundle.catalog[card_id] = CardDef.from_dict({**raw["definitions"][key]["mechanics"], "id": card_id,
+                                                   "rule_key": key, "name": "media-check"})
+        bundle.presentations[card_id] = SimpleNamespace(**raw["definitions"][key]["presentation"])
+    media = validate_media(artwork, bundle)
+    assert len(media.images) == 168
+    assert len(artwork["bindings"]) == 147
+    assert len(artwork["assets"]) == 127

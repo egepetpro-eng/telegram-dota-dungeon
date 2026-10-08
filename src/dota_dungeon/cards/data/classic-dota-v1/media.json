@@ -1,7 +1,7 @@
 {
-  "media_version": "classic-dota-v1-draft-2",
+  "media_version": "classic-dota-v1-media-v1",
   "catalog_version": "classic-dota-v1",
-  "catalog_digest": null,
+  "catalog_digest": "32d2dedf9a6d1efc1cf415ce580baaa17eaa87cdeea4f062d985ebf9e2da14f1",
   "assets": {
     "abyssal_blade_valve_icon_707": {
       "dota_entity_id": "item:abyssal_blade",
