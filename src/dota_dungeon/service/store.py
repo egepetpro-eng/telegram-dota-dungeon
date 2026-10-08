@@ -125,12 +125,18 @@ class GameRepository:
             connection.execute("INSERT INTO outbox(game_id,update_id,ordinal,method,payload) VALUES (%s,%s,%s,%s,%s)",
                                (game_id, update_id, ordinal, message["method"], Jsonb(message["payload"])))
 
-    def enqueue(self, update_id, messages, *, callbacks=None, game_id=None):
+    def enqueue(self, update_id, messages, *, callbacks=None, game_id=None, private_link=None):
         with self.connection() as connection:
             if not self._receipt(connection, update_id, game_id):
                 return False
+            if private_link is not None:
+                self._link_private(connection, *private_link)
             self._outgoing(connection, update_id, game_id, messages, callbacks or [])
             return True
+
+    def update_seen(self, update_id):
+        with self.connection() as connection:
+            return connection.execute("SELECT 1 FROM update_receipts WHERE update_id=%s", (update_id,)).fetchone() is not None
 
     def callback(self, token):
         from ..telegram.callbacks import CallbackIntent
@@ -138,11 +144,15 @@ class GameRepository:
             row = connection.execute("SELECT * FROM callback_intentions WHERE token=%s", (token,)).fetchone()
         return CallbackIntent(**row) if row else None
 
-    def link_private(self, user_id, chat_id):
+    @staticmethod
+    def _link_private(connection, user_id, chat_id):
         if type(user_id) is not int or user_id <= 0 or chat_id != user_id:
             raise ValueError("invalid private chat identity")
+        connection.execute("INSERT INTO private_chats(user_id,chat_id) VALUES (%s,%s) ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id,available=TRUE,updated_at=CURRENT_TIMESTAMP", (user_id, chat_id))
+
+    def link_private(self, user_id, chat_id):
         with self.connection() as connection:
-            connection.execute("INSERT INTO private_chats(user_id,chat_id) VALUES (%s,%s) ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id,available=TRUE,updated_at=CURRENT_TIMESTAMP", (user_id, chat_id))
+            self._link_private(connection, user_id, chat_id)
 
     def private_chat(self, user_id):
         with self.connection() as connection:

@@ -196,10 +196,16 @@ def run_service(config: Config):
     repository = GameRepository(config.database_url,
                                 scheduler=lambda s, m: refresh_timers(s, m, datetime.now(timezone.utc)))
     repository.migrate()
+    for snapshot in repository.active_games():
+        if (snapshot.state.catalog_version, snapshot.state.catalog_digest) != (release.version, release.digest):
+            raise ValueError("an active game requires another pinned catalog release")
     bot = BotClient(config.bot_token)
     identity = bot.call("getMe", {})
     if not isinstance(identity, dict) or not identity.get("is_bot") or not identity.get("username"):
         raise ValueError("Telegram identity is not a bot")
+    webhook = bot.call("getWebhookInfo", {})
+    if isinstance(webhook, dict) and webhook.get("url"):
+        bot.call("deleteWebhook", {"drop_pending_updates": False})
     bot.call("setMyCommands", {"commands": [
         {"command": "start", "description": "Открыть личное меню"},
         {"command": "newgame", "description": "Собрать партию в группе"},

@@ -190,3 +190,13 @@ def test_timer_replacement_is_atomic_and_newer_version_invalidates_old_jobs(repo
     assert repository.due_timers(now=now)[0]["expected_version"] == 1
     repository.apply("game", 1, "tg:newer", level_up)
     assert repository.due_timers(now=now) == []
+
+
+def test_replayed_start_does_not_reenable_blocked_private_chat(repository):
+    message = {"method": "sendMessage", "payload": {"chat_id": 11, "text": "linked"}}
+    assert repository.enqueue("tg:start", [message], private_link=(11, 11))
+    assert repository.update_seen("tg:start")
+    assert repository.private_chat(11) == 11
+    repository.unavailable_private(11)
+    assert not repository.enqueue("tg:start", [message], private_link=(11, 11))
+    assert repository.private_chat(11) is None
