@@ -21,6 +21,44 @@ def _check_slots(player: Player, card_id: str, catalog: Catalog) -> None:
         raise RuleError("hand slots are occupied")
 
 
+def can_use(player: Player, card_id: str, catalog: Catalog) -> bool:
+    restrictions = catalog[card_id].restrictions
+    roles = {catalog[cid].rule_key for cid in player.role_ids}
+    races = {catalog[cid].rule_key for cid in player.race_ids}
+    for key, identities in (("role_any", roles), ("race_any", races)):
+        if restrictions.get(key) and not identities.intersection(restrictions[key]):
+            return False
+    if roles.intersection(restrictions.get("cannot_use_roles", [])) or races.intersection(restrictions.get("cannot_use_races", [])):
+        return False
+    if "sex" in restrictions and getattr(player, "sex", None) != restrictions["sex"]:
+        return False
+    required = restrictions.get("requires_rule")
+    return not required or any(catalog[cid].rule_key == required for cid in player.in_play)
+
+
+def reconcile_equipment(player: Player, catalog: Catalog) -> None:
+    player.equipped[:] = [cid for cid in player.equipped if can_use(player, cid, catalog)]
+
+
+def carry(state: GameState, actor_id: int, card_id: str,
+          catalog: Catalog) -> tuple[GameState, list[Event]]:
+    _outside_combat(state)
+    if state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}:
+        raise RuleError("item cannot be carried in this phase")
+    if actor_id not in state.players or card_id not in state.players[actor_id].hand:
+        raise RuleError("item is not in hand")
+    card = catalog[card_id]
+    if card.kind != "item":
+        raise RuleError("only items can be carried")
+    player = state.players[actor_id]
+    if card.size == "big" and any(catalog[cid].size == "big" for cid in player.in_play):
+        raise RuleError("only one Big item can be carried")
+    result = deepcopy(state)
+    result.players[actor_id].hand.remove(card_id)
+    result.players[actor_id].in_play.append(card_id)
+    return result, [Event("group", "item.carried", {"user_id": actor_id, "card_id": card_id})]
+
+
 def equip(state: GameState, actor_id: int, card_id: str,
           catalog: Catalog) -> tuple[GameState, list[Event]]:
     _outside_combat(state)
@@ -34,6 +72,10 @@ def equip(state: GameState, actor_id: int, card_id: str,
     card = catalog[card_id]
     if card.kind != "item":
         raise RuleError("only items can be equipped")
+    if state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}:
+        raise RuleError("equipment cannot change in this phase")
+    if not can_use(player, card_id, catalog):
+        raise RuleError("item identity restriction")
     _check_slots(player, card_id, catalog)
     if card.size == "big" and card_id in player.hand:
         if sum(catalog[item].size == "big" for item in player.in_play) >= 1:
@@ -58,7 +100,8 @@ def unequip(state: GameState, actor_id: int, card_id: str) -> tuple[GameState, l
 
 def play_identity(state: GameState, actor_id: int, card_id: str,
                   catalog: Catalog) -> tuple[GameState, list[Event]]:
-    if actor_id != state.active_user_id or state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}:
+    if (actor_id not in state.players or state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}
+            or (actor_id != state.active_user_id and (state.phase != "turn.prepare" or state.turn_number > 1))):
         raise RuleError("identity can be played only on your turn")
     _outside_combat(state)
     if card_id not in state.players[actor_id].hand:
@@ -76,6 +119,7 @@ def play_identity(state: GameState, actor_id: int, card_id: str,
     player.hand.remove(card_id)
     player.in_play.append(card_id)
     active.append(card_id)
+    reconcile_equipment(player, catalog)
     return result, [Event("group", "identity.played", {
         "user_id": actor_id, "card_id": card_id, "kind": card.kind})]
 

@@ -88,7 +88,8 @@ def test_one_shot_from_hand_changes_fighter_strength_and_restarts_window():
     state, _ = play_combat_card(state, 101, "buff", "101", catalog, NOW)
     assert combat_strength(state, 101, catalog) == 9
     assert declare_result(state, 101, catalog).outcome == "provisional_win"
-    assert "buff" in state.treasure_discard
+    assert "buff" in state.combat.played_card_ids
+    assert "buff" not in state.treasure_discard
 
 
 def test_rewards_wait_for_reaction_window_then_solo_draw_is_private():

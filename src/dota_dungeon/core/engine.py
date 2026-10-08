@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from random import Random
 
-from . import combat, items, setup, trade, turn
+from . import combat, items, play, setup, trade, turn
 from .model import Catalog, Command, Event, GameState, RuleError
 
 
@@ -18,6 +18,11 @@ def _arg(command: Command, key: str):
 
 
 HANDLERS: dict[str, Handler] = {
+    "play_card": lambda s, c, catalog, rng: play.play_card(
+        s, c.actor_id, _arg(c, "card_id"), c.args.get("target", {}), catalog, rng, _arg(c, "now")),
+    "leave_lobby": lambda s, c, catalog, rng: setup.leave_lobby(s, c.actor_id),
+    "decline_help": lambda s, c, catalog, rng: combat.decline_help(s, c.actor_id),
+    "cancel_trade": lambda s, c, catalog, rng: trade.cancel_trade(s, c.actor_id, _arg(c, "trade_id")),
     "join": lambda s, c, catalog, rng: setup.join(s, c.actor_id),
     "ready": lambda s, c, catalog, rng: setup.set_ready(s, c.actor_id, _arg(c, "ready")),
     "start": lambda s, c, catalog, rng: setup.start(s, c.actor_id, catalog, rng),
@@ -57,7 +62,7 @@ HANDLERS: dict[str, Handler] = {
 
 ACTIVE_PLAYER_COMMANDS = {
     "open_door", "seek_trouble", "loot_room", "give_charity", "end_turn",
-    "equip", "unequip", "play_identity", "sell", "ask_help", "declare_win",
+    "sell", "ask_help", "declare_win",
     "close_reaction", "begin_escape",
 }
 
@@ -69,6 +74,9 @@ def dispatch(state: GameState, command: Command, catalog: Catalog,
         raise RuleError("unknown command")
     if command.name in ACTIVE_PLAYER_COMMANDS and command.actor_id != state.active_user_id:
         raise RuleError("not your turn")
+    if command.name in {"equip", "unequip", "play_identity"} and command.actor_id != state.active_user_id:
+        if state.phase != "turn.prepare" or state.turn_number > 1:
+            raise RuleError("not your turn")
     return handler(state, command, catalog, rng)
 
 

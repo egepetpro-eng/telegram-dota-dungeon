@@ -120,3 +120,17 @@ def cancel_trades_for_cards(state: GameState, card_ids: list[str]) -> None:
     for trade in state.trades.values():
         if trade.status == "pending" and changed.intersection(trade.offered_ids + trade.requested_ids):
             trade.status = "cancelled"
+
+
+def cancel_trade(state: GameState, actor_id: int, trade_id: str) -> tuple[GameState, list[Event]]:
+    if state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"} or state.combat:
+        raise RuleError("cannot cancel trade in this phase")
+    offer = state.trades.get(trade_id)
+    if actor_id not in state.players or offer is None or actor_id not in {offer.sender_id, offer.receiver_id}:
+        raise RuleError("trade is not available to this player")
+    if offer.status != "pending":
+        raise RuleError("trade is no longer available")
+    result = deepcopy(state)
+    result.trades[trade_id].status = "cancelled"
+    return result, [Event(f"user:{uid}", "trade.cancelled", {"trade_id": trade_id})
+                    for uid in (offer.sender_id, offer.receiver_id)]

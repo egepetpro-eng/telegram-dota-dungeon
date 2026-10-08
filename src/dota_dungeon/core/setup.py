@@ -35,6 +35,17 @@ def set_ready(state: GameState, user_id: int, ready: bool) -> tuple[GameState, l
     return result, [Event("group", "player.ready", {"user_id": user_id, "ready": ready})]
 
 
+def leave_lobby(state: GameState, actor_id: int) -> tuple[GameState, list[Event]]:
+    if state.phase != "lobby" or actor_id not in state.players:
+        raise RuleError("not a lobby player")
+    if actor_id == state.host_id:
+        raise RuleError("host cannot leave own lobby")
+    result = deepcopy(state)
+    del result.players[actor_id]
+    result.order.remove(actor_id)
+    return result, [Event("group", "player.left", {"user_id": actor_id})]
+
+
 def start(state: GameState, actor_id: int, catalog: Catalog, rng: Random) -> tuple[GameState, list[Event]]:
     if state.phase != "lobby":
         raise RuleError("game already started")

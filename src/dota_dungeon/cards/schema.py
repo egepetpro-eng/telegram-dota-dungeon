@@ -103,10 +103,24 @@ def validate_operation(effect: Any, path: str) -> None:
             raise ValueError(f"{path}.can_win: expected boolean")
         if op == "draw":
             enum(effect.get("deck", "treasure"), DECKS, f"{path}.deck")
+    elif op == "remove_item" and "selector" in effect:
+        object_fields(effect, {"op", "selector"}, {"op", "selector"}, path)
+        selector = object_fields(effect["selector"], {"zone", "kind", "slot", "size", "rule_key", "tag"}, {"zone"}, f"{path}.selector")
+        enum(selector["zone"], {"hand", "in_play"}, f"{path}.selector.zone")
+        for key, choices in (("kind", {"item", "role", "race"}), ("slot", SLOTS), ("size", {"small", "big"})):
+            if key in selector:
+                enum(selector[key], choices, f"{path}.selector.{key}")
+        if "slot" in selector and selector["zone"] != "in_play":
+            raise ValueError(f"{path}.selector: worn slot requires in_play")
+        for key in ("rule_key", "tag"):
+            if key in selector:
+                text(selector[key], f"{path}.selector.{key}")
     else:
         operand = "card_id" if op in {"remove_item", "persistent"} else "monster_id"
-        object_fields(effect, {"op", operand}, {"op", operand}, path)
-        text(effect[operand], f"{path}.{operand}")
+        required = {"op"} if op == "persistent" else {"op", operand}
+        object_fields(effect, {"op", operand}, required, path)
+        if operand in effect:
+            text(effect[operand], f"{path}.{operand}")
 
 
 def validate_presentation(raw: Any, path: str) -> None:
@@ -159,9 +173,12 @@ def validate_mechanics(raw: Any, path: str) -> dict:
         current = f"{path}.abilities[{index}]"
         keys = {"key", "cost", "limit", "phases"}
         object_fields(ability, keys, keys, current)
-        object_fields(ability["cost"], {"zone", "count"}, {"zone", "count"}, f"{current}.cost")
+        object_fields(ability["cost"], {"zone", "count", "mode"}, {"zone", "count"}, f"{current}.cost")
         enum(ability["cost"]["zone"], {"hand", "in_play", "either"}, f"{current}.cost.zone")
         integer(ability["cost"]["count"], f"{current}.cost.count", 0)
+        enum(ability["cost"].get("mode", "exact"), {"exact", "all_hand"}, f"{current}.cost.mode")
+        if ability["cost"].get("mode") == "all_hand" and ability["cost"]["zone"] != "hand":
+            raise ValueError(f"{current}.cost: all_hand requires hand zone")
         object_fields(ability["limit"], {"scope", "max_uses"}, {"scope", "max_uses"}, f"{current}.limit")
         enum(ability["limit"]["scope"], {"combat", "escape_attempt", "turn", "unlimited"}, f"{current}.limit.scope")
         if ability["limit"]["max_uses"] is not None:

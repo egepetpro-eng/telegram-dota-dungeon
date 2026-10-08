@@ -74,35 +74,61 @@ def accept_help(state: GameState, actor_id: int) -> tuple[GameState, list[Event]
     return result, events
 
 
+def restart_reaction(state: GameState, catalog: Catalog, now: datetime,
+                     was_reacting: bool) -> list[Event]:
+    """Invalidate passes after intervention and restart a still-winning window."""
+    combat = state.combat
+    for cid in combat.modifier_ids:
+        if cid not in combat.played_card_ids:
+            combat.played_card_ids.append(cid)
+    combat.passes.clear()
+    combat.reaction_deadline = None
+    if was_reacting and state.phase == "combat.active" and declare_result(state, state.active_user_id, catalog).outcome == "provisional_win":
+        combat.reaction_deadline = now + timedelta(seconds=30)
+        return [Event("group", "combat.reaction_restarted", {"deadline": combat.reaction_deadline.isoformat()})]
+    return []
+
+
 def play_combat_card(state: GameState, actor_id: int, card_id: str,
                      target_id: str, catalog: Catalog,
                      now: datetime) -> tuple[GameState, list[Event]]:
     _require_combat(state)
-    if actor_id not in state.players or card_id not in state.players[actor_id].hand:
-        raise RuleError("combat card is not in hand")
+    if card_id not in catalog:
+        raise RuleError("unknown combat card")
+    from dataclasses import replace
+    from .play import play_card
     card = catalog[card_id]
     if card.kind not in {"modifier", "one_shot", "curse"}:
         raise RuleError("card cannot be played in combat")
-    if card.kind == "modifier" and target_id not in state.combat.monster_ids:
-        raise RuleError("modifier requires a monster target")
-    result = deepcopy(state)
-    was_reacting = result.combat.reaction_deadline is not None
-    result.players[actor_id].hand.remove(card_id)
     if card.kind == "modifier":
-        result.combat.modifier_ids.append(card_id)
+        target = {"monster_id": target_id}
+        rule = "monster"
     else:
-        target = int(target_id) if target_id.isdigit() else result.active_user_id
-        result, _ = apply_effects(result, target, card.effects, catalog)
-        (result.door_discard if card.deck == "door" else result.treasure_discard).append(card_id)
-    result.combat.passes.clear()
-    result.combat.reaction_deadline = None
-    events = [Event("group", "combat.card_played", {
-        "actor_id": actor_id, "card_id": card_id, "target_id": target_id})]
-    if was_reacting and declare_result(result, result.active_user_id, catalog).outcome == "provisional_win":
-        result.combat.reaction_deadline = now + timedelta(seconds=30)
-        events.append(Event("group", "combat.reaction_restarted", {
-            "deadline": result.combat.reaction_deadline.isoformat()}))
+        try:
+            player_id = int(target_id)
+        except (ValueError, TypeError) as exc:
+            raise RuleError("invalid player target") from exc
+        target = {"player_id": player_id}
+        rule = "player"
+    # Compatibility for old test catalogs; releases retain their declared policy.
+    adapted = catalog
+    if not card.play_phases and card.rule_key is None:
+        adapted = dict(catalog)
+        adapted[card_id] = replace(card, play_phases=("combat.active",), target_rule=rule)
+    result, events = play_card(state, actor_id, card_id, target, adapted, Random(), now)
+    events = [event for event in events if event.name != "card.played"]
+    events.insert(0, Event("group", "combat.card_played", {
+        "actor_id": actor_id, "card_id": card_id, "target_id": target_id}))
     return result, events
+
+
+def decline_help(state: GameState, actor_id: int) -> tuple[GameState, list[Event]]:
+    _require_combat(state)
+    if actor_id not in state.players or state.combat.pending_help is None or state.combat.pending_help[0] != actor_id:
+        raise RuleError("no help offer for this player")
+    result = deepcopy(state)
+    result.combat.pending_help = None
+    return result, [Event(f"user:{state.active_user_id}", "help.declined", {"helper_id": actor_id})]
 
 
 def declare_win(state: GameState, actor_id: int, catalog: Catalog,
@@ -214,7 +240,7 @@ def escape_modifier(state: GameState, actor_id: int, monster_id: str,
 
 
 def _discard_combat_cards(state: GameState) -> None:
-    for cid in state.combat.monster_ids + state.combat.modifier_ids:
+    for cid in dict.fromkeys(state.combat.monster_ids + state.combat.played_card_ids + state.combat.modifier_ids):
         (state.door_discard if state.card_decks.get(cid, "door") == "door"
          else state.treasure_discard).append(cid)
 

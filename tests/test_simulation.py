@@ -15,7 +15,8 @@ def all_zones(state):
     zones += [cid for player in state.players.values() for cid in player.hand + player.in_play]
     zones += [cid for cards in state.corpse.values() for cid in cards]
     if state.combat:
-        zones += state.combat.monster_ids + state.combat.modifier_ids
+        zones += state.combat.monster_ids + state.combat.played_card_ids
+        zones += [cid for cid in state.combat.modifier_ids if cid not in state.combat.played_card_ids]
     return zones
 
 
