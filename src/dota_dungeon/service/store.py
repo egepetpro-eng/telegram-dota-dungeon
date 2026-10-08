@@ -91,8 +91,9 @@ class GameRepository:
                 if update_id and not self._receipt(connection, update_id, state.game_id):
                     return False
                 connection.execute(
-                    "INSERT INTO games(game_id, group_id, active, state, rng, metadata) VALUES (%s,%s,%s,%s,%s,%s)",
+                    "INSERT INTO games(game_id, group_id, active, status, state, rng, metadata) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                     (state.game_id, state.group_id, state.phase != "game.finished",
+                     "finished" if state.phase == "game.finished" else "active",
                      Jsonb(encode_state(state)), Jsonb(encode_rng(rng)), Jsonb(metadata or {})),
                 )
                 self._members(connection, state)
@@ -226,6 +227,8 @@ class GameRepository:
             mutation = transition(snapshot)
             if not isinstance(mutation, Mutation):
                 raise ValueError("transition must return a mutation")
+            if mutation.state.phase == "game.finished":
+                mutation.status = "finished"
             if self.scheduler is not None:
                 mutation = self.scheduler(snapshot, mutation)
             if (mutation.state.game_id, mutation.state.group_id) != (game_id, row["group_id"]):

@@ -103,6 +103,31 @@ def test_active_group_uniqueness_and_other_game_isolation(repository):
     assert repository.get("other").state.players[11].level == 1
 
 
+@pytest.mark.parametrize("through_transition", [False, True])
+def test_finished_state_has_durable_finished_status_and_releases_lobby(repository, through_transition):
+    from dota_dungeon.service.store import GameRepository, Mutation
+    state = create(repository)
+    if through_transition:
+        def finish(snapshot):
+            snapshot.state.phase = "game.finished"
+            snapshot.state.players[11].level = 10
+            return Mutation(snapshot.state, snapshot.rng, [])
+        result = repository.apply("game", 0, "tg:win", finish)
+        assert result.snapshot.status == "finished"
+    else:
+        state.game_id = "already-finished"
+        state.group_id = -200
+        state.phase = "game.finished"
+        repository.create(state, Random(42))
+
+    restarted = GameRepository(repository.database_url, schema=repository.schema)
+    assert restarted.get(state.game_id).status == "finished"
+    assert restarted.active_group(state.group_id) is None
+    assert state.game_id not in {game.state.game_id for game in restarted.active_user(11)}
+    create(restarted, "next-party", state.group_id)
+    assert restarted.active_group(state.group_id).state.game_id == "next-party"
+
+
 def test_invalid_outbox_message_rolls_back_move(repository):
     from dota_dungeon.service.store import Mutation
     create(repository)
