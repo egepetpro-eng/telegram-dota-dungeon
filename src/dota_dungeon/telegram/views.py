@@ -562,8 +562,26 @@ def _context_rows(state, viewer, release, now):
     return rows
 
 
-def render_view(state: GameState, viewer_id: int, screen: str, release, *, names=None, now=None) -> View:
+def render_endgame_confirmation(state: GameState, viewer_id: int) -> View:
+    if viewer_id != state.host_id or state.phase == "game.finished":
+        raise ValueError("only host may request ending an unfinished game")
+    return View("group", "Завершить эту партию без победителя? Продолжить её после подтверждения нельзя.", [
+        [Button("Завершить партию", "confirm_endgame", actor_id=viewer_id),
+         Button("Отмена", "cancel_endgame", actor_id=viewer_id)],
+    ])
+
+
+def render_view(state: GameState, viewer_id: int, screen: str, release, *, names=None, now=None, ended_by=None) -> View:
     now = now or datetime.now(timezone.utc)
+    if state.phase == "game.finished":
+        if screen != "group" and viewer_id not in state.players:
+            raise ValueError("not a player")
+        if ended_by is not None:
+            text = "Ведущий завершил партию без победителя. Создайте новую партию в группе командой /newgame."
+        else:
+            winners = [uid for uid, player in state.players.items() if player.level >= 10]
+            text = "🏆 Победа: " + ", ".join(_name(uid, names or {}) for uid in winners)
+        return View("group" if screen == "group" else f"user:{viewer_id}", text)
     if screen in {"sell", "charity", "help"}:
         return render_selection(state, viewer_id, screen, {}, release, now=now, names=names)
     if screen == "corpses":

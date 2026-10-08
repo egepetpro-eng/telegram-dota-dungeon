@@ -8,9 +8,9 @@ from ..core.engine import decide
 from ..core.model import Command
 from ..core.setup import new_lobby
 from ..service.store import Mutation, Snapshot
-from ..service.timers import pause_game, resume_game
+from ..service.timers import finish_game, pause_game, resume_game
 from .callbacks import CallbackIntent, authorize_callback, new_token
-from .views import Button, render_selection, render_view
+from .views import Button, render_endgame_confirmation, render_selection, render_view
 
 
 class Router:
@@ -33,7 +33,10 @@ class Router:
     def _render(self, snapshot, viewer, screen, now):
         self._check_release(snapshot.state)
         names = {int(uid): name for uid, name in snapshot.metadata.get("names", {}).items()}
-        view = render_view(snapshot.state, viewer, screen, self.release, names=names, now=now)
+        view = render_view(snapshot.state, viewer, screen, self.release, names=names, now=now,
+                           ended_by=snapshot.metadata.get("ended_by"))
+        if snapshot.state.phase == "game.finished":
+            return view
         if snapshot.status == "paused":
             view.text += "\n⏸ Партия на паузе. Ведущий может продолжить её командой /resume."
             view.rows = [[b for b in row if b.action == "nav"] for row in view.rows]
@@ -137,7 +140,8 @@ class Router:
         labels = {"player.joined": "Игрок вошёл в партию.", "player.ready": "Готовность обновлена.",
                   "game.started": "Партия началась!", "room.looted": "Комната обыскана.",
                   "combat.started": "Начался бой.", "combat.won": "Бой выигран.",
-                  "game.won": "🏆 Победа!", "escape.rolled": "Бросок на побег.",
+                  "game.won": "🏆 Победа!", "game.ended": "Ведущий завершил партию без победителя.",
+                  "escape.rolled": "Бросок на побег.",
                   "player.died": "Игрок погиб.", "trade.accepted": "Обмен завершён.",
                   "help.accepted": "Помощник вступил в бой.", "charity.given": "Лишние карты переданы.",
                   "charity.discarded": "Лишние карты сброшены.", "turn.started": "Начался новый ход."}
@@ -202,6 +206,16 @@ class Router:
             return mutation
         self.repository.apply(snapshot.state.game_id, snapshot.version, update_id, transition, allow_paused=action == "resume")
 
+    def _finish(self, snapshot, actor, update_id, now, query_id):
+        def transition(saved):
+            mutation = finish_game(saved, actor, now)
+            messages, callbacks = self.mutation_messages(mutation.state, saved.version + 1,
+                mutation.metadata, mutation.events, now, actor_id=actor, status=mutation.status)
+            mutation.messages = [self._ack(query_id)] + messages
+            mutation.callbacks = callbacks
+            return mutation
+        self.repository.apply(snapshot.state.game_id, snapshot.version, update_id, transition, allow_paused=True)
+
     def route_update(self, update: dict, *, now: datetime | None = None):
         now = now or datetime.now(timezone.utc)
         if now.utcoffset() is None:
@@ -238,6 +252,17 @@ class Router:
             self.repository.enqueue(update_id, [])
             return
         private = incoming["chat"]["type"] == "private"
+        if name == "endgame":
+            if incoming["chat"]["type"] not in {"group", "supergroup"}:
+                raise ValueError("ending must be requested in a group")
+            snapshot = self.repository.active_group(chat)
+            if snapshot is None or uid != snapshot.state.host_id or snapshot.status not in {"active", "paused"}:
+                raise ValueError("only host can request ending an active game")
+            self._check_release(snapshot.state)
+            view = render_endgame_confirmation(snapshot.state, uid)
+            messages, callbacks = self.outgoing_view(snapshot, view, now)
+            self.repository.enqueue(update_id, messages, callbacks=callbacks, game_id=snapshot.state.game_id)
+            return
         if name == "start" and private:
             if uid != chat:
                 raise ValueError("invalid private identity")
@@ -303,6 +328,20 @@ class Router:
         self._check_release(state)
         authorize_callback(intent, telegram_user_id=uid, chat_id=chat, now=now, current_version=snapshot.version,
                            member_ids=set(state.players), phase=state.phase, host_id=state.host_id)
+        if intent.action in {"confirm_endgame", "cancel_endgame"}:
+            if (uid != state.host_id or chat != state.group_id
+                    or query["message"]["chat"].get("type") not in {"group", "supergroup"}
+                    or snapshot.status not in {"active", "paused"} or state.phase == "game.finished"):
+                raise ValueError("only current host in the game group may end or cancel")
+            if intent.action == "confirm_endgame":
+                self._finish(snapshot, uid, update_id, now, query["id"])
+            else:
+                messages, callbacks = self._panel(snapshot, uid, "group", now)
+                self.repository.enqueue(update_id, [self._ack(query["id"])] + messages,
+                                        callbacks=callbacks, game_id=state.game_id)
+            return
+        if snapshot.status == "finished" and intent.action != "nav":
+            raise ValueError("game finished")
         if intent.action in {"pause", "resume", "reaction_seconds"}:
             self._control(snapshot, uid, intent.action, intent.args, update_id, now, query["id"])
             return
