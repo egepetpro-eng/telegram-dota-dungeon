@@ -10,7 +10,7 @@ from ..core.setup import new_lobby
 from ..service.store import Mutation, Snapshot
 from ..service.timers import finish_game, pause_game, resume_game
 from .callbacks import CallbackIntent, authorize_callback, new_token
-from .views import Button, render_endgame_confirmation, render_selection, render_view
+from .views import Button, decision_options, render_endgame_confirmation, render_selection, render_view
 
 
 class Router:
@@ -81,8 +81,16 @@ class Router:
                 if button.url:
                     buttons.append({"text": button.text, "url": button.url})
                 else:
+                    expires_at = now + timedelta(seconds=120)
+                    if button.action not in {"nav", "pause", "resume", "confirm_endgame", "cancel_endgame", "reaction_seconds"}:
+                        decision = decision_options(state, button.actor_id, self.release.catalog)
+                        if decision:
+                            if not decision["mandatory"]:
+                                expires_at = min(expires_at, datetime.fromisoformat(decision["deadline"]))
+                        elif state.combat and state.combat.escape_deadline:
+                            expires_at = min(expires_at, state.combat.escape_deadline)
                     intent = CallbackIntent(new_token(), state.game_id, snapshot.version, button.actor_id,
-                                            chat, button.action, deepcopy(button.args), now + timedelta(seconds=120))
+                                            chat, button.action, deepcopy(button.args), expires_at)
                     callbacks.append(intent)
                     buttons.append({"text": button.text, "callback_data": intent.token})
             if buttons:
@@ -142,6 +150,9 @@ class Router:
                   "combat.started": "Начался бой.", "combat.won": "Бой выигран.",
                   "game.won": "🏆 Победа!", "game.ended": "Ведущий завершил партию без победителя.",
                   "escape.rolled": "Бросок на побег.",
+                  "escape.rerolled": "Кубик побега переброшен.", "die.rolled": "Бросок кубика.",
+                  "decision.required": "Требуется выбор.", "curse.immune": "Проклятие отражено.",
+                  "treasure.drawn": "Получено сокровище.", "elf.helper_levels": "Помощник получил уровень.",
                   "player.died": "Игрок погиб.", "trade.accepted": "Обмен завершён.",
                   "help.accepted": "Помощник вступил в бой.", "charity.given": "Лишние карты переданы.",
                   "charity.discarded": "Лишние карты сброшены.", "turn.started": "Начался новый ход."}
@@ -158,6 +169,14 @@ class Router:
             if destination is None:
                 continue
             text = labels.get(event.name, "Состояние партии обновлено.")
+            if event.name == "decision.required":
+                from .views import DECISION_LABELS
+                text = DECISION_LABELS.get(event.data.get("kind"), "Требуется выбор") + "."
+                text += "\nВыбор в личке: " + ", ".join(f"Игрок {u}" for u in event.data.get("chooser_ids", []))
+            if event.name in {"escape.rolled", "escape.rerolled", "die.rolled"} and type(event.data.get("die")) is int:
+                text += f"\nРезультат: {event.data['die']}"
+            if event.name == "player.died":
+                text += "\nОткрытая добыча:\n" + "\n".join(card_name(self.release, cid) for cid in event.data.get("card_ids", []) if cid in self.release.catalog)
             # Only public disclosure events may render actual card identities in a group.
             if event.name in {"door.revealed", "item.equipped", "item.unequipped", "identity.played", "combat.card_played", "card.played", "curse.applied"}:
                 cid = event.data.get("card_id")
@@ -382,16 +401,8 @@ class Router:
         def transition(saved):
             args = deepcopy(intent.args)
             action = intent.action
-            if action == "loot_hidden_corpse":
-                deceased = args["deceased_id"]
-                eligible = [cid for cid in saved.state.corpse.get(deceased, [])
-                            if cid in saved.state.corpse_hand.get(deceased, set())]
-                if not eligible:
-                    raise ValueError("no hidden corpse card")
-                action = "loot_corpse"
-                args = {"deceased_id": deceased, "card_id": saved.rng.choice(eligible)}
-            if intent.action in {"declare_win", "play_combat_card", "play_card", "use_ability", "accept_trade", "offer_trade"}:
-                args["now"] = now
+            args["now"] = now
+            args["reaction_seconds"] = saved.metadata.get("reaction_seconds", 30)
             if intent.action == "declare_win":
                 args["seconds"] = saved.metadata.get("reaction_seconds", 30)
             if intent.action == "offer_trade":

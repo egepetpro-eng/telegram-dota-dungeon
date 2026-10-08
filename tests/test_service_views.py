@@ -133,7 +133,7 @@ def test_charity_selector_chooses_excess_and_balances_lowest_players():
     assert button.args == {"assignments": {22: ["c0"], 33: ["c1"]}}
 
 
-def test_escape_and_corpse_controls_are_actor_scoped_and_hide_dead_hand():
+def test_escape_and_corpse_controls_are_actor_scoped_and_show_public_corpse():
     from dota_dungeon.telegram.views import render_view
     state, release = fixture()
     state.phase = "combat.run_away"
@@ -148,8 +148,8 @@ def test_escape_and_corpse_controls_are_actor_scoped_and_hide_dead_hand():
     state.corpse_hand = {22: {"secret-b"}}
     state.corpse_looted_by = {22: set()}
     corpse = render_view(state, 11, "corpses", release)
-    assert "Чужая тайная карта" not in corpse.text
-    assert "secret-b" not in str(corpse.rows)
+    assert "Чужая тайная карта" in corpse.text
+    assert "secret-b" in str(corpse.rows)
 
 
 def test_card_menu_hides_unplayable_card_selector_and_trade_menu_hides_in_combat():
