@@ -10,12 +10,12 @@ def _selected_card(state, target_id, effect, catalog, choices, rng):
     player = state.players[target_id]
     if 'card_id' in effect:
         cid = effect['card_id']
-        if cid not in player.hand + player.in_play:
+        if cid == choices.get('played_card_id') or cid not in player.hand + player.in_play:
             raise RuleError('card is not owned')
         return cid
     selector = effect['selector']
     source = player.hand if selector['zone'] == 'hand' else player.in_play
-    eligible = [cid for cid in source if cid in catalog]
+    eligible = [cid for cid in source if cid in catalog and cid != choices.get('played_card_id')]
     for key, attribute in (('kind', 'kind'), ('size', 'size'), ('slot', 'slots'), ('rule_key', 'rule_key')):
         if key in selector:
             value = 'footwear' if key == 'slot' and selector[key] == 'feet' else selector[key]

@@ -267,3 +267,62 @@ def test_declared_empty_phases_are_not_bypassed_by_legacy_combat_command():
     with pytest.raises(RuleError):
         play_combat_card(state, 1, 'played', '1', catalog, NOW)
     assert state == before
+
+
+def test_self_hand_loss_excludes_the_played_source_and_preserves_rng_on_rejection():
+    state, catalog = fixture('curse', [{'op': 'remove_item', 'selector': {'zone': 'hand'}}])
+    before = deepcopy(state)
+    rng = Random(3)
+    rng_before = rng.getstate()
+    command = Command('g', 1, 'source-reservation', 'play_card', {'card_id': 'played', 'target': {}, 'now': NOW})
+    with pytest.raises(RuleError):
+        decide(state, command, catalog, rng)
+    assert state == before
+    assert rng.getstate() == rng_before
+
+
+def test_self_hand_loss_consumes_another_card_and_source_exactly_once():
+    state, catalog = fixture('curse', [{'op': 'remove_item', 'selector': {'zone': 'hand'}}])
+    catalog['other'] = CardDef('other', 'treasure', 'item', 'Synthetic other')
+    state.players[1].hand.append('other')
+    state.card_decks['other'] = 'treasure'
+    result, _ = play(state, catalog)
+    assert result.players[1].hand == []
+    assert result.door_discard == ['played']
+    assert result.treasure_discard == ['other']
+    assert sorted(zones(result)) == ['other', 'played']
+
+
+def test_reaction_finalization_failure_preserves_input_and_supplied_rng():
+    state, catalog = fixture('curse', [{'op': 'remove_item', 'selector': {'zone': 'hand'}}], 'player', 'combat.active')
+    catalog['monster'] = CardDef('monster', 'door', 'monster', 'Synthetic monster', bonus=1)
+    catalog['other'] = CardDef('other', 'treasure', 'item', 'Synthetic other')
+    state.players[2].hand = ['other']
+    state.card_decks.update({'monster': 'door', 'other': 'treasure'})
+    state.combat = CombatState(fighter_ids=[1], monster_ids=['monster'], reaction_deadline=NOW)
+    before = deepcopy(state)
+    rng = Random(3)
+    rng_before = rng.getstate()
+    command = Command('g', 1, 'late-failure', 'play_card', {'card_id': 'played', 'target': {'player_id': 2}, 'now': datetime.max})
+    # All effects succeed; restarting the reaction overflows the supplied time.
+    with pytest.raises(OverflowError):
+        decide(state, command, catalog, rng)
+    assert state == before
+    assert rng.getstate() == rng_before
+
+
+@pytest.mark.parametrize('phase,turn_number,allowed', [('turn.prepare', 1, True), ('turn.prepare', 3, False), ('turn.after_door', 1, False)])
+def test_generic_item_carrying_obeys_initial_preparation_boundary(phase, turn_number, allowed):
+    state, catalog = fixture('item', [], phase=phase)
+    state.turn_number = turn_number
+    state.players[1].hand = []
+    state.players[2].hand = ['played']
+    before = deepcopy(state)
+    if allowed:
+        result, _ = play(state, catalog, actor=2)
+        assert result.players[2].in_play == ['played']
+        assert state == before
+    else:
+        with pytest.raises(RuleError, match='not your turn'):
+            play(state, catalog, actor=2)
+        assert state == before

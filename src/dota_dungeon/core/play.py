@@ -100,9 +100,10 @@ def play_card(state: GameState, actor_id: int, card_id: str, target: dict,
         if not registered.handler(deepcopy(state), actor_id, target_id, catalog, deepcopy(condition["args"])):
             raise RuleError("card condition not met")
     result = deepcopy(state)
+    transition_rng = deepcopy(rng)
     was_reacting = bool(result.combat and result.combat.reaction_deadline)
     choices = {**target, "played_card_id": card_id, "actor_id": actor_id}
-    result, events = apply_effects(result, target_id, card.effects, catalog, choices=choices, rng=rng)
+    result, events = apply_effects(result, target_id, card.effects, catalog, choices=choices, rng=transition_rng)
     owner = result.players[actor_id]
     persistent = card_id in result.players[target_id].in_play and not carried_shot
     if not persistent:
@@ -117,4 +118,5 @@ def play_card(state: GameState, actor_id: int, card_id: str, target: dict,
         from .combat import restart_reaction
         events.extend(restart_reaction(result, catalog, now, was_reacting))
     events.append(Event("group", "card.played", {"actor_id": actor_id, "card_id": card_id, "target": target.copy()}))
+    rng.setstate(transition_rng.getstate())
     return result, events

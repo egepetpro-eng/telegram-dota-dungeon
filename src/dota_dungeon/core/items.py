@@ -45,6 +45,8 @@ def carry(state: GameState, actor_id: int, card_id: str,
     _outside_combat(state)
     if state.phase not in {"turn.prepare", "turn.after_door", "turn.charity"}:
         raise RuleError("item cannot be carried in this phase")
+    if actor_id != state.active_user_id and (state.phase != "turn.prepare" or state.turn_number > 1):
+        raise RuleError("not your turn")
     if actor_id not in state.players or card_id not in state.players[actor_id].hand:
         raise RuleError("item is not in hand")
     card = catalog[card_id]
