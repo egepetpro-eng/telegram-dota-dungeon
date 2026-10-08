@@ -65,6 +65,13 @@ class Player:
     alive: bool = True
     strength_bonus: int = 0
     escape_bonus: int = 0
+    character_sex: str | None = None
+    next_combat_penalty: int = 0
+    halfling_sale_turn: int | None = None
+    pending_big_excess: int = 0
+    pending_identity_excess: dict[str, int] = field(default_factory=dict)
+    attachments: dict[str, str] = field(default_factory=dict)
+    hireling_items: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -94,6 +101,14 @@ class CombatState:
     monster_strength_bonus: int = 0
     prevented_bad_stuff: set[tuple[int, str]] = field(default_factory=set)
     played_card_ids: list[str] = field(default_factory=list)
+    ability_uses: dict[tuple[int, str, int | None], int] = field(default_factory=dict)
+    escape_outcomes: dict[tuple[int, str], bool] = field(default_factory=dict)
+    tuba_rewarded: set[int] = field(default_factory=set)
+    escape_rolls: dict[tuple[int, str], int] = field(default_factory=dict)
+    escape_uses: dict[tuple[int, str, str], int] = field(default_factory=dict)
+    escape_bonuses: dict[tuple[int, str], int] = field(default_factory=dict)
+    charmed_monster_ids: list[str] = field(default_factory=list)
+    character_penalties: dict[int, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

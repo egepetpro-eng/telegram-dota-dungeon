@@ -33,3 +33,9 @@ TRIGGER_HANDLERS.update({
 })
 SPECIAL_HANDLERS["all_clerics_gain_level"] = RegisteredRule(
     all_clerics_gain_level, _cleric_args)
+
+from .character_rules import register as _register_character
+
+_register_character(
+    RegisteredRule, SPECIAL_HANDLERS, CONDITION_HANDLERS, ABILITY_HANDLERS
+)

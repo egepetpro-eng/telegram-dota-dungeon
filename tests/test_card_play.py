@@ -58,7 +58,14 @@ def test_curse_target_another_player_discard_actual_deck():
     assert result.door_discard == ['played']
 
 
-@pytest.mark.parametrize('target,phase', [({'player_id': 999}, 'turn.prepare'), ({}, 'lobby'), ({'card_id': 'secret'}, 'turn.prepare')])
+@pytest.mark.parametrize(
+    "target,phase",
+    [
+        ({"player_id": 999}, "turn.prepare"),
+        ({}, "lobby"),
+        ({"card_id": "secret"}, "turn.prepare"),
+    ],
+)
 def test_invalid_target_or_phase_preserves_input(target, phase):
     state, catalog = fixture()
     state.phase = phase
@@ -88,7 +95,7 @@ def test_last_chained_effect_failure_is_atomic():
     assert state == before
 
 
-@pytest.mark.parametrize('source', ['hand', 'in_play'])
+@pytest.mark.parametrize("source", ["hand", "in_play"])
 def test_combat_one_shot_retained_until_victory(source):
     from dota_dungeon.core.combat import declare_win, close_reaction
     state, catalog = fixture('one_shot', [{'op': 'add_strength', 'amount': 2}], phase='combat.active')
@@ -150,7 +157,15 @@ def test_nonactive_initial_equipment_and_identity():
     result, _ = decide(state, Command('g', 2, 'equip', 'equip', {'card_id': 'played'}), catalog, Random(3))
     assert result.players[2].equipped == ['played']
 
-@pytest.mark.parametrize('name,args,actor', [('leave_lobby', {}, 2), ('decline_help', {}, 2), ('cancel_trade', {'trade_id': 't'}, 1)])
+
+@pytest.mark.parametrize(
+    "name,args,actor",
+    [
+        ("leave_lobby", {}, 2),
+        ("decline_help", {}, 2),
+        ("cancel_trade", {"trade_id": "t"}, 1),
+    ],
+)
 def test_lifecycle_commands_authorized_and_replay_safe(name, args, actor):
     state, catalog = fixture()
     if name == 'leave_lobby':
@@ -173,7 +188,14 @@ def test_lifecycle_commands_authorized_and_replay_safe(name, args, actor):
     assert replay is result and events == []
 
 
-@pytest.mark.parametrize('name,args,actor', [('leave_lobby', {}, 2), ('decline_help', {}, 1), ('cancel_trade', {'trade_id': 't'}, 3)])
+@pytest.mark.parametrize(
+    "name,args,actor",
+    [
+        ("leave_lobby", {}, 2),
+        ("decline_help", {}, 1),
+        ("cancel_trade", {"trade_id": "t"}, 3),
+    ],
+)
 def test_lifecycle_rejects_invalid_actor_or_phase_atomically(name, args, actor):
     state, catalog = fixture()
     state.trades['t'] = Trade('t', 1, 2, [], [], NOW)
@@ -204,14 +226,19 @@ def test_restricted_item_cannot_be_equipped_without_identity():
     assert state == before
 
 
-def test_nonactive_equipment_outside_initial_preparation_rejected():
-    state, catalog = fixture('item', [])
+def test_nonactive_equipment_is_allowed_outside_combat():
+    state, catalog = fixture("item", [])
     state.turn_number = 3
     state.players[1].hand = []
-    state.players[2].hand = ['played']
+    state.players[2].hand = ["played"]
     before = deepcopy(state)
-    with pytest.raises(RuleError):
-        decide(state, Command('g', 2, 'equip', 'equip', {'card_id': 'played'}), catalog, Random(3))
+    result, _ = decide(
+        state,
+        Command("g", 2, "equip", "equip", {"card_id": "played"}),
+        catalog,
+        Random(3),
+    )
+    assert result.players[2].equipped == ["played"]
     assert state == before
 
 
@@ -314,18 +341,23 @@ def test_reaction_finalization_failure_preserves_input_and_supplied_rng():
     assert rng.getstate() == rng_before
 
 
-@pytest.mark.parametrize('phase,turn_number,allowed', [('turn.prepare', 1, True), ('turn.prepare', 3, False), ('turn.after_door', 1, False)])
-def test_generic_item_carrying_obeys_initial_preparation_boundary(phase, turn_number, allowed):
-    state, catalog = fixture('item', [], phase=phase)
+@pytest.mark.parametrize(
+    "phase,turn_number",
+    [
+        ("turn.prepare", 1),
+        ("turn.prepare", 3),
+        ("turn.after_door", 1),
+        ("turn.charity", 4),
+    ],
+)
+def test_generic_item_carrying_is_allowed_during_other_noncombat_turn(
+    phase, turn_number
+):
+    state, catalog = fixture("item", [], phase=phase)
     state.turn_number = turn_number
     state.players[1].hand = []
-    state.players[2].hand = ['played']
+    state.players[2].hand = ["played"]
     before = deepcopy(state)
-    if allowed:
-        result, _ = play(state, catalog, actor=2)
-        assert result.players[2].in_play == ['played']
-        assert state == before
-    else:
-        with pytest.raises(RuleError, match='not your turn'):
-            play(state, catalog, actor=2)
-        assert state == before
+    result, _ = play(state, catalog, actor=2)
+    assert result.players[2].in_play == ["played"]
+    assert state == before

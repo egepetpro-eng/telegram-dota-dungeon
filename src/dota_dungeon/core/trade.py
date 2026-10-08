@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from .model import Catalog, Event, GameState, Player, RuleError, Trade
+from .items import is_item_card, big_limit, big_count, reconcile_possessions
 
 
 def _ensure_trade_allowed(state: GameState, actor_id: int, partner_id: int) -> None:
@@ -21,10 +22,16 @@ def _check_open(player: Player, card_ids: list[str], label: str) -> None:
         raise RuleError(f"{label} item must be in play and have unchanged owner")
 
 
-def offer_trade(state: GameState, actor_id: int, partner_id: int,
-                offered_ids: list[str], requested_ids: list[str],
-                expires_at: datetime, catalog: Catalog,
-                now: datetime) -> tuple[GameState, list[Event]]:
+def offer_trade(
+    state: GameState,
+    actor_id: int,
+    partner_id: int,
+    offered_ids: list[str],
+    requested_ids: list[str],
+    expires_at: datetime,
+    catalog: Catalog,
+    now: datetime,
+) -> tuple[GameState, list[Event]]:
     _ensure_trade_allowed(state, actor_id, partner_id)
     if expires_at <= now or expires_at > now + timedelta(minutes=2):
         raise RuleError("trade must expire within two minutes")
@@ -32,32 +39,57 @@ def offer_trade(state: GameState, actor_id: int, partner_id: int,
         raise RuleError("empty trade")
     _check_open(state.players[actor_id], offered_ids, "offered")
     _check_open(state.players[partner_id], requested_ids, "requested")
-    if any(catalog[cid].kind != "item" for cid in offered_ids + requested_ids):
+    if any(not is_item_card(catalog[cid]) for cid in offered_ids + requested_ids):
         raise RuleError("only items can be traded")
-    reserved = {cid for trade in state.trades.values() if trade.status == "pending"
-                and trade.expires_at > now
-                for cid in trade.offered_ids + trade.requested_ids}
+    reserved = {
+        cid
+        for trade in state.trades.values()
+        if trade.status == "pending" and trade.expires_at > now
+        for cid in trade.offered_ids + trade.requested_ids
+    }
     if reserved.intersection(offered_ids + requested_ids):
         raise RuleError("item already reserved in another trade")
     result = deepcopy(state)
     trade_id = uuid4().hex
-    result.trades[trade_id] = Trade(trade_id, actor_id, partner_id, offered_ids.copy(),
-                                    requested_ids.copy(), expires_at)
-    return result, [Event(f"user:{partner_id}", "trade.offered", {"trade_id": trade_id,
-                    "offered_ids": offered_ids.copy(), "requested_ids": requested_ids.copy()})]
+    result.trades[trade_id] = Trade(
+        trade_id,
+        actor_id,
+        partner_id,
+        offered_ids.copy(),
+        requested_ids.copy(),
+        expires_at,
+    )
+    return result, [
+        Event(
+            f"user:{partner_id}",
+            "trade.offered",
+            {
+                "trade_id": trade_id,
+                "offered_ids": offered_ids.copy(),
+                "requested_ids": requested_ids.copy(),
+            },
+        )
+    ]
 
 
-def validate_trade_transfer(seller: Player, buyer: Player, trade: Trade, catalog: Catalog) -> None:
+def validate_trade_transfer(
+    seller: Player, buyer: Player, trade: Trade, catalog: Catalog
+) -> None:
     _check_open(seller, trade.offered_ids, "offered")
     _check_open(buyer, trade.requested_ids, "requested")
-    if any(catalog[cid].kind != "item" for cid in trade.offered_ids + trade.requested_ids):
+    if any(
+        not is_item_card(catalog[cid])
+        for cid in trade.offered_ids + trade.requested_ids
+    ):
         raise RuleError("only items can be traded")
     for player, outgoing, incoming in (
         (seller, trade.offered_ids, trade.requested_ids),
         (buyer, trade.requested_ids, trade.offered_ids),
     ):
         remaining = (set(player.in_play) - set(outgoing)) | set(incoming)
-        if sum(catalog[cid].size == "big" for cid in remaining) > 1:
+        if big_limit(player, catalog) is not None and big_count(
+            player, catalog, remaining
+        ) > big_limit(player, catalog):
             raise RuleError("Big item carrying limit")
 
 
@@ -69,8 +101,9 @@ def transfer_items(sender: Player, receiver: Player, card_ids: list[str]) -> Non
         receiver.in_play.append(cid)
 
 
-def accept_trade(state: GameState, actor_id: int, trade_id: str,
-                 catalog: Catalog, now: datetime) -> tuple[GameState, list[Event]]:
+def accept_trade(
+    state: GameState, actor_id: int, trade_id: str, catalog: Catalog, now: datetime
+) -> tuple[GameState, list[Event]]:
     if trade_id not in state.trades:
         raise RuleError("unknown trade")
     trade = state.trades[trade_id]
@@ -84,12 +117,32 @@ def accept_trade(state: GameState, actor_id: int, trade_id: str,
     validate_trade_transfer(seller, buyer, trade, catalog)
     result = deepcopy(state)
     saved = result.trades[trade_id]
-    transfer_items(result.players[saved.sender_id], result.players[saved.receiver_id], saved.offered_ids)
-    transfer_items(result.players[saved.receiver_id], result.players[saved.sender_id], saved.requested_ids)
+    transfer_items(
+        result.players[saved.sender_id],
+        result.players[saved.receiver_id],
+        saved.offered_ids,
+    )
+    transfer_items(
+        result.players[saved.receiver_id],
+        result.players[saved.sender_id],
+        saved.requested_ids,
+    )
+    reconcile_possessions(result, saved.sender_id, catalog)
+    reconcile_possessions(result, saved.receiver_id, catalog)
     saved.status = "accepted"
-    return result, [Event("group", "trade.accepted", {"trade_id": trade_id,
-                    "sender_id": saved.sender_id, "receiver_id": saved.receiver_id,
-                    "offered_ids": saved.offered_ids.copy(), "requested_ids": saved.requested_ids.copy()})]
+    return result, [
+        Event(
+            "group",
+            "trade.accepted",
+            {
+                "trade_id": trade_id,
+                "sender_id": saved.sender_id,
+                "receiver_id": saved.receiver_id,
+                "offered_ids": saved.offered_ids.copy(),
+                "requested_ids": saved.requested_ids.copy(),
+            },
+        )
+    ]
 
 
 def expire_trade(state: GameState, trade_id: str,

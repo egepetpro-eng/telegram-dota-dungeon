@@ -32,14 +32,27 @@ def validate_cost(player: Player, cost: dict, cost_ids: list[str]) -> None:
         raise RuleError("insufficient or excessive discard cost")
 
 
-def _target(state: GameState, actor_id: int, rule: str, target: dict,
-            catalog: Catalog) -> int:
+def _target(
+    state: GameState,
+    actor_id: int,
+    rule: str,
+    target: dict,
+    catalog: Catalog,
+    *,
+    played_card_id: str | None = None,
+) -> int:
     if not isinstance(target, dict):
         raise RuleError("target must be an object")
-    allowed = {"none": set(), "self": {"player_id"}, "player": {"player_id"},
-               "monster": {"monster_id"}, "open_item": {"player_id", "card_id"},
-               "identity": {"player_id", "card_id"}, "discard": {"card_id"},
-               "combat": {"player_id", "monster_id"}}
+    allowed = {
+        "none": set(),
+        "self": {"player_id"},
+        "player": {"player_id"},
+        "monster": {"monster_id"},
+        "open_item": {"player_id", "card_id"},
+        "identity": {"player_id", "card_id"},
+        "discard": {"card_id"},
+        "combat": {"player_id", "monster_id"},
+    }
     if rule not in allowed or set(target) - allowed[rule]:
         raise RuleError("invalid target operands")
     player_id = target.get("player_id", actor_id)
@@ -59,18 +72,39 @@ def _target(state: GameState, actor_id: int, rule: str, target: dict,
             raise RuleError("target is not a fighter")
     if rule in {"open_item", "identity"}:
         cid = target.get("card_id")
-        if cid not in state.players[player_id].in_play or cid not in catalog:
+        own_cheat_item = (
+            rule == "open_item"
+            and played_card_id in catalog
+            and catalog[played_card_id].rule_key == "cheat"
+            and player_id == actor_id
+            and cid in state.players[player_id].hand
+        )
+        if (
+            cid not in state.players[player_id].in_play and not own_cheat_item
+        ) or cid not in catalog:
             raise RuleError("target is not an open owned card")
         kinds = {"item"} if rule == "open_item" else {"role", "race"}
-        if catalog[cid].kind not in kinds:
+        if (rule == "open_item" and not items.is_item_card(catalog[cid])) or (
+            rule != "open_item" and catalog[cid].kind not in kinds
+        ):
             raise RuleError("invalid target card kind")
-    if rule == "discard" and target.get("card_id") not in state.door_discard + state.treasure_discard:
+    if (
+        rule == "discard"
+        and target.get("card_id") not in state.door_discard + state.treasure_discard
+    ):
         raise RuleError("target is not discarded")
     return player_id
 
 
-def play_card(state: GameState, actor_id: int, card_id: str, target: dict,
-              catalog: Catalog, rng: Random, now: datetime) -> tuple[GameState, list[Event]]:
+def play_card(
+    state: GameState,
+    actor_id: int,
+    card_id: str,
+    target: dict,
+    catalog: Catalog,
+    rng: Random,
+    now: datetime,
+) -> tuple[GameState, list[Event]]:
     if actor_id not in state.players or not state.players[actor_id].alive:
         raise RuleError("unknown or dead player")
     if card_id not in catalog:
@@ -81,7 +115,9 @@ def play_card(state: GameState, actor_id: int, card_id: str, target: dict,
     carried_shot = card.kind == "one_shot" and card_id in owner.in_play
     if card_id not in owner.hand and not carried_shot:
         raise RuleError("card is not owned in playable zone")
-    target_id = _target(state, actor_id, card.target_rule, target, catalog)
+    target_id = _target(
+        state, actor_id, card.target_rule, target, catalog, played_card_id=card_id
+    )
     if card.kind in {"role", "race", "item"}:
         if target_id != actor_id:
             raise RuleError("possessions require self target")
@@ -90,20 +126,36 @@ def play_card(state: GameState, actor_id: int, card_id: str, target: dict,
         return items.carry(state, actor_id, card_id, catalog)
     if card.kind not in {"level_up", "one_shot", "curse", "modifier", "special"}:
         raise RuleError("card cannot be played directly")
-    if card.kind == "modifier" and (not state.combat or target.get("monster_id") not in state.combat.monster_ids):
+    if card.kind == "modifier" and (
+        not state.combat or target.get("monster_id") not in state.combat.monster_ids
+    ):
         raise RuleError("modifier requires a monster target")
     for condition in card.conditions:
         registered = card_rules.CONDITION_HANDLERS.get(condition["rule_key"])
         if registered is None:
             raise RuleError("unimplemented condition")
         registered.validate_args(deepcopy(condition["args"]))
-        if not registered.handler(deepcopy(state), actor_id, target_id, catalog, deepcopy(condition["args"])):
+        if not registered.handler(
+            deepcopy(state), actor_id, target_id, catalog, deepcopy(condition["args"])
+        ):
             raise RuleError("card condition not met")
     result = deepcopy(state)
     transition_rng = deepcopy(rng)
     was_reacting = bool(result.combat and result.combat.reaction_deadline)
     choices = {**target, "played_card_id": card_id, "actor_id": actor_id}
-    result, events = apply_effects(result, target_id, card.effects, catalog, choices=choices, rng=transition_rng)
+    if card.rule_key == "really_impressive_title":
+        result.players[actor_id].hand.remove(card_id)
+        result.players[actor_id].in_play.append(card_id)
+        events = []
+    else:
+        result, events = apply_effects(
+            result,
+            target_id,
+            card.effects,
+            catalog,
+            choices=choices,
+            rng=transition_rng,
+        )
     owner = result.players[actor_id]
     persistent = card_id in result.players[target_id].in_play and not carried_shot
     if not persistent:
@@ -113,10 +165,19 @@ def play_card(state: GameState, actor_id: int, card_id: str, target: dict,
             if card.kind == "modifier":
                 result.combat.modifier_ids.append(card_id)
         else:
-            (result.door_discard if card.deck == "door" else result.treasure_discard).append(card_id)
+            (
+                result.door_discard if card.deck == "door" else result.treasure_discard
+            ).append(card_id)
     if result.combat:
         from .combat import restart_reaction
+
         events.extend(restart_reaction(result, catalog, now, was_reacting))
-    events.append(Event("group", "card.played", {"actor_id": actor_id, "card_id": card_id, "target": target.copy()}))
+    events.append(
+        Event(
+            "group",
+            "card.played",
+            {"actor_id": actor_id, "card_id": card_id, "target": target.copy()},
+        )
+    )
     rng.setstate(transition_rng.getstate())
     return result, events

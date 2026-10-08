@@ -6,6 +6,8 @@ from random import Random
 
 from .effects import apply_effects
 from .model import Catalog, CombatDecision, Event, GameState, RuleError
+from .character import identities, matches_identity, start_character_combat
+from .items import can_use, is_item_card
 
 
 def _require_combat(state: GameState) -> None:
@@ -15,24 +17,92 @@ def _require_combat(state: GameState) -> None:
 
 def combat_strength(state: GameState, user_id: int, catalog: Catalog) -> int:
     player = state.players[user_id]
-    cards = set(player.equipped) | set(player.role_ids) | set(player.race_ids)
-    return (player.level + player.strength_bonus + sum(catalog[cid].bonus for cid in cards)
-            + (state.combat.temporary_strength.get(user_id, 0) if state.combat else 0))
+    cards = (
+        set(cid for cid in player.equipped if can_use(player, cid, catalog))
+        | set(player.role_ids)
+        | set(player.race_ids)
+        | set(player.hireling_items.values())
+    )
+    cards |= {
+        cid
+        for cid in player.in_play
+        if catalog[cid].rule_key in {"hireling", "really_impressive_title"}
+    }
+    bonus = sum(catalog[cid].bonus for cid in cards)
+    for cid in cards:
+        for condition in catalog[cid].conditions:
+            if condition["rule_key"] == "item_identity_bonus" and matches_identity(
+                player, catalog, condition["args"]
+            ):
+                bonus += condition["args"]["amount"]
+    return (
+        player.level
+        + player.strength_bonus
+        + bonus
+        + (
+            state.combat.temporary_strength.get(user_id, 0)
+            + state.combat.character_penalties.get(user_id, 0)
+            if state.combat
+            else 0
+        )
+    )
+
+
+def combat_totals(state: GameState, catalog: Catalog) -> tuple[int, int]:
+    if not state.combat:
+        raise RuleError("no combat")
+    fighters = sum(
+        combat_strength(state, uid, catalog) for uid in state.combat.fighter_ids
+    )
+    monsters = (
+        sum(catalog[cid].bonus for cid in state.combat.monster_ids)
+        + sum(catalog[cid].bonus for cid in state.combat.modifier_ids)
+        + state.combat.monster_strength_bonus
+    )
+    for cid in state.combat.monster_ids:
+        for condition in catalog[cid].conditions:
+            if condition["rule_key"] == "monster_bonus" and any(
+                matches_identity(
+                    state.players[uid], catalog, condition["args"], disadvantage=True
+                )
+                for uid in state.combat.fighter_ids
+            ):
+                monsters += condition["args"]["amount"]
+    return fighters, monsters
 
 
 def declare_result(state: GameState, actor_id: int, catalog: Catalog) -> CombatDecision:
     _require_combat(state)
     if actor_id != state.active_user_id:
         raise RuleError("only active fighter can declare result")
-    fighters = sum(combat_strength(state, user_id, catalog) for user_id in state.combat.fighter_ids)
-    monsters = (sum(catalog[cid].bonus for cid in state.combat.monster_ids)
-                + sum(catalog[cid].bonus for cid in state.combat.modifier_ids)
-                + state.combat.monster_strength_bonus)
-    return CombatDecision("provisional_win" if fighters > monsters else "must_run_away")
+    if any(
+        (
+            state.players[uid].pending_big_excess
+            or state.players[uid].pending_identity_excess
+        )
+        for uid in state.combat.fighter_ids
+    ):
+        raise RuleError("resolve excess Big Items first")
+    fighters, monsters = combat_totals(state, catalog)
+    wins_ties = any(
+        "warrior" in identities(state.players[uid], catalog, "role")
+        for uid in state.combat.fighter_ids
+    )
+    return CombatDecision(
+        "provisional_win"
+        if fighters > monsters or (fighters == monsters and wins_ties)
+        else "must_run_away"
+    )
 
 
-def ask_help(state: GameState, actor_id: int, helper_id: int, treasure_count: int,
-             item_ids: list[str], catalog: Catalog) -> tuple[GameState, list[Event]]:
+def ask_help(
+    state: GameState,
+    actor_id: int,
+    helper_id: int,
+    treasure_count: int,
+    item_ids: list[str],
+    catalog: Catalog,
+) -> tuple[GameState, list[Event]]:
     _require_combat(state)
     if actor_id != state.active_user_id:
         raise RuleError("only active fighter can ask for help")
@@ -45,17 +115,30 @@ def ask_help(state: GameState, actor_id: int, helper_id: int, treasure_count: in
     available = sum(catalog[cid].treasures for cid in state.combat.monster_ids)
     if treasure_count > available:
         raise RuleError("promised treasure exceeds monster reward")
-    if len(item_ids) != len(set(item_ids)) or any(cid not in state.players[actor_id].in_play for cid in item_ids):
+    if len(item_ids) != len(set(item_ids)) or any(
+        cid not in state.players[actor_id].in_play for cid in item_ids
+    ):
         raise RuleError("promised item must be in play")
-    if any(catalog[cid].kind != "item" for cid in item_ids):
+    if any(not is_item_card(catalog[cid]) for cid in item_ids):
         raise RuleError("only items can be promised")
     result = deepcopy(state)
     result.combat.pending_help = (helper_id, treasure_count, item_ids.copy())
-    return result, [Event(f"user:{helper_id}", "help.offered", {
-        "fighter_id": actor_id, "treasure_count": treasure_count, "item_ids": item_ids.copy()})]
+    return result, [
+        Event(
+            f"user:{helper_id}",
+            "help.offered",
+            {
+                "fighter_id": actor_id,
+                "treasure_count": treasure_count,
+                "item_ids": item_ids.copy(),
+            },
+        )
+    ]
 
 
-def accept_help(state: GameState, actor_id: int) -> tuple[GameState, list[Event]]:
+def accept_help(
+    state: GameState, actor_id: int, catalog: Catalog | None = None
+) -> tuple[GameState, list[Event]]:
     _require_combat(state)
     if state.combat.pending_help is None or state.combat.pending_help[0] != actor_id:
         raise RuleError("no help offer for this player")
@@ -66,9 +149,14 @@ def accept_help(state: GameState, actor_id: int) -> tuple[GameState, list[Event]
     result.combat.help_treasure_count = treasures
     result.combat.help_item_ids = items
     result.combat.fighter_ids.append(actor_id)
+    if catalog is not None:
+        p = result.players[actor_id]
+        result.combat.character_penalties[actor_id] = p.next_combat_penalty
+        p.next_combat_penalty = 0
     result.combat.reaction_deadline = None
     result.combat.passes.clear()
     from .trade import cancel_trades_for_combat
+
     events = [Event("group", "help.accepted", {"helper_id": actor_id})]
     events.extend(cancel_trades_for_combat(result, actor_id))
     return result, events
@@ -152,62 +240,162 @@ def pass_reaction(state: GameState, actor_id: int) -> tuple[GameState, list[Even
     return result, [Event("group", "combat.passed", {"user_id": actor_id})]
 
 
-def resolve_rewards(state: GameState, catalog: Catalog,
-                    rng: Random | None = None) -> tuple[GameState, list[Event]]:
+def resolve_rewards(
+    state: GameState,
+    catalog: Catalog,
+    rng: Random | None = None,
+    *,
+    resurrection_ids: dict[int, list[str]] | None = None,
+) -> tuple[GameState, list[Event]]:
     _require_combat(state)
     result = deepcopy(state)
     combat = result.combat
     leader = result.players[result.active_user_id]
     levels = sum(catalog[cid].levels for cid in combat.monster_ids)
-    treasures = sum(catalog[cid].treasures for cid in combat.monster_ids)
+    treasures = sum(
+        catalog[cid].treasures
+        for cid in combat.monster_ids + combat.charmed_monster_ids
+    )
     if combat.help_treasure_count > treasures:
         raise RuleError("promised treasure exceeds reward")
     for cid in combat.help_item_ids:
         if cid not in leader.in_play:
             raise RuleError("promised item changed owner")
     leader.level = min(10, leader.level + levels)
-    events = [Event("group", "combat.won", {"fighter_id": leader.user_id,
-                                              "monster_ids": combat.monster_ids.copy(),
-                                              "levels": levels})]
+    events = [
+        Event(
+            "group",
+            "combat.won",
+            {
+                "fighter_id": leader.user_id,
+                "monster_ids": combat.monster_ids.copy(),
+                "levels": levels,
+            },
+        )
+    ]
     from .draw import draw_cards
+
     transition_rng = deepcopy(rng) if rng is not None else Random()
     existing_hand = set(leader.hand)
-    result, draw_events = draw_cards(result, leader.user_id, "treasure", treasures,
-                                    combat.helper_id is not None, catalog, transition_rng)
+    selections = resurrection_ids or {}
+    if not isinstance(selections, dict) or set(selections) - set(combat.fighter_ids):
+        raise RuleError("invalid resurrection recipients")
+    from .play import validate_cost
+
+    for uid, costs in selections.items():
+        if type(uid) is not int or not isinstance(costs, list):
+            raise RuleError("invalid resurrection selections")
+        validate_cost(state.players[uid], {"zone": "hand", "count": len(costs)}, costs)
+        if costs and "cleric" not in identities(state.players[uid], catalog, "role"):
+            raise RuleError("resurrection requires Cleric")
+    existing_hand -= set(selections.get(leader.user_id, []))
+    allocations = []
+    if combat.helper_id is not None:
+        allocations.append((combat.helper_id, combat.help_treasure_count))
+    allocations.append((leader.user_id, treasures - combat.help_treasure_count))
+    plan = {}
+    offset = 0
+    for uid, count in allocations:
+        costs = selections.get(uid, [])
+        if len(costs) > count:
+            raise RuleError("resurrection exceeds face-up draw entitlement")
+        for index, cid in enumerate(costs):
+            plan[offset + index] = (uid, cid)
+        offset += count
+    result, draw_events = draw_cards(
+        result,
+        leader.user_id,
+        "treasure",
+        treasures,
+        combat.helper_id is not None,
+        catalog,
+        transition_rng,
+        resurrection_plan=plan,
+    )
+    for event in draw_events:
+        events.append(
+            Event(event.audience, "treasure.drawn", event.data)
+            if event.name == "card.drawn"
+            else event
+        )
     leader = result.players[leader.user_id]
     acquired = [cid for cid in leader.hand if cid not in existing_hand]
-    helper_cards = acquired[:combat.help_treasure_count] if combat.helper_id is not None else []
+    helper_cards = (
+        acquired[: combat.help_treasure_count] if combat.helper_id is not None else []
+    )
     for cid in helper_cards:
         leader.hand.remove(cid)
         result.players[combat.helper_id].hand.append(cid)
-    for event in draw_events:
-        if event.name == "card.drawn":
-            cid = event.data["card_id"]
-            recipient = combat.helper_id if cid in helper_cards else leader.user_id
-            events.append(Event(event.audience, "treasure.drawn", {**event.data, "recipient_id": recipient}))
-        else:
-            events.append(event)
+    events = [
+        (
+            Event(
+                e.audience,
+                e.name,
+                {
+                    **e.data,
+                    "recipient_id": (
+                        combat.helper_id
+                        if e.data.get("card_id") in helper_cards
+                        else leader.user_id
+                    ),
+                },
+            )
+            if e.name == "treasure.drawn"
+            else e
+        )
+        for e in events
+    ]
     if combat.helper_id is not None:
         helper = result.players[combat.helper_id]
+        if "elf" in identities(helper, catalog, "race"):
+            helper.level = min(10, helper.level + len(combat.monster_ids))
+            events.append(
+                Event(
+                    "group",
+                    "elf.helper_levels",
+                    {"user_id": helper.user_id, "levels": len(combat.monster_ids)},
+                )
+            )
         for cid in combat.help_item_ids:
             leader.in_play.remove(cid)
             if cid in leader.equipped:
                 leader.equipped.remove(cid)
             helper.in_play.append(cid)
         if combat.help_item_ids:
-            events.append(Event("group", "help.items_transferred", {"card_ids": combat.help_item_ids.copy()}))
+            events.append(
+                Event(
+                    "group",
+                    "help.items_transferred",
+                    {"card_ids": combat.help_item_ids.copy()},
+                )
+            )
+    from .items import reconcile_possessions
+
+    for uid in combat.fighter_ids:
+        reconcile_possessions(result, uid, catalog)
     _discard_combat_cards(result)
     result.combat = None
-    result.phase = "game.finished" if leader.level >= 10 or result.phase == "game.finished" else "turn.charity"
-    if result.phase == "game.finished":
-        events.append(Event("group", "game.won", {"user_id": leader.user_id}))
+    winners = [uid for uid in combat.fighter_ids if result.players[uid].level >= 10]
+    result.phase = (
+        "game.finished"
+        if winners or result.phase == "game.finished"
+        else "turn.charity"
+    )
+    for uid in winners:
+        events.append(Event("group", "game.won", {"user_id": uid}))
     if rng is not None:
         rng.setstate(transition_rng.getstate())
     return result, events
 
 
-def close_reaction(state: GameState, catalog: Catalog, now: datetime,
-                   rng: Random | None = None) -> tuple[GameState, list[Event]]:
+def close_reaction(
+    state: GameState,
+    catalog: Catalog,
+    now: datetime,
+    rng: Random | None = None,
+    *,
+    resurrection_ids: dict[int, list[str]] | None = None,
+) -> tuple[GameState, list[Event]]:
     _require_combat(state)
     combat = state.combat
     if combat.reaction_deadline is None:
@@ -215,9 +403,12 @@ def close_reaction(state: GameState, catalog: Catalog, now: datetime,
     eligible = set(state.order) - set(combat.fighter_ids)
     if now < combat.reaction_deadline and not eligible.issubset(combat.passes):
         raise RuleError("reaction window is still open")
-    if declare_result(state, state.active_user_id, catalog).outcome != "provisional_win":
+    if (
+        declare_result(state, state.active_user_id, catalog).outcome
+        != "provisional_win"
+    ):
         raise RuleError("fighters are no longer winning")
-    return resolve_rewards(state, catalog, rng)
+    return resolve_rewards(state, catalog, rng, resurrection_ids=resurrection_ids)
 
 
 def begin_escape(state: GameState, actor_id: int,
@@ -236,15 +427,34 @@ def begin_escape(state: GameState, actor_id: int,
     return result, [Event("group", "combat.escape_started", {})]
 
 
-def escape_modifier(state: GameState, actor_id: int, monster_id: str,
-                    catalog: Catalog) -> int:
-    return state.players[actor_id].escape_bonus
+def escape_modifier(
+    state: GameState, actor_id: int, monster_id: str, catalog: Catalog
+) -> int:
+    p = state.players[actor_id]
+    bonus = p.escape_bonus + (1 if "elf" in identities(p, catalog, "race") else 0)
+    for cid in p.equipped:
+        if not can_use(p, cid, catalog):
+            continue
+        for condition in catalog[cid].conditions:
+            if condition["rule_key"] in {"item_escape_bonus", "tuba_escape"}:
+                bonus += condition["args"]["amount"]
+    if state.combat:
+        bonus += state.combat.escape_bonuses.get((actor_id, monster_id), 0)
+    return bonus
 
 
 def _discard_combat_cards(state: GameState) -> None:
-    for cid in dict.fromkeys(state.combat.monster_ids + state.combat.played_card_ids + state.combat.modifier_ids):
-        (state.door_discard if state.card_decks.get(cid, "door") == "door"
-         else state.treasure_discard).append(cid)
+    for cid in dict.fromkeys(
+        state.combat.monster_ids
+        + state.combat.charmed_monster_ids
+        + state.combat.played_card_ids
+        + state.combat.modifier_ids
+    ):
+        (
+            state.door_discard
+            if state.card_decks.get(cid, "door") == "door"
+            else state.treasure_discard
+        ).append(cid)
 
 
 def apply_bad_stuff(state: GameState, actor_id: int, monster_id: str,
@@ -275,29 +485,158 @@ def apply_bad_stuff(state: GameState, actor_id: int, monster_id: str,
     return result, events
 
 
-def run_away(state: GameState, actor_id: int, monster_id: str, rng: Random,
-             catalog: Catalog) -> tuple[GameState, list[Event]]:
-    if state.phase != "combat.run_away" or state.combat is None:
-        raise RuleError("no escape in progress")
-    if (actor_id, monster_id) not in state.combat.escape_pending:
-        raise RuleError("escape roll already resolved or invalid")
+def finish_escape_attempt(
+    state: GameState,
+    actor_id: int,
+    monster_id: str,
+    escaped: bool,
+    catalog: Catalog,
+    rng: Random | None = None,
+):
+    if (
+        state.phase != "combat.run_away"
+        or state.combat is None
+        or (actor_id, monster_id) not in state.combat.escape_pending
+    ):
+        raise RuleError("no escape attempt")
     result = deepcopy(state)
-    die = rng.randint(1, 6)
-    escaped = die + escape_modifier(result, actor_id, monster_id, catalog) >= 5
-    events = [Event("group", "escape.rolled", {"user_id": actor_id,
-                 "monster_id": monster_id, "die": die, "escaped": escaped})]
-    result.combat.escape_pending.remove((actor_id, monster_id))
+    pair = (actor_id, monster_id)
+    events = []
+    result.combat.escape_pending.remove(pair)
+    result.combat.escape_rolls.pop(pair, None)
+    result.combat.escape_outcomes[pair] = escaped
     if not escaped:
         result, bad_events = apply_bad_stuff(result, actor_id, monster_id, catalog)
         events.extend(bad_events)
         if not result.players[actor_id].alive:
-            result.combat.escape_pending = {pair for pair in result.combat.escape_pending
-                                            if pair[0] != actor_id}
+            result.combat.escape_pending = {
+                p for p in result.combat.escape_pending if p[0] != actor_id
+            }
+            result.combat.escape_rolls = {
+                p: die
+                for p, die in result.combat.escape_rolls.items()
+                if p[0] != actor_id
+            }
+    if (
+        not any(p[0] == actor_id for p in result.combat.escape_pending)
+        and actor_id not in result.combat.tuba_rewarded
+        and all(
+            success
+            for p, success in result.combat.escape_outcomes.items()
+            if p[0] == actor_id
+        )
+    ):
+        p = result.players[actor_id]
+        if any(
+            catalog[cid].rule_key == "tuba_of_charm" and can_use(p, cid, catalog)
+            for cid in p.equipped
+        ):
+            result.combat.tuba_rewarded.add(actor_id)
+            from .draw import draw_cards
+
+            transition_rng = deepcopy(rng) if rng is not None else Random()
+            result, drawn = draw_cards(
+                result, actor_id, "treasure", 1, False, catalog, transition_rng
+            )
+            events.extend(drawn)
+            if rng is not None and hasattr(rng, "setstate"):
+                rng.setstate(transition_rng.getstate())
     if not result.combat.escape_pending:
         _discard_combat_cards(result)
         result.combat = None
-        result.phase = "turn.charity"
+        result.phase = (
+            "game.finished" if result.phase == "game.finished" else "turn.charity"
+        )
         events.append(Event("group", "combat.escape_finished", {}))
+    return result, events
+
+
+def resolve_escape(
+    state: GameState,
+    actor_id: int,
+    monster_id: str,
+    catalog: Catalog,
+    rng: Random | None = None,
+):
+    pair = (actor_id, monster_id)
+    if not state.combat or pair not in state.combat.escape_rolls:
+        raise RuleError("no stored escape roll")
+    escaped = (
+        state.combat.escape_rolls[pair]
+        + escape_modifier(state, actor_id, monster_id, catalog)
+        >= 5
+    )
+    result, events = finish_escape_attempt(
+        state, actor_id, monster_id, escaped, catalog, rng
+    )
+    events.insert(
+        0,
+        Event(
+            "group",
+            "escape.resolved",
+            {"user_id": actor_id, "monster_id": monster_id, "escaped": escaped},
+        ),
+    )
+    return result, events
+
+
+def run_away(
+    state: GameState, actor_id: int, monster_id: str, rng: Random, catalog: Catalog
+) -> tuple[GameState, list[Event]]:
+    if state.phase != "combat.run_away" or state.combat is None:
+        raise RuleError("no escape in progress")
+    pair = (actor_id, monster_id)
+    if pair not in state.combat.escape_pending or pair in state.combat.escape_rolls:
+        raise RuleError("escape roll already resolved or invalid")
+    result = deepcopy(state)
+    transition_rng = deepcopy(rng)
+    die = transition_rng.randint(1, 6)
+    result.combat.escape_rolls[pair] = die
+    escaped = die + escape_modifier(result, actor_id, monster_id, catalog) >= 5
+    events = [
+        Event(
+            "group",
+            "escape.rolled",
+            {
+                "user_id": actor_id,
+                "monster_id": monster_id,
+                "die": die,
+                "escaped": escaped,
+            },
+        )
+    ]
+    p = result.players[actor_id]
+    after_roll = any(
+        a["key"] in {"wizard_flight", "halfling_escape_retry"}
+        for cid in p.role_ids + p.race_ids
+        for a in catalog[cid].abilities
+    )
+    after_roll |= any(
+        catalog[cid].rule_key
+        in {"loaded_die", "invisibility_potion", "magic_lamp", "flask_of_glue"}
+        for q in result.players.values()
+        for cid in q.hand + q.in_play
+    )
+    if after_roll:
+        events.append(
+            Event(
+                f"user:{actor_id}",
+                "escape.decision_required",
+                {
+                    "user_id": actor_id,
+                    "monster_id": monster_id,
+                    "die": die,
+                    "escaped": escaped,
+                },
+            )
+        )
+    else:
+        result, resolved = resolve_escape(
+            result, actor_id, monster_id, catalog, transition_rng
+        )
+        events.extend(resolved)
+    if hasattr(rng, "setstate"):
+        rng.setstate(transition_rng.getstate())
     return result, events
 
 

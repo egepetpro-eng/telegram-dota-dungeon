@@ -47,7 +47,9 @@ def leave_lobby(state: GameState, actor_id: int) -> tuple[GameState, list[Event]
     return result, [Event("group", "player.left", {"user_id": actor_id})]
 
 
-def start(state: GameState, actor_id: int, catalog: Catalog, rng: Random) -> tuple[GameState, list[Event]]:
+def start(
+    state: GameState, actor_id: int, catalog: Catalog, rng: Random
+) -> tuple[GameState, list[Event]]:
     if state.phase != "lobby":
         raise RuleError("game already started")
     if actor_id != state.host_id:
@@ -70,15 +72,49 @@ def start(state: GameState, actor_id: int, catalog: Catalog, rng: Random) -> tup
     events: list[Event] = []
     for user_id in result.order:
         for deck in ("door", "treasure"):
-            result, drawn_events = draw_cards(result, user_id, deck, 4, False, catalog, transition_rng)
+            result, drawn_events = draw_cards(
+                result, user_id, deck, 4, False, catalog, transition_rng
+            )
             events.extend(drawn_events)
-        events.append(Event(f"user:{user_id}", "hand.dealt", {
-            "card_ids": result.players[user_id].hand.copy()}))
+        events.append(
+            Event(
+                f"user:{user_id}",
+                "hand.dealt",
+                {"card_ids": result.players[user_id].hand.copy()},
+            )
+        )
     result.active_user_id = transition_rng.choice(result.order)
+    for user_id in result.order:
+        if result.players[user_id].character_sex is None:
+            result.players[user_id].character_sex = transition_rng.choice(
+                ("male", "female")
+            )
     result.phase = "turn.prepare"
     result.turn_number = 1
     result, trigger_events = resolve_initial_deal(result, catalog, transition_rng)
     events.extend(trigger_events)
-    events.append(Event("group", "game.started", {"active_user_id": result.active_user_id, "order": result.order.copy()}))
+    events.append(
+        Event(
+            "group",
+            "game.started",
+            {"active_user_id": result.active_user_id, "order": result.order.copy()},
+        )
+    )
     rng.setstate(transition_rng.getstate())
     return result, events
+
+
+def set_character_sex(state: GameState, actor_id: int, character_sex: str | None):
+    if state.phase != "lobby" or actor_id not in state.players:
+        raise RuleError("not a lobby player")
+    if character_sex is not None and character_sex not in {"male", "female"}:
+        raise RuleError("invalid character sex")
+    result = deepcopy(state)
+    result.players[actor_id].character_sex = character_sex
+    return result, [
+        Event(
+            "group",
+            "character.sex_set",
+            {"user_id": actor_id, "character_sex": character_sex},
+        )
+    ]
