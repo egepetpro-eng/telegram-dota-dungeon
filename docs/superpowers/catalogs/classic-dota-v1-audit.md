@@ -1,7 +1,8 @@
 # Classic Dota v1 factual source audit
 
-Verified on 2026-10-08. The compiled data release preserves this factual manifest;
-runtime release acceptance still requires Task 5/6 handlers and behavior tests.
+Verified on 2026-10-08. The compiled release preserves this factual manifest;
+Task 5/6 handlers and the definition-keyed behavior scenarios are implemented
+and independently reviewed. Packaging and deployment are separate release gates.
 
 ## Scope and evidence standard
 
@@ -69,9 +70,9 @@ the expressly labelled evidence limits in the Task 6 source clarification report
 
 These are compiled Russian description changes only. Mechanics, numeric values,
 physical copies, source references, entity mappings and source-manifest facts are
-unchanged. This compilation check does not establish production runtime readiness;
-Task 5/6 handler acceptance remains outstanding. The media owner must repin the
-media catalog digest separately after review.
+unchanged. This historical compilation check alone did not establish runtime
+readiness. Task 5/6 handlers have since been accepted and the media catalog
+repinned to the current digest after review.
 
 ## Accepted Dota mappings
 
@@ -240,9 +241,9 @@ The compiled release now has implemented handlers and closed validators for all
 validation succeeds for all 168 cards and the matching media release. The current
 catalog digest is `8bf556a9ff3ba28a7fb0c116432c8ba076d5183702634a9e56ec53c111593a76`.
 The definition-keyed [behavior coverage ledger](classic-dota-v1-behavior-coverage.md)
-records executed original-card scenarios and their acceptance status; PENDING
-rows are not release claims. Final behavioral review, packaging and deployment
-checks remain separate gates.
+records executed original-card scenarios and their acceptance status. The final
+behavioral review accepted the original-card scenarios and privacy regressions.
+Packaging and deployment checks remain separate gates.
 
 Historical compilation evidence: on the branch based on
 `316af736bf2b6eec29737df203cbf2e860e79692`, the four registries were empty and the
@@ -296,6 +297,19 @@ Older face evidence was reconciled with known publisher changes, but there is no
 `hoard`, `mandatory_play`.
 
 ## Verification
+
+Current integrated verification, 2026-10-08: `python -m pytest -q --tb=short`
+passed 805 tests locally, with 28 PostgreSQL tests skipped because the local
+fixture has no test database. The same complete suite passed all 833 tests
+against the dedicated server test database, with no skips. This includes all
+147 primary definition scenarios, six privacy-oracle regressions, real installed
+catalog acceptance, Telegram callback chains and persisted continuations.
+The strict catalog CLI validates 168 cards, 95 Doors and 73 Treasures against
+the current matching media digest. An isolated wheel install and the running
+production service are verified separately; these test results do not claim
+that a human Telegram party has been played.
+
+### Historical source and compilation verification
 
 TDD red: four missing-manifest failures; numeric-evidence failure for Net Troll; price-evidence failure for Magic Missile; Rat ability regression failed because it was an equip effect; GUAL recipient regression failed because Boil an Anthill was self-only. Green manifest suite: 8 passed. Full suite: 78 passed. Tests verify independent per-card copy counts, totals, evidence completeness, fixed factual examples, naming isolation, conditional escape representation and ordinary GUAL recipient eligibility.
 
