@@ -56,7 +56,7 @@ HANDLERS: dict[str, Handler] = {
         _arg(c, "now"),
     ),
     "force_help": lambda s, c, catalog, rng: combat.force_help(
-        s, c.actor_id, _arg(c, "helper_id"), catalog, _arg(c, "now")
+        s, c.actor_id, _arg(c, "helper_id"), catalog, _arg(c, "now"), rng=rng
     ),
     "join_undead": lambda s, c, catalog, rng: combat.join_undead(
         s, c.actor_id, _arg(c, "card_id"), catalog, _arg(c, "now")
@@ -239,10 +239,7 @@ def dispatch(
     )
     actor = state.players.get(command.actor_id)
     choices = {"resolve_big_items", "resolve_identity_excess"}
-    pending = any(
-        p.pending_identity_excess or p.pending_big_excess
-        for p in state.players.values()
-    )
+    pending = decisions.possession_pending(state)
     sale_resolution = (
         actor is not None
         and actor.pending_big_excess
@@ -279,11 +276,17 @@ def dispatch(
         if state.phase != "turn.prepare" or state.turn_number > 1:
             raise RuleError("not your turn")
     result, events = handler(state, command, catalog, rng)
+    result, continuation_events = decisions.drain(
+        result, catalog, rng, command.args.get("now")
+    )
+    events.extend(continuation_events)
     if (
         result.combat
         and result.phase == "combat.active"
         and not result.pending_decision
         and not result.combat.reward_state
+        and not decisions.possession_pending(result)
+        and not result.resolution_queue
     ):
         result, mandatory = combat.settle_mandatory_monsters(
             result, catalog, rng, command.args.get("now")

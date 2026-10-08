@@ -241,7 +241,7 @@ def monster_action(state, actor, monster_id, choices, catalog, rng, now):
     return result, events + ev
 
 
-def force_help(state, actor, helper, catalog, now):
+def force_help(state, actor, helper, catalog, now, *, rng=None):
     from .combat import leader_id, ask_help, accept_help, monster_rewards
 
     if (
@@ -265,7 +265,7 @@ def force_help(state, actor, helper, catalog, now):
     ):
         raise RuleError("cannot force this helper or winning level")
     result, events = ask_help(state, actor, helper, 0, [], catalog)
-    result, ev = accept_help(result, helper, catalog, now=now)
+    result, ev = accept_help(result, helper, catalog, now=now, rng=rng)
     if result.combat:
         result.combat.forced_helper = True
     return result, events + ev

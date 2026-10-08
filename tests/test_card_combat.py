@@ -578,3 +578,119 @@ def test_forced_helper_leaves_when_later_level_gain_makes_winning_combat():
         and s.combat.helper_id is None
         and s.combat.fighter_ids == [1]
     )
+
+
+# Task 6 review round 1: reward ownership and character/turn/RNG boundaries.
+@pytest.mark.parametrize("helper_count", [0, 1])
+def test_review_i2_hoard_costs_respect_new_draw_ownership(helper_count):
+    from dota_dungeon.core.card_rules import decision_options
+    from tests.test_card_bad_stuff import respond
+
+    s, c = game(role="cleric", level=5)
+    s.combat.helper_id = 2
+    s.combat.fighter_ids = [1, 2]
+    s.combat.help_treasure_count = helper_count
+    s.treasure_deck = ["cost7", "cost6", "hoard", "pretty_balloons"]
+    s.treasure_discard = ["magic_missile"]
+    s, _ = combat.resolve_rewards(s, c, Random(1), now=NOW)
+    s, _ = respond(s, c, {"card_ids": []})
+    assert s.pending_decision.kind == "reward_draw"
+    costs = decision_options(s, 1, c)["choices"]["card_ids"]
+    if helper_count:
+        assert "pretty_balloons" not in costs
+        before, rng = deepcopy(s), Random(13)
+        rng_before = rng.getstate()
+        with pytest.raises(RuleError):
+            decide(
+                s,
+                Command(
+                    "g",
+                    1,
+                    "reserved-cost",
+                    "respond_decision",
+                    {
+                        "decision_id": s.pending_decision.id,
+                        "choices": {"card_ids": ["pretty_balloons"]},
+                        "now": NOW,
+                    },
+                ),
+                c,
+                rng,
+            )
+        assert s == before and rng.getstate() == rng_before
+        s, _ = respond(s, c, {"card_ids": ["cost0"]})
+        assert "pretty_balloons" in s.players[2].hand
+    else:
+        assert "pretty_balloons" in costs
+        s, _ = respond(s, c, {"card_ids": ["pretty_balloons"]})
+        assert "pretty_balloons" in s.treasure_discard
+    assert s.combat is None and s.pending_decision is None
+    assert "magic_missile" in s.players[1].hand
+
+
+@pytest.mark.parametrize("returning", [False, True])
+def test_review_i5_transfer_applies_queued_penalty_preserving_combat_uses_and_rewards(
+    returning,
+):
+    s, c = game(level=4)
+    s.combat.monster_ids = ["floating_nose", "lame_goblin"]
+    s, _ = play(s, c, "potion_of_halitosis", {"monster_id": "floating_nose"})
+    earned = deepcopy(s.combat.pending_rewards)
+    s.players[2].next_combat_penalty = 0 if returning else -5
+    if returning:
+        s.combat.character_penalties[2] = -5
+    s.combat.ability_uses[(2, "warrior_berserk", None)] = 2
+    s, _ = play(s, c, "transferral_potion", {"player_id": 2})
+    assert combat.combat_strength(s, 2, c) == -2
+    assert s.players[2].next_combat_penalty == 0
+    assert s.combat.pending_rewards == earned
+    assert s.combat.ability_uses[(2, "warrior_berserk", None)] == 2
+
+
+def test_review_i6_after_combat_entitlement_ends_with_turn():
+    s, c = game(level=4)
+    s.players[1].hand = []
+    s, _ = combat.resolve_rewards(s, c, Random(1), now=NOW)
+    assert s.after_combat
+    s, _ = command(s, c, "end_turn")
+    assert s.active_user_id == 2 and not s.after_combat
+    s.players[2].hand = ["mutilate_the_bodies"]
+    before = deepcopy(s)
+    with pytest.raises(RuleError):
+        play(s, c, "mutilate_the_bodies", {"player_id": 2}, actor=2)
+    assert s == before
+
+
+@pytest.mark.parametrize("entry", ["open_door", "seek_trouble"])
+def test_review_i6_new_combat_clears_previous_after_combat_entitlement(entry):
+    s, c = game(phase="turn.prepare" if entry == "open_door" else "turn.after_door")
+    s.after_combat = True
+    s.door_deck = ["monster"]
+    args = {}
+    if entry == "seek_trouble":
+        s.players[1].hand.append("monster")
+        s.door_deck = []
+        args["card_id"] = "monster"
+    s, _ = command(s, c, entry, **args)
+    assert s.combat and not s.after_combat
+
+
+def test_review_i7_forced_female_help_amazon_recycle_uses_injected_rng():
+    s, c = game(level=4)
+    s.combat.monster_ids = ["amazon"]
+    s.players[1].character_sex = "male"
+    s.players[2].level = 5
+    s.players[2].character_sex = "female"
+    s.players[1].in_play = ["kneepads_of_allure"]
+    s.players[1].equipped = ["kneepads_of_allure"]
+    s.treasure_deck = []
+    s.treasure_discard = ["cost6", "cost7"]
+    cmd = Command("g", 1, "force-amazon", "force_help", {"helper_id": 2, "now": NOW})
+    rng, replay_rng = Random(29), Random(29)
+    before = rng.getstate()
+    result, events = decide(s, cmd, c, rng)
+    replay, replay_events = decide(deepcopy(s), cmd, c, replay_rng)
+    assert result.combat is None
+    assert rng.getstate() != before
+    assert result == replay and events == replay_events
+    assert rng.getstate() == replay_rng.getstate()

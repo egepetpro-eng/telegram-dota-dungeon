@@ -50,8 +50,10 @@ def decision_options(state, user_id, catalog):
             }
             options["allow_decline"] = False
         elif d.kind == "reward_draw":
+            from .reward_rules import resurrection_cost_ids
+
             options = {
-                "card_ids": state.players[user_id].hand.copy(),
+                "card_ids": resurrection_cost_ids(state, user_id),
                 "maximum": d.payload["maximum"].get(user_id, 0),
                 "allow_decline": True,
             }
@@ -106,9 +108,20 @@ def finish_source(state, cid, catalog):
         getattr(state, f"{catalog[cid].deck}_discard").append(cid)
 
 
+def possession_pending(state):
+    return any(
+        p.pending_identity_excess or p.pending_big_excess
+        for p in state.players.values()
+    )
+
+
 def drain(state, catalog, rng, now):
     events = []
-    while state.resolution_queue and not state.pending_decision:
+    while (
+        state.resolution_queue
+        and not state.pending_decision
+        and not possession_pending(state)
+    ):
         task = state.resolution_queue.pop(0)
         kind = task["kind"]
         if kind == "effects":
@@ -130,6 +143,15 @@ def drain(state, catalog, rng, now):
 
             state, ev = request_loss(state, catalog, rng, now, **task["args"])
             events.extend(ev)
+        elif kind == "reaction":
+            if state.combat:
+                from .combat import restart_reaction
+
+                events.extend(
+                    restart_reaction(
+                        state, catalog, time_value(now), task["was_reacting"]
+                    )
+                )
         elif kind == "escape_finish":
             from .combat import complete_escape
 
@@ -216,6 +238,12 @@ def start_curse(state, actor, target, cid, catalog, now, *, door=False):
     remove_owned_card(state.players[actor], cid)
     state.resolving_card_ids.append(cid)
     state.resolution_queue.append(dict(kind="source", card_id=cid))
+    if state.combat:
+        state.resolution_queue.append(
+            dict(
+                kind="reaction", was_reacting=state.combat.reaction_deadline is not None
+            )
+        )
     return state, offer(
         state,
         "curse_response",

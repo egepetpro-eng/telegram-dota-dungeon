@@ -146,9 +146,26 @@ def advance(state, catalog, rng, now, *, selections=None):
     return state, events + final
 
 
+def resurrection_cost_ids(state, user_id):
+    """Owned hand costs exclude draws already promised to another recipient."""
+    reserved = set()
+    if state.combat and state.combat.reward_state:
+        for batch in state.combat.reward_state["batches"]:
+            if batch["owner"] == user_id and batch["helper_id"] is not None:
+                reserved.update(batch["acquired"][: batch["helper_count"]])
+    return [cid for cid in state.players[user_id].hand if cid not in reserved]
+
+
+def validate_reward_cost(state, user_id, costs):
+    from .play import validate_cost
+
+    validate_cost(state.players[user_id], {"zone": "hand", "count": len(costs)}, costs)
+    if not set(costs) <= set(resurrection_cost_ids(state, user_id)):
+        raise RuleError("resurrection cost belongs to another reward recipient")
+
+
 def draw_batch(state, catalog, rng, selections):
     from .draw import draw_cards
-    from .play import validate_cost
 
     c = state.combat
     session = c.reward_state
@@ -161,12 +178,14 @@ def draw_batch(state, catalog, rng, selections):
         raise RuleError("invalid resurrection recipients")
     for uid, n in alloc:
         costs = selections.get(uid, [])
-        validate_cost(state.players[uid], {"zone": "hand", "count": len(costs)}, costs)
+        validate_reward_cost(state, uid, costs)
         if len(costs) > n:
             raise RuleError("resurrection exceeds entitlement")
         for i, cid in enumerate(costs):
             plan[offset + i] = (uid, cid)
         offset += n
+    spent = {cid for uid, cid in plan.values() if uid == batch["owner"]}
+    batch["acquired"] = [cid for cid in batch["acquired"] if cid not in spent]
     batch["remaining"] = 0
     before = set(state.players[batch["owner"]].hand) - {
         cid for uid, cid in plan.values() if uid == batch["owner"]
@@ -199,12 +218,8 @@ def respond_reward(state, actor, choices, catalog, rng, now, *, expire=False):
     else:
         if set(choices) != {"card_ids"} or not isinstance(choices["card_ids"], list):
             raise RuleError("invalid resurrection choices")
-        from .play import validate_cost
-
         costs = choices["card_ids"]
-        validate_cost(
-            state.players[actor], {"zone": "hand", "count": len(costs)}, costs
-        )
+        validate_reward_cost(state, actor, costs)
         if len(costs) > d.payload["maximum"][actor]:
             raise RuleError("resurrection exceeds entitlement")
         if sum(len(v["card_ids"]) for v in d.responses.values()) + len(costs) > len(

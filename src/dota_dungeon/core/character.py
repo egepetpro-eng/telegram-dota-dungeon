@@ -65,7 +65,8 @@ def effective_hand_limit(state: GameState, user_id: int, catalog: Catalog) -> in
 def start_character_combat(state, catalog):
     for uid in state.combat.fighter_ids:
         p = state.players[uid]
-        state.combat.character_penalties[uid] = p.next_combat_penalty
+        if p.next_combat_penalty or uid not in state.combat.character_penalties:
+            state.combat.character_penalties[uid] = p.next_combat_penalty
         p.next_combat_penalty = 0
 
 

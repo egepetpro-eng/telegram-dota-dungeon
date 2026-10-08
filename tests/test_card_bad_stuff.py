@@ -288,3 +288,108 @@ def test_corpse_is_public_and_highest_level_living_player_loots_first():
         "cost4",
         "cost5",
     }
+
+
+# Task 6 review round 1: serialized obligations, living recipients and deadlines.
+@pytest.mark.parametrize("through_escape", [False, True])
+def test_review_i1_leper_big_excess_precedes_next_neighbor_choice(through_escape):
+    s, c = game(level=7, phase="combat.run_away" if through_escape else "combat.active")
+    s.combat.monster_ids = ["leperchaun"]
+    s.players[1].in_play = ["huge_rock", "tuba_of_charm"]
+    s.players[2].in_play = ["stepladder"]
+    if through_escape:
+        s.combat.escape_pending = {(1, "leperchaun")}
+        s.combat.escape_rolls = {(1, "leperchaun"): 1}
+        s, _ = command(s, c, "resolve_escape", monster_id="leperchaun")
+    else:
+        s, _ = combat.apply_bad_stuff(s, 1, "leperchaun", c, rng=Random(1), now=NOW)
+    s, _ = respond(s, c, {"card_ids": ["huge_rock"]}, 2)
+    assert s.players[2].pending_big_excess == 1
+    assert s.pending_decision is None and s.resolution_queue
+    s, _ = command(s, c, "resolve_big_items", 2, card_ids=["huge_rock"], recipient_id=3)
+    assert s.players[2].pending_big_excess == 0
+    assert s.pending_decision.chooser_ids == [3]
+    assert s.pending_decision.payload["card_ids"] == ["tuba_of_charm"]
+    s, _ = respond(s, c, {"card_ids": ["tuba_of_charm"]}, 3)
+    assert s.pending_decision is None and s.players[3].pending_big_excess == 1
+    s, _ = command(
+        s, c, "resolve_big_items", 3, card_ids=["tuba_of_charm"], recipient_id=1
+    )
+    assert not s.resolution_queue and s.pending_decision is None
+    assert s.players[1].in_play == ["tuba_of_charm"]
+    assert s.players[3].in_play == ["huge_rock"]
+    if through_escape:
+        assert s.combat is None and s.phase == "turn.charity"
+
+
+def test_review_i3_leper_skips_dead_printed_neighbor_without_replacement():
+    s, c = game()
+    s.combat.monster_ids = ["leperchaun"]
+    s.players[1].in_play = ["pretty_balloons", "magic_missile"]
+    s.players[2].alive = False
+    s, _ = combat.apply_bad_stuff(s, 1, "leperchaun", c, rng=Random(1), now=NOW)
+    assert s.pending_decision.chooser_ids == [3]
+    s, _ = respond(s, c, {"card_ids": ["pretty_balloons"]}, 3)
+    assert not s.pending_decision and not s.resolution_queue
+    assert s.players[1].in_play == ["magic_missile"]
+    assert not s.players[2].in_play and s.players[3].in_play == ["pretty_balloons"]
+
+
+def test_review_i3_loss_settlement_rejects_dead_recipient_atomically():
+    s, c = game()
+    s.combat.monster_ids = ["leperchaun"]
+    s.players[1].in_play = ["pretty_balloons"]
+    s, _ = combat.apply_bad_stuff(s, 1, "leperchaun", c, rng=Random(1), now=NOW)
+    s.players[2].alive = False
+    before = deepcopy(s)
+    with pytest.raises(RuleError):
+        respond(s, c, {"card_ids": ["pretty_balloons"]}, 2)
+    assert s == before
+
+
+@pytest.mark.parametrize(
+    "key,loss", [("curse_lose_a_level", False), ("curse_lose_a_small_item", True)]
+)
+@pytest.mark.parametrize("level", [4, 9])
+def test_review_i4_deferred_curse_restarts_configured_window_after_final_choice(
+    key, loss, level
+):
+    s, c = game(level=level)
+    s, _ = command(s, c, "declare_win", seconds=60)
+    s, _ = command(s, c, "pass_reaction", 3)
+    s.players[2].hand = [key]
+    s, _ = command(
+        s,
+        c,
+        "play_card",
+        2,
+        card_id=key,
+        target={"player_id": 1},
+        now=NOW + timedelta(seconds=20),
+    )
+    s, _ = command(
+        s,
+        c,
+        "respond_decision",
+        decision_id=s.pending_decision.id,
+        choices={},
+        now=NOW + timedelta(seconds=59),
+    )
+    finished_at = 59
+    if loss:
+        assert s.pending_decision.kind == "loss_choice"
+        s, _ = command(
+            s,
+            c,
+            "respond_decision",
+            decision_id=s.pending_decision.id,
+            choices={"card_ids": ["cost0"]},
+            now=NOW + timedelta(seconds=80),
+        )
+        finished_at = 80
+    assert s.pending_decision is None
+    expected = NOW + timedelta(seconds=finished_at + 60)
+    if level == 4 and not loss:
+        expected = None
+    assert s.combat.reaction_deadline == expected
+    assert not s.combat.passes

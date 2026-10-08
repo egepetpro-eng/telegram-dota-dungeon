@@ -148,6 +148,9 @@ def handler(key):
                 raise RuleError("transfer requires other living player")
             c.leader_id = target
             c.fighter_ids = [target]
+            from .character import start_character_combat
+
+            start_character_combat(state, catalog)
             c.helper_id = None
             c.forced_helper = False
             c.pending_help = None

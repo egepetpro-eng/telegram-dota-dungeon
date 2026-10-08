@@ -188,9 +188,9 @@ def accept_help(
     result.combat.help_item_ids = items
     result.combat.fighter_ids.append(actor_id)
     if catalog is not None:
-        p = result.players[actor_id]
-        result.combat.character_penalties[actor_id] = p.next_combat_penalty
-        p.next_combat_penalty = 0
+        from .character import start_character_combat
+
+        start_character_combat(result, catalog)
     result.combat.reaction_deadline = None
     result.combat.passes.clear()
     from .trade import cancel_trades_for_combat

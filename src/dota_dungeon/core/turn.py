@@ -57,6 +57,7 @@ def open_door(
                 result.players[actor_id].hand.remove(drawn)
                 result.phase = "combat.active"
                 result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[drawn])
+                result.after_combat = False
                 start_character_combat(result, catalog)
                 from .combat import settle_mandatory_monsters
 
@@ -120,6 +121,7 @@ def seek_trouble(
     result = deepcopy(state)
     result.players[actor_id].hand.remove(card_id)
     result.combat = CombatState(fighter_ids=[actor_id], monster_ids=[card_id])
+    result.after_combat = False
     start_character_combat(result, catalog)
     result.phase = "combat.active"
     from .trade import cancel_trades_for_combat
@@ -250,6 +252,7 @@ def end_turn(
     index = result.order.index(actor_id)
     result.active_user_id = result.order[(index + 1) % len(result.order)]
     result.turn_number += 1
+    result.after_combat = False
     result.phase = "turn.prepare"
     next_player = result.players[result.active_user_id]
     events = [Event("group", "turn.started", {"user_id": result.active_user_id})]

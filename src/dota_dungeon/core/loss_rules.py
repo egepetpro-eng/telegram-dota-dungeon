@@ -34,6 +34,8 @@ def request_loss(
     amount=None,
     card_ids=None,
 ):
+    if recipient is not None and not state.players[recipient].alive:
+        return state, []
     p = state.players[victim]
     eligible = (
         owned_items(state, victim, catalog, public=public)
@@ -81,6 +83,11 @@ def fulfill_loss(state, payload, picked, catalog, rng, now):
     victim = payload["victim"]
     p = state.players[victim]
     rule = payload["rule"]
+    if (
+        payload.get("recipient") is not None
+        and not state.players[payload["recipient"]].alive
+    ):
+        raise RuleError("dead player cannot receive cards")
     if (
         payload.get("minimum_value") is not None
         and sum(catalog[c].value for c in picked) < payload["minimum_value"]
@@ -489,7 +496,7 @@ def handler(key):
                     ),
                 )
                 for uid in receivers
-                if uid != target
+                if uid != target and state.players[uid].alive
             ]
             state.resolution_queue[0:0] = tasks
             from .decisions import drain
