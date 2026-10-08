@@ -16,7 +16,7 @@ import pytest
 from dota_dungeon.cards.installed import validate_installed_release
 from dota_dungeon.core.combat import combat_strength, combat_totals
 from dota_dungeon.core.engine import decide
-from dota_dungeon.core.model import Command, RuleError
+from dota_dungeon.core.model import Command, Event, RuleError
 from dota_dungeon.core.setup import new_lobby
 
 NOW = datetime(2026, 10, 8, 12, tzinfo=timezone.utc)
@@ -81,6 +81,7 @@ class Game:
         self.state = new_lobby("behavior", -100, 1, self.catalog)
         self.rng = Random(seed)
         self.seq = 0
+        self.public_hand_ids = set()
         for uid in range(1, count + 1):
             self.do(uid, "join")
             self.do(uid, "set_character_sex", character_sex="male")
@@ -98,14 +99,28 @@ class Game:
                        action, {"now": NOW, **args})
 
     def do(self, actor, action, **args):
-        before_hidden = {cid for p in self.state.players.values() for cid in p.hand}
+        before = deepcopy(self.state)
         self.state, events = decide(self.state, self.command(actor, action, **args),
                                     self.catalog, self.rng)
         assert_zones(self.state, self.catalog)
-        still_hidden = before_hidden & {cid for p in self.state.players.values() for cid in p.hand}
-        for event in events:
-            if event.audience == "group":
-                assert not (still_hidden & strings_in(event.data)), (action, event)
+        # A kicked Door is public. Helped combat rewards are face up, including
+        # already earned rewards whose fighters changed after Transferral.
+        public_cards = {before.door_deck[-1]} if action == "open_door" and before.door_deck else set()
+        if action == "play_card" and args.get("card_id") == "wand_of_dowsing:1":
+            selected = args.get("target", {}).get("card_id")
+            if selected in before.door_discard + before.treasure_discard:
+                public_cards.add(selected)
+        public_recipients = set()
+        if before.combat:
+            c = before.combat
+            if c.helper_id is not None:
+                public_recipients.update(c.fighter_ids)
+            for reward in c.pending_rewards:
+                if reward["helper_id"] is not None:
+                    public_recipients.update((reward["beneficiary"], reward["helper_id"]))
+        self.public_hand_ids = assert_hand_privacy(
+            before, self.state, events, known_public=self.public_hand_ids,
+            public_cards=public_cards, public_draw_recipients=public_recipients)
         return events
 
     def reject(self, actor, action, **args):
@@ -209,10 +224,77 @@ def strings_in(value):
     if isinstance(value, str):
         return {value}
     if isinstance(value, dict):
-        return set().union(*(strings_in(v) for v in value.values())) if value else set()
+        return set().union(*(strings_in(v) for pair in value.items() for v in pair)) if value else set()
     if isinstance(value, (list, tuple, set)):
         return set().union(*(strings_in(v) for v in value)) if value else set()
     return set()
+
+
+def assert_hand_privacy(before, after, events, *, known_public=(), public_cards=(),
+                        public_draw_recipients=()):
+    """Protect every post-transition private card, including new acquisitions.
+
+    Public knowledge comes from open zones or explicit legal draw contexts;
+    an arbitrary group event cannot make a secret public. A private draw always
+    resets earlier knowledge (for example when a discarded card is recycled).
+    """
+    current = {cid for p in after.players.values() for cid in p.hand}
+    open_before = set(before.door_discard + before.treasure_discard)
+    open_before.update(cid for p in before.players.values() for cid in p.in_play)
+    open_before.update(cid for corpse in before.corpse.values() for cid in corpse)
+    public = set(known_public) | open_before
+    private_draws = set()
+    for event in events:
+        if event.name in {"card.drawn", "treasure.drawn"}:
+            cid = event.data["card_id"]
+            if event.audience.startswith("user:"):
+                private_draws.add(cid)
+            elif (event.audience == "group"
+                  and event.data["recipient_id"] in public_draw_recipients):
+                public.add(cid)
+        # The printed Divine Intervention is revealed even on a private draw.
+        if event.name in {"card.triggered", "initial_trigger.pending"}:
+            if event.data.get("card_id") == "divine_intervention:1":
+                public.add("divine_intervention:1")
+    # Explicit public retrieval (Dowsing) remains known even if its delivery
+    # notification is private; recycled blind draws have no such exemption.
+    public = ((public - private_draws) | set(public_cards)) & current
+    protected = current - public
+    for event in events:
+        if event.audience == "group":
+            leaked = {cid for cid in protected
+                      if any(cid in value for value in strings_in(event.data))}
+            assert not leaked, (leaked, event)
+    return public
+
+
+@pytest.mark.parametrize("payload", ["value", "mapping_key", "embedded_text"])
+def test_privacy_oracle_rejects_extra_group_payload_after_private_draw(release, payload):
+    g = Game(release)
+    g.state.phase = "turn.after_door"
+    secret = "warrior:1"
+    g.state.door_deck.remove(secret)
+    g.state.door_deck.append(secret)
+    before = deepcopy(g.state)
+    events = g.do(1, "loot_room")
+    assert secret in g.state.players[1].hand
+    assert any(e.name == "card.drawn" and e.audience == "user:1"
+               and e.data["card_id"] == secret for e in events)
+    data = {"value": {"extra": secret},
+            "mapping_key": {"nested": {secret: "leaked"}},
+            "embedded_text": {"nested": [f"Private acquisition: {secret}."]}}[payload]
+    with pytest.raises(AssertionError):
+        assert_hand_privacy(before, g.state, events + [Event("group", "extra.payload", data)])
+
+
+def test_privacy_oracle_retains_lawful_public_door_acquisition(release):
+    g = Game(release)
+    revealed = g.open("warrior")
+    assert revealed in g.state.players[1].hand
+    assert g.public_hand_ids == {revealed}
+    assert_hand_privacy(g.state, g.state,
+                        [Event("group", "known.card", {"text": f"Previously revealed {revealed}"})],
+                        known_public=g.public_hand_ids)
 
 
 # Printed bonus; prerequisite; incompatible identity/trait; printed slot/size.
@@ -331,6 +413,11 @@ PRICES = {
     "flaming_poison_potion": 100, "freezing_explosive_potion": 100, "magic_missile": 300,
     "nasty_tasting_sports_drink": 200, "potion_of_idiotic_bravery": 100,
     "pretty_balloons": 0, "sleep_potion": 100,
+    "doppleganger": 300, "flask_of_glue": 100, "friendship_potion": 200,
+    "instant_wall": 300, "invisibility_potion": 200, "loaded_die": 300,
+    "magic_lamp": 500, "pollymorph_potion": 1300, "potion_of_halitosis": 100,
+    "transferral_potion": 300, "wand_of_dowsing": 1100, "wishing_ring": 500,
+    "yuppie_water": 100,
 }
 
 
@@ -422,17 +509,21 @@ def item_economy_case(release, key):
     pool = ["sleep_potion", "potion_of_idiotic_bravery", "leather_armor",
             "slimy_armor", "magic_missile", "broad_sword", "cloak_of_obscurity"]
     pool = [k for k in pool if k != key]
-    for total, succeeds in ((900, False), (1000, True)):
+    boundaries = ((1900, 1), (2000, 2)) if PRICES[key] > 1000 else ((900, 0), (1000, 1))
+    for total, levels in boundaries:
         remaining = total - PRICES[key]
         choices = next(combo for count in range(len(pool) + 1)
                        for combo in combinations(pool, count)
                        if sum(PRICES[k] for k in combo) == remaining)
         g = Game(release)
         ids = [g.give(k) for k in (key, *choices)]
-        if succeeds:
+        if levels:
             g.do(1, "sell", card_ids=ids)
-            assert g.state.players[1].level == 4
+            assert g.state.players[1].level == 3 + levels
             assert set(ids).issubset(g.state.treasure_discard)
+            capped = Game(release, level=9)
+            capped_ids = [capped.give(k) for k in (key, *choices)]
+            capped.reject(1, "sell", card_ids=capped_ids)
         else:
             g.reject(1, "sell", card_ids=ids)
     g = Game(release)
@@ -892,7 +983,15 @@ def curse(g, key, victim=1, actor=2):
 
 
 def monster_distinctive(release, key):
-    if key == "crabs":
+    if key == "tongue_demon":
+        for half_breed, expected_level in ((False, 4), (True, 5)):
+            g = Game(release, level=7)
+            g.identity("elf")
+            if half_breed:
+                g.play("half_breed")
+            g.lose_to(key)
+            assert g.state.players[1].level == expected_level
+    elif key == "crabs":
         g = Game(release, level=1)
         g.identity("wizard")
         armor = g.equip("leather_armor")
@@ -1025,6 +1124,10 @@ def monster_distinctive(release, key):
         assert loss.state.players[1].level == 7
         assert role in loss.state.door_discard
     elif key == "floating_nose":
+        loss = Game(release, level=7)
+        loss.lose_to(key, die=6)
+        assert loss.state.players[1].level == 4
+        assert loss.state.combat is None
         g = Game(release)
         cheap = g.give("sleep_potion")
         valid = g.give("eleven_foot_pole")
@@ -1564,8 +1667,19 @@ def special_case(release, key):
         g.state.players[1].level = 9
         monster = g.open("net_troll")
         g.play("ancient", actor=2, target={"monster_id": monster})
+        source = g.give(key, actor=2)
+        non_monster = g.give("sleep_potion", actor=2)
+        foreign_monster = g.give("gazebo", actor=3)
+        for invalid in (non_monster, foreign_monster):
+            g.reject(2, "play_card", card_id=source, target={"monster_id": monster},
+                     choices={"replacement_card_id": invalid})
+            assert source in g.state.players[2].hand
+            assert non_monster in g.state.players[2].hand
+            assert foreign_monster in g.state.players[3].hand
+            assert monster in g.state.combat.monster_ids
         replacement = g.give("potted_plant", actor=2)
-        g.play(key, actor=2, target={"monster_id": monster}, choices={"replacement_card_id": replacement})
+        g.do(2, "play_card", card_id=source, target={"monster_id": monster},
+             choices={"replacement_card_id": replacement})
         assert combat_totals(g.state, g.catalog) == (9, 1)
         g.safe_treasures()
         g.win()
@@ -1817,6 +1931,7 @@ def topology_distinctive(release, key):
 
 
 def exceptional_item_case(release, key):
+    item_economy_case(release, key)
     g = Game(release)
     if key == "wand_of_dowsing":
         for selected in ("warrior:1", "magic_missile:1"):
@@ -1855,6 +1970,31 @@ def exceptional_item_case(release, key):
         assert g.state.combat is None
         assert len(g.state.players[1].hand) == 3
         assert g.state.players[1].level == 3
+        if key == "magic_lamp":
+            failed = Game(release)
+            lamp = failed.give(key)
+            exposed = failed.equip("leather_armor")
+            monster = failed.open("net_troll")
+            failed.safe_treasures()
+            failed.do(1, "begin_escape")
+            failed.rng = Dice(1)
+            failed.do(1, "run_away", monster_id=monster)
+            assert (1, monster) in failed.state.combat.escape_rolls
+            assert exposed in failed.state.players[1].in_play
+            failed.do(1, "play_card", card_id=lamp, target={"monster_id": monster})
+            failed.decline_windows()
+            assert failed.state.combat is None
+            assert failed.state.players[1].level == 3
+            assert len(failed.state.players[1].hand) == 3
+            assert exposed in failed.state.players[1].in_play
+            assert lamp in failed.state.treasure_discard
+            foreign = Game(release)
+            foreign_lamp = foreign.give(key, actor=2)
+            monster = foreign.open("net_troll")
+            foreign.play("transferral_potion", target={"player_id": 2})
+            assert foreign.state.active_user_id == 1
+            assert foreign.state.combat.fighter_ids == [2]
+            foreign.reject(2, "play_card", card_id=foreign_lamp, target={"monster_id": monster})
     elif key == "friendship_potion":
         g.open("net_troll")
         g.play(key)

@@ -48,9 +48,40 @@ none), Wall preserves impossible-foe consequences, Potted Plant retains its Glue
 opportunity, and Platycore permits empty-hand/floor outcomes. Current extensions
 also cover enhanced Mate/independent escape/Illusion, explicit random selections,
 helper-only bonuses, mixed Tuba success, actual-turn Halfling sale reset and
-reactive roll contexts. The latest complete diagnostic is **147 passed in
-14.80s**. Final promotion still requires accepted-core synchronization and a
+reactive roll contexts. The final pre-review diagnostic was **147 passed in
+15.20s**. The latest round-1 diagnostic is **151 passed in 20.36s** (147 definition
+nodes plus four privacy-oracle nodes), against development core `333e062`.
+Final promotion still requires accepted-core synchronization and a
 fresh run; no diagnostic PASS is presented as release acceptance.
+
+### Review round 1 evidence (all affected rows still PENDING)
+
+- `test_privacy_oracle_rejects_extra_group_payload_after_private_draw[value]`,
+  `[mapping_key]`, and `[embedded_text]` make an actual private room draw and
+  inject an extra group payload. Each failed against the old oracle with
+  `DID NOT RAISE AssertionError`; each passes with the post-transition private
+  hand check. `test_privacy_oracle_retains_lawful_public_door_acquisition` checks
+  the lawful public exception. The shared oracle tracks public hand knowledge,
+  public Door/reward acquisition, Dowsing retrieval and public corpse/open-zone
+  transfers; private draws reset prior knowledge. Nested keys and embedded ID
+  text are scanned as well as exact values.
+- Every exceptional Item node now executes literal-price sale portfolios,
+  carrying, accepted trading, and atomic level-9 sale rejection:
+  `doppleganger`, `flask_of_glue`, `friendship_potion`, `instant_wall`,
+  `invisibility_potion`, `loaded_die`, `magic_lamp`, `pollymorph_potion`,
+  `potion_of_halitosis`, `transferral_potion`, `wand_of_dowsing`, `wishing_ring`,
+  `yuppie_water`. Values below 1000 use 900/1000 boundaries; Dowsing 1100 and
+  Pollymorph 1300 use 1900/2000 portfolios for one versus two levels.
+- `test_classic_definition_behavior[tongue_demon]` now checks Elf 7→4 and
+  single-race Half-Breed Elf 7→5. `[floating_nose]` checks that die 6 cannot
+  escape and applies 7→4 Bad Stuff. `[illusion]` rejects an own non-monster and
+  a foreign-hand monster, retaining both source cards and state/RNG.
+  `[magic_lamp]` uses the Lamp after an own failed roll before Bad Stuff, keeps
+  the exposed Item, grants three Treasures/no level, and rejects the transferred
+  fighter's Lamp on the original player's turn atomically.
+- Fresh own-branch `python -m pytest tests/test_catalog_behavior.py -q -x
+  --tb=short` remains **1 setup error in 0.25s**, rejecting the unfinished
+  `orcs_bad_stuff_die` handler. No accepted-core result or row promotion is claimed.
 
 ## Supplemental distinctive evidence map
 
