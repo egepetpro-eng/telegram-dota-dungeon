@@ -52,6 +52,8 @@ class MemoryRepository:
     def enqueue(self, update_id, messages, *, callbacks=(), game_id=None, private_link=None):
         if update_id in self.receipts:
             return False
+        if game_id is not None and any(c.game_id != game_id for c in callbacks):
+            raise ValueError("invalid callback context")
         self.receipts.add(update_id)
         if private_link:
             self.link_private(*private_link)
@@ -401,3 +403,23 @@ def test_persisted_catalog_pin_rejects_actions_against_different_release():
     router.route_update(press(door, 11, 2), now=NOW)
     assert repo.get("g").version == 0
     assert repo.get("g").state.phase == "turn.prepare"
+
+
+def test_matches_navigation_from_one_game_can_issue_intents_for_multiple_games():
+    repo, router = setup_router()
+    router.route_update(message(11, 11, "/start", 1), now=NOW)
+    for group, seq in ((-100, 2), (-200, 3)):
+        router.route_update(message(11, group, "/newgame", seq), now=NOW)
+    router.route_update(message(11, 11, "/games", 4), now=NOW)
+    router.route_update(press(button(repo, "nav", actor=11, screen="main"), 11, 5), now=NOW)
+    router.route_update(press(button(repo, "nav", actor=11, screen="matches"), 11, 6), now=NOW)
+    payload = repo.outbox[-1]["payload"]
+    assert payload["chat_id"] == 11
+    assert len(payload["reply_markup"]["inline_keyboard"]) == 2
+    assert "Ваши партии" in payload["text"]
+
+
+def test_newgame_is_allowed_only_in_group_or_supergroup():
+    repo, router = setup_router()
+    router.route_update(message(11, -100, "/newgame", 1, chat_type="channel"), now=NOW)
+    assert not repo.games

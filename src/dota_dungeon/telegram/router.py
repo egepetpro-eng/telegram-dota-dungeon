@@ -254,7 +254,7 @@ class Router:
                 messages.insert(0, self._message(chat, "Ссылка лобби устарела. Личка подключена; обновите /game в группе."))
             self.repository.enqueue(update_id, messages, callbacks=callbacks, private_link=(uid, chat))
             return
-        if name == "newgame" and not private:
+        if name == "newgame" and incoming["chat"]["type"] in {"group", "supergroup"}:
             if self.repository.active_group(chat):
                 self.repository.enqueue(update_id, [self._message(chat, "В этой группе уже есть партия. Откройте /game.")])
                 return
@@ -326,9 +326,11 @@ class Router:
                 raise ValueError("private link unavailable")
             if intent.args["screen"] == "matches":
                 messages, callbacks = self._matches(uid, now)
+                outgoing_game_id = None
             else:
                 messages, callbacks = self._panel(snapshot, uid, intent.args["screen"], now)
-            self.repository.enqueue(update_id, [self._ack(query["id"])] + messages, callbacks=callbacks, game_id=state.game_id)
+                outgoing_game_id = state.game_id
+            self.repository.enqueue(update_id, [self._ack(query["id"])] + messages, callbacks=callbacks, game_id=outgoing_game_id)
             return
         if intent.action == "ready" and intent.args.get("ready"):
             if self.repository.private_chat(uid) is None:
