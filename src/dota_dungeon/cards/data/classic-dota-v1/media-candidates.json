@@ -1,0 +1,1685 @@
+{
+  "schema_version": 1,
+  "assets": {
+    "abaddon_valve_portrait": {
+      "dota_entity_id": "hero:abaddon",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/abaddon.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original abaddon game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "alchemist_valve_portrait": {
+      "dota_entity_id": "hero:alchemist",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/alchemist.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original alchemist game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "ancient_apparition_valve_portrait": {
+      "dota_entity_id": "hero:ancient_apparition",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/ancient_apparition.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original ancient apparition game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "anti_mage_valve_portrait": {
+      "dota_entity_id": "hero:anti_mage",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/antimage.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original anti mage game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "arc_warden_valve_portrait": {
+      "dota_entity_id": "hero:arc_warden",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/arc_warden.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original arc warden game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "axe_valve_portrait": {
+      "dota_entity_id": "hero:axe",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/axe.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original axe game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "bane_valve_portrait": {
+      "dota_entity_id": "hero:bane",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/bane.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original bane game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "batrider_valve_portrait": {
+      "dota_entity_id": "hero:batrider",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/batrider.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original batrider game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "beastmaster_valve_portrait": {
+      "dota_entity_id": "hero:beastmaster",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/beastmaster.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original beastmaster game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "bloodseeker_valve_portrait": {
+      "dota_entity_id": "hero:bloodseeker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/bloodseeker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original bloodseeker game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "bounty_hunter_valve_portrait": {
+      "dota_entity_id": "hero:bounty_hunter",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/bounty_hunter.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original bounty hunter game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "brewmaster_valve_portrait": {
+      "dota_entity_id": "hero:brewmaster",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/brewmaster.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original brewmaster game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "bristleback_valve_portrait": {
+      "dota_entity_id": "hero:bristleback",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/bristleback.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original bristleback game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "broodmother_valve_portrait": {
+      "dota_entity_id": "hero:broodmother",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/broodmother.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original broodmother game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "centaur_warrunner_valve_portrait": {
+      "dota_entity_id": "hero:centaur_warrunner",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/centaur.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original centaur warrunner game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "chaos_knight_valve_portrait": {
+      "dota_entity_id": "hero:chaos_knight",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/chaos_knight.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original chaos knight game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "chen_valve_portrait": {
+      "dota_entity_id": "hero:chen",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/chen.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original chen game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "clinkz_valve_portrait": {
+      "dota_entity_id": "hero:clinkz",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/clinkz.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original clinkz game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "clockwerk_valve_portrait": {
+      "dota_entity_id": "hero:clockwerk",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/rattletrap.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original clockwerk game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "crystal_maiden_valve_portrait": {
+      "dota_entity_id": "hero:crystal_maiden",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/crystal_maiden.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original crystal maiden game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "dark_seer_valve_portrait": {
+      "dota_entity_id": "hero:dark_seer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/dark_seer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original dark seer game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "dark_willow_valve_portrait": {
+      "dota_entity_id": "hero:dark_willow",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/dark_willow.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original dark willow game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "dawnbreaker_valve_portrait": {
+      "dota_entity_id": "hero:dawnbreaker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/dawnbreaker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original dawnbreaker game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "dazzle_valve_portrait": {
+      "dota_entity_id": "hero:dazzle",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/dazzle.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original dazzle game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "death_prophet_valve_portrait": {
+      "dota_entity_id": "hero:death_prophet",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/death_prophet.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original death prophet game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "disruptor_valve_portrait": {
+      "dota_entity_id": "hero:disruptor",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/disruptor.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original disruptor game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "doom_valve_portrait": {
+      "dota_entity_id": "hero:doom",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/doom_bringer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original doom game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "dragon_knight_valve_portrait": {
+      "dota_entity_id": "hero:dragon_knight",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/dragon_knight.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original dragon knight game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "drow_ranger_valve_portrait": {
+      "dota_entity_id": "hero:drow_ranger",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/drow_ranger.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original drow ranger game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "earth_spirit_valve_portrait": {
+      "dota_entity_id": "hero:earth_spirit",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/earth_spirit.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original earth spirit game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "earthshaker_valve_portrait": {
+      "dota_entity_id": "hero:earthshaker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/earthshaker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original earthshaker game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "elder_titan_valve_portrait": {
+      "dota_entity_id": "hero:elder_titan",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/elder_titan.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original elder titan game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "ember_spirit_valve_portrait": {
+      "dota_entity_id": "hero:ember_spirit",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/ember_spirit.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original ember spirit game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "enchantress_valve_portrait": {
+      "dota_entity_id": "hero:enchantress",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/enchantress.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original enchantress game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "enigma_valve_portrait": {
+      "dota_entity_id": "hero:enigma",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/enigma.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original enigma game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "faceless_void_valve_portrait": {
+      "dota_entity_id": "hero:faceless_void",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/faceless_void.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original faceless void game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "grimstroke_valve_portrait": {
+      "dota_entity_id": "hero:grimstroke",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/grimstroke.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original grimstroke game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "gyrocopter_valve_portrait": {
+      "dota_entity_id": "hero:gyrocopter",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/gyrocopter.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original gyrocopter game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "hoodwink_valve_portrait": {
+      "dota_entity_id": "hero:hoodwink",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/hoodwink.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original hoodwink game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "huskar_valve_portrait": {
+      "dota_entity_id": "hero:huskar",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/huskar.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original huskar game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "invoker_valve_portrait": {
+      "dota_entity_id": "hero:invoker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/invoker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original invoker game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "io_valve_portrait": {
+      "dota_entity_id": "hero:io",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/wisp.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original io game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "jakiro_valve_portrait": {
+      "dota_entity_id": "hero:jakiro",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/jakiro.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original jakiro game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "juggernaut_valve_portrait": {
+      "dota_entity_id": "hero:juggernaut",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/juggernaut.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original juggernaut game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "keeper_of_the_light_valve_portrait": {
+      "dota_entity_id": "hero:keeper_of_the_light",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/keeper_of_the_light.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original keeper of the light game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "kez_valve_portrait": {
+      "dota_entity_id": "hero:kez",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/kez.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original kez game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "kunkka_valve_portrait": {
+      "dota_entity_id": "hero:kunkka",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/kunkka.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original kunkka game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "legion_commander_valve_portrait": {
+      "dota_entity_id": "hero:legion_commander",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/legion_commander.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original legion commander game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "leshrac_valve_portrait": {
+      "dota_entity_id": "hero:leshrac",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/leshrac.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original leshrac game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "lich_valve_portrait": {
+      "dota_entity_id": "hero:lich",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/lich.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original lich game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "lifestealer_valve_portrait": {
+      "dota_entity_id": "hero:lifestealer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/life_stealer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original lifestealer game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "lina_valve_portrait": {
+      "dota_entity_id": "hero:lina",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/lina.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original lina game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "lion_valve_portrait": {
+      "dota_entity_id": "hero:lion",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/lion.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original lion game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "lone_druid_valve_portrait": {
+      "dota_entity_id": "hero:lone_druid",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/lone_druid.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original lone druid game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "luna_valve_portrait": {
+      "dota_entity_id": "hero:luna",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/luna.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original luna game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "lycan_valve_portrait": {
+      "dota_entity_id": "hero:lycan",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/lycan.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original lycan game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "magnus_valve_portrait": {
+      "dota_entity_id": "hero:magnus",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/magnataur.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original magnus game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "medusa_valve_portrait": {
+      "dota_entity_id": "hero:medusa",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/medusa.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original medusa game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "meepo_valve_portrait": {
+      "dota_entity_id": "hero:meepo",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/meepo.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original meepo game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "mirana_valve_portrait": {
+      "dota_entity_id": "hero:mirana",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/mirana.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original mirana game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "monkey_king_valve_portrait": {
+      "dota_entity_id": "hero:monkey_king",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/monkey_king.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original monkey king game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "morphling_valve_portrait": {
+      "dota_entity_id": "hero:morphling",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/morphling.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original morphling game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "muerta_valve_portrait": {
+      "dota_entity_id": "hero:muerta",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/muerta.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original muerta game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "naga_siren_valve_portrait": {
+      "dota_entity_id": "hero:naga_siren",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/naga_siren.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original naga siren game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "necrophos_valve_portrait": {
+      "dota_entity_id": "hero:necrophos",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/necrolyte.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original necrophos game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "night_stalker_valve_portrait": {
+      "dota_entity_id": "hero:night_stalker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/night_stalker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original night stalker game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "nyx_assassin_valve_portrait": {
+      "dota_entity_id": "hero:nyx_assassin",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/nyx_assassin.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original nyx assassin game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "ogre_magi_valve_portrait": {
+      "dota_entity_id": "hero:ogre_magi",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/ogre_magi.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original ogre magi game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "omniknight_valve_portrait": {
+      "dota_entity_id": "hero:omniknight",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/omniknight.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original omniknight game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "oracle_valve_portrait": {
+      "dota_entity_id": "hero:oracle",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/oracle.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original oracle game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "outworld_destroyer_valve_portrait": {
+      "dota_entity_id": "hero:outworld_destroyer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/obsidian_destroyer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original outworld destroyer game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "pangolier_valve_portrait": {
+      "dota_entity_id": "hero:pangolier",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/pangolier.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original pangolier game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "phantom_assassin_valve_portrait": {
+      "dota_entity_id": "hero:phantom_assassin",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/phantom_assassin.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original phantom assassin game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "phantom_lancer_valve_portrait": {
+      "dota_entity_id": "hero:phantom_lancer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/phantom_lancer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original phantom lancer game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "phoenix_valve_portrait": {
+      "dota_entity_id": "hero:phoenix",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/phoenix.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original phoenix game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "primal_beast_valve_portrait": {
+      "dota_entity_id": "hero:primal_beast",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/primal_beast.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original primal beast game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "puck_valve_portrait": {
+      "dota_entity_id": "hero:puck",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/puck.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original puck game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "pudge_valve_portrait": {
+      "dota_entity_id": "hero:pudge",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/pudge.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original pudge game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "pugna_valve_portrait": {
+      "dota_entity_id": "hero:pugna",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/pugna.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original pugna game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "queen_of_pain_valve_portrait": {
+      "dota_entity_id": "hero:queen_of_pain",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/queenofpain.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original queen of pain game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "razor_valve_portrait": {
+      "dota_entity_id": "hero:razor",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/razor.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original razor game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "riki_valve_portrait": {
+      "dota_entity_id": "hero:riki",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/riki.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original riki game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "rubick_valve_portrait": {
+      "dota_entity_id": "hero:rubick",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/rubick.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original rubick game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "sand_king_valve_portrait": {
+      "dota_entity_id": "hero:sand_king",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/sand_king.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original sand king game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "shadow_demon_valve_portrait": {
+      "dota_entity_id": "hero:shadow_demon",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/shadow_demon.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original shadow demon game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "shadow_fiend_valve_portrait": {
+      "dota_entity_id": "hero:shadow_fiend",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/nevermore.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original shadow fiend game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "shadow_shaman_valve_portrait": {
+      "dota_entity_id": "hero:shadow_shaman",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/shadow_shaman.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original shadow shaman game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "silencer_valve_portrait": {
+      "dota_entity_id": "hero:silencer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/silencer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original silencer game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "skywrath_mage_valve_portrait": {
+      "dota_entity_id": "hero:skywrath_mage",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/skywrath_mage.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original skywrath mage game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "slardar_valve_portrait": {
+      "dota_entity_id": "hero:slardar",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/slardar.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original slardar game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "slark_valve_portrait": {
+      "dota_entity_id": "hero:slark",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/slark.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original slark game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "snapfire_valve_portrait": {
+      "dota_entity_id": "hero:snapfire",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/snapfire.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original snapfire game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "sniper_valve_portrait": {
+      "dota_entity_id": "hero:sniper",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/sniper.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original sniper game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "spectre_valve_portrait": {
+      "dota_entity_id": "hero:spectre",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/spectre.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original spectre game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "spirit_breaker_valve_portrait": {
+      "dota_entity_id": "hero:spirit_breaker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/spirit_breaker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original spirit breaker game portrait. URL read from Valve gallery CSS; image visually inspected in full gallery screenshot on 2026-10-08. Recognizable face crop; landscape portrait suitable as same-entity fallback. No card binding or class mapping asserted."
+    },
+    "aether_lens_valve_icon_707": {
+      "dota_entity_id": "item:aether_lens",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/aether_lens_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original aether lens item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "battle_fury_valve_icon_707": {
+      "dota_entity_id": "item:battle_fury",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/bfury_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original battle fury item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "boots_of_speed_valve_icon_707": {
+      "dota_entity_id": "item:boots_of_speed",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/boots_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original boots of speed item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "boots_of_travel_valve_icon_707": {
+      "dota_entity_id": "item:boots_of_travel",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/travel_boots_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original boots of travel item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "bloodstone_valve_icon_707": {
+      "dota_entity_id": "item:bloodstone",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/bloodstone_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original bloodstone item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "butterfly_valve_icon_707": {
+      "dota_entity_id": "item:butterfly",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/butterfly_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original butterfly item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "desolator_valve_icon_707": {
+      "dota_entity_id": "item:desolator",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/desolator_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original desolator item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "diffusal_blade_valve_icon_707": {
+      "dota_entity_id": "item:diffusal_blade",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/diffusal_blade_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original diffusal blade item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "drum_of_endurance_valve_icon_707": {
+      "dota_entity_id": "item:drum_of_endurance",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/ancient_janggo_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original drum of endurance item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "ethereal_blade_valve_icon_707": {
+      "dota_entity_id": "item:ethereal_blade",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/ethereal_blade_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original ethereal blade item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "eye_of_skadi_valve_icon_707": {
+      "dota_entity_id": "item:eye_of_skadi",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/skadi_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original eye of skadi item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "force_staff_valve_icon_707": {
+      "dota_entity_id": "item:force_staff",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/force_staff_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original force staff item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "glimmer_cape_valve_icon_707": {
+      "dota_entity_id": "item:glimmer_cape",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/glimmer_cape_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original glimmer cape item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "hurricane_pike_valve_icon_707": {
+      "dota_entity_id": "item:hurricane_pike",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/hurricane_pike_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original hurricane pike item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "iron_talon_valve_icon_707": {
+      "dota_entity_id": "item:iron_talon",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/iron_talon_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original iron talon item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "javelin_valve_icon_707": {
+      "dota_entity_id": "item:javelin",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/javelin_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original javelin item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "skull_basher_valve_icon_707": {
+      "dota_entity_id": "item:skull_basher",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/basher_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original skull basher item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "abyssal_blade_valve_icon_707": {
+      "dota_entity_id": "item:abyssal_blade",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/abyssal_blade_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original abyssal blade item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "monkey_king_bar_valve_icon_707": {
+      "dota_entity_id": "item:monkey_king_bar",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/monkey_king_bar_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original monkey king bar item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "linkens_sphere_valve_icon_707": {
+      "dota_entity_id": "item:linkens_sphere",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/sphere_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original linkens sphere item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "magic_wand_valve_icon_707": {
+      "dota_entity_id": "item:magic_wand",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/magic_wand_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original magic wand item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "necronomicon_valve_icon_707": {
+      "dota_entity_id": "item:necronomicon",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/necronomicon_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original necronomicon item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "poor_mans_shield_valve_icon_707": {
+      "dota_entity_id": "item:poor_mans_shield",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/poor_mans_shield_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original poor mans shield item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "orb_of_venom_valve_icon_707": {
+      "dota_entity_id": "item:orb_of_venom",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/orb_of_venom_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original orb of venom item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "pipe_of_insight_valve_icon_707": {
+      "dota_entity_id": "item:pipe_of_insight",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/pipe_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original pipe of insight item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "ring_of_regeneration_valve_icon_707": {
+      "dota_entity_id": "item:ring_of_regeneration",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/ring_of_regen_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original ring of regeneration item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "satanic_valve_icon_707": {
+      "dota_entity_id": "item:satanic",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/satanic_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original satanic item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "sentry_ward_valve_icon_707": {
+      "dota_entity_id": "item:sentry_ward",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/ward_sentry_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original sentry ward item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "silver_edge_valve_icon_707": {
+      "dota_entity_id": "item:silver_edge",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/silver_edge_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original silver edge item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "smoke_of_deceit_valve_icon_707": {
+      "dota_entity_id": "item:smoke_of_deceit",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/smoke_of_deceit_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original smoke of deceit item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "solar_crest_valve_icon_707": {
+      "dota_entity_id": "item:solar_crest",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/solar_crest_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original solar crest item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "soul_ring_valve_icon_707": {
+      "dota_entity_id": "item:soul_ring",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/soul_ring_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original soul ring item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "stout_shield_valve_icon_707": {
+      "dota_entity_id": "item:stout_shield",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/stout_shield_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original stout shield item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "urn_of_shadows_valve_icon_707": {
+      "dota_entity_id": "item:urn_of_shadows",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/urn_of_shadows_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original urn of shadows item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "vladmirs_offering_valve_icon_707": {
+      "dota_entity_id": "item:vladmirs_offering",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/vladmir_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original vladmirs offering item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "meteor_hammer_valve_icon_707": {
+      "dota_entity_id": "item:meteor_hammer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/meteor_hammer_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original meteor hammer item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "aeon_disk_valve_icon_707": {
+      "dota_entity_id": "item:aeon_disk",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/combo_breaker_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original aeon disk item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "spirit_vessel_valve_icon_707": {
+      "dota_entity_id": "item:spirit_vessel",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/items/spirit_vessel_lg.png",
+      "original_publication_url": "https://www.dota2.com/duelingfates",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "icon",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original spirit vessel item icon. Exact image URL read from published item section; icon and adjacent item name visually inspected in page screenshot. Historical 7.07 publication verifies identity/provenance only; no Dota stats imported into card mechanics. Small icon fallback; large card use needs layout inspection."
+    },
+    "axe_unleashed_valve_promo": {
+      "dota_entity_id": "hero:axe",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/international2019/sections/axe_bg.jpg",
+      "original_publication_url": "https://www.dota2.com/international2019/battlepass/",
+      "credit": "Valve Corporation; individual artist not named",
+      "asset_kind": "promo",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Image URL read from AxeExclusive section CSS and opened directly. Axe Unleashed bare-knuckle variant; red face/beard and muscular silhouette clear. Subject left of wide dark background; crop needed for small card. Primary section names Axe and set explicitly."
+    },
+    "invoker_acolyte_valve_promo": {
+      "dota_entity_id": "hero:invoker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/international2019/sections/kidinvoker_bg.jpg",
+      "original_publication_url": "https://www.dota2.com/international2019/battlepass/",
+      "credit": "Valve Corporation; individual artist not named",
+      "asset_kind": "promo",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Image URL read from KidInvoker section CSS and opened directly. Young Invoker with three orbs and adult likeness behind him; primary publication explicitly names Acolyte of the Lost Arts persona. Possible wizard art inventory only; class mapping not accepted. Wide image needs subject crop."
+    },
+    "hoodwink_valve_wallpaper": {
+      "dota_entity_id": "hero:hoodwink",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/hoodwink/wallpaper/dota_hw_wallpaper1.jpg",
+      "original_publication_url": "https://www.dota2.com/mistwoods?l=english",
+      "credit": "Valve Corporation; individual artist not named",
+      "asset_kind": "wallpaper",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "3840x2160 original linked under WALLPAPERS; opened and visually inspected. Hoodwink hood, squirrel face and crossbow clearly recognizable; no text beyond Dota corner logo. Strong colorful art option after mapping."
+    },
+    "clockwerk_battletrap_loading": {
+      "dota_entity_id": "hero:clockwerk",
+      "image_url": "https://cdna.artstation.com/p/assets/images/images/011/315/150/large/dawn-drop-dd-battletrapdota2loadingscreen.jpg?1528942112",
+      "original_publication_url": "https://dawndrop.artstation.com/projects/Lqxbv",
+      "credit": "Jonathan Lee (Dawndrop): Battletrap concept, model and illustration; Valve: Clockwerk character",
+      "asset_kind": "loading_screen",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Artist primary portfolio explicitly says loading screen for Clockwerk set currently in game. Publication and linked large original (712x1024) inspected. Single close mechanical face with cyan eyes and orange sparks; strong vertical card composition, artist mark at bottom. Official in-game status evidenced by creator statement; later selection should preserve credit."
+    },
+    "shadow_fiend_murder_of_souls_candidate": {
+      "dota_entity_id": "hero:shadow_fiend",
+      "image_url": "https://cdnb.artstation.com/p/assets/images/images/006/883/177/original/matt-cristello-737849290-preview-nevermore.gif?1501966701",
+      "original_publication_url": "https://mattcristello.artstation.com/projects/1VQ1G",
+      "credit": "Matt Cristello: concept, animated loading screen and lore; Chris Archer: highpoly and textures; Thiago Vidotto: set base model; Valve: Shadow Fiend base model",
+      "asset_kind": "loading_screen",
+      "verified_on": "2026-10-08",
+      "status": "candidate",
+      "notes": "Image and creator attribution inspected in original portfolio; horned/crowned Shadow Fiend with red-green soul effects. Creator identifies a Dota set, but publication does not establish Valve acceptance/in-game release. Do not bind as official until acceptance verified. Animated GIF also needs later static frame choice."
+    },
+    "roshan_diretide_2012_valve_art": {
+      "dota_entity_id": "creep:roshan",
+      "image_url": "https://media.steampowered.com/apps/dota2/posts/diretide_full.jpg",
+      "original_publication_url": "https://store.steampowered.com/news/posts/?appids=570&enddate=1352228437",
+      "credit": "Valve Corporation / Dota 2 team; individual artist not named",
+      "asset_kind": "official_art",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Steam Dota 2 news archive publishes Diretide entry with original image link (Nov 5 2012 archived entry); inspected HTTPS original directly. Roshan dominates image with horned head, orange eye, wings and pumpkin bucket; small Diretide lettering at lower left. Strong recognizable illustration with seasonal prop. Source archive contains third-party entries too: evidence is specifically the publisher's Diretide announcement and its linked image."
+    },
+    "roshan_diretide_2020_guide": {
+      "dota_entity_id": "creep:roshan",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images//diretide2020/howtoplay-3.png",
+      "original_publication_url": "https://www.dota2.com/diretide?l=english",
+      "credit": "Valve Corporation; individual artist not named",
+      "asset_kind": "promo",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original image URL read from official Diretide page and opened. Roshan game model looms over bucket in instructional composite. Clear head/wing silhouette; large transparent/empty lower half and small numbered bubble make this weaker than 2012 art. Not a portrait icon."
+    },
+    "nature_prophet_valve_portrait": {
+      "dota_entity_id": "hero:nature_prophet",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/furion.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original Nature's Prophet portrait. Exact filename furion.png read from official gallery; recognizable horned elf face and beard visually inspected in full gallery screenshot. Canonical entity slug follows accepted mapping nature_prophet. Same-entity fallback, no binding asserted."
+    },
+    "storm_spirit_valve_portrait": {
+      "dota_entity_id": "hero:storm_spirit",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/storm_spirit.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original storm spirit portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "sven_valve_portrait": {
+      "dota_entity_id": "hero:sven",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/sven.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original sven portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "techies_valve_portrait": {
+      "dota_entity_id": "hero:techies",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/techies.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original techies portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "templar_assassin_valve_portrait": {
+      "dota_entity_id": "hero:templar_assassin",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/templar_assassin.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original templar assassin portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "terrorblade_valve_portrait": {
+      "dota_entity_id": "hero:terrorblade",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/terrorblade.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original terrorblade portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "tidehunter_valve_portrait": {
+      "dota_entity_id": "hero:tidehunter",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/tidehunter.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original tidehunter portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "timbersaw_valve_portrait": {
+      "dota_entity_id": "hero:timbersaw",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/shredder.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original timbersaw portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "tinker_valve_portrait": {
+      "dota_entity_id": "hero:tinker",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/tinker.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original tinker portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "tiny_valve_portrait": {
+      "dota_entity_id": "hero:tiny",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/tiny.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original tiny portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "treant_protector_valve_portrait": {
+      "dota_entity_id": "hero:treant_protector",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/treant.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original treant protector portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "troll_warlord_valve_portrait": {
+      "dota_entity_id": "hero:troll_warlord",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/troll_warlord.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original troll warlord portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "tusk_valve_portrait": {
+      "dota_entity_id": "hero:tusk",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/tusk.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original tusk portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "underlord_valve_portrait": {
+      "dota_entity_id": "hero:underlord",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/abyssal_underlord.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original underlord portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "undying_valve_portrait": {
+      "dota_entity_id": "hero:undying",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/undying.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original undying portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "ursa_valve_portrait": {
+      "dota_entity_id": "hero:ursa",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/ursa.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original ursa portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "vengeful_spirit_valve_portrait": {
+      "dota_entity_id": "hero:vengeful_spirit",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/vengefulspirit.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original vengeful spirit portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "venomancer_valve_portrait": {
+      "dota_entity_id": "hero:venomancer",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/venomancer.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original venomancer portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "viper_valve_portrait": {
+      "dota_entity_id": "hero:viper",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/viper.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original viper portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "visage_valve_portrait": {
+      "dota_entity_id": "hero:visage",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/visage.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original visage portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "void_spirit_valve_portrait": {
+      "dota_entity_id": "hero:void_spirit",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/void_spirit.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original void spirit portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "warlock_valve_portrait": {
+      "dota_entity_id": "hero:warlock",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/warlock.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original warlock portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "weaver_valve_portrait": {
+      "dota_entity_id": "hero:weaver",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/weaver.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original weaver portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "windranger_valve_portrait": {
+      "dota_entity_id": "hero:windranger",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/windrunner.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original windranger portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "winter_wyvern_valve_portrait": {
+      "dota_entity_id": "hero:winter_wyvern",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/winter_wyvern.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original winter wyvern portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "witch_doctor_valve_portrait": {
+      "dota_entity_id": "hero:witch_doctor",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/witch_doctor.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original witch doctor portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "wraith_king_valve_portrait": {
+      "dota_entity_id": "hero:wraith_king",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/skeleton_king.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original wraith king portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    },
+    "zeus_valve_portrait": {
+      "dota_entity_id": "hero:zeus",
+      "image_url": "https://cdn.steamstatic.com/apps/dota2/images/dota_react/heroes/zuus.png",
+      "original_publication_url": "https://www.dota2.com/heroes",
+      "credit": "Valve Corporation; individual artist not named on publication",
+      "asset_kind": "portrait",
+      "verified_on": "2026-10-08",
+      "status": "verified",
+      "notes": "Original zeus portrait. Exact URL read from original Valve gallery CSS; face visually inspected in full gallery screenshot. Recognizable game portrait fallback; no card binding asserted."
+    }
+  }
+}
