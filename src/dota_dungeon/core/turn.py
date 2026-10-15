@@ -166,11 +166,21 @@ def loot_room(
     return result, events
 
 
+def charity_recipients(state):
+    """Living lowest-level recipients, shared by commands and private menus."""
+    living = [u for u in state.order if state.players[u].alive]
+    if not living:
+        return []
+    minimum = min(state.players[u].level for u in living)
+    return [u for u in living if state.players[u].level == minimum]
+
+
 def give_charity(
     state: GameState,
     actor_id: int,
     assignments: dict[int, list[str]],
     catalog: Catalog | None = None,
+    *, discard_ids: list[str] | None = None,
 ) -> tuple[GameState, list[Event]]:
     _require_active(state, actor_id, "turn.charity")
     result = deepcopy(state)
@@ -183,28 +193,28 @@ def give_charity(
         ),
     )
     if not excess:
-        if any(assignments.values()):
+        if any(assignments.values()) or discard_ids:
             raise RuleError("no excess cards")
         return result, []
-    minimum = min(p.level for p in result.players.values() if p.alive)
-    if player.level == minimum:
-        if any(assignments.values()):
+    recipients = set(charity_recipients(state))
+    if actor_id in recipients:
+        if assignments:
             raise RuleError("lowest level discards excess")
-        cards = player.hand[-excess:]
-        del player.hand[-excess:]
+        cards = discard_ids
+        if (not isinstance(cards, list) or len(cards) != excess
+                or len(set(cards)) != excess or not set(cards).issubset(player.hand)):
+            raise RuleError("charity discards must match excess")
         for card_id in cards:
+            player.hand.remove(card_id)
             deck = result.card_decks.get(card_id)
             if deck is None:
                 raise RuleError("unknown card deck")
-            (result.door_discard if deck == "door" else result.treasure_discard).append(
-                card_id
-            )
+            (result.door_discard if deck == "door" else result.treasure_discard).append(card_id)
         return result, [
             Event("group", "charity.discarded", {"user_id": actor_id, "count": excess})
         ]
-    recipients = {
-        u for u, p in result.players.items() if p.alive and p.level == minimum
-    }
+    if discard_ids:
+        raise RuleError("charity must go to lowest-level players")
     if set(assignments) != recipients:
         raise RuleError("charity must go to lowest-level players")
     cards = [card_id for group in assignments.values() for card_id in group]
@@ -243,6 +253,9 @@ def end_turn(
         or state.players[actor_id].pending_identity_excess
     ):
         raise RuleError("resolve excess Big Items first")
+    if any(cards and any(state.players[u].alive for u in state.corpse_loot_order.get(uid, []))
+           for uid, cards in state.corpse.items()):
+        raise RuleError("resolve corpse loot before the next turn")
     if len(state.players[actor_id].hand) > (
         effective_hand_limit(state, actor_id, catalog) if catalog is not None else 5
     ):
@@ -256,16 +269,22 @@ def end_turn(
     result.phase = "turn.prepare"
     next_player = result.players[result.active_user_id]
     events = [Event("group", "turn.started", {"user_id": result.active_user_id})]
-    if not next_player.alive:
-        for cid in result.corpse.pop(next_player.user_id, []):
-            deck = result.card_decks[cid]
-            (result.door_discard if deck == "door" else result.treasure_discard).append(
-                cid
-            )
-        result.corpse_looted_by.pop(next_player.user_id, None)
-        result.corpse_hand.pop(next_player.user_id, None)
-        result.corpse_loot_order.pop(next_player.user_id, None)
-        next_player.alive = True
+    # Revival and replacement cards have different deadlines. Legacy dead states
+    # also acquire the entitlement here when first loaded with the new model.
+    for uid in result.order:
+        p = result.players[uid]
+        if p.alive:
+            continue
+        p.alive = True
+        p.rebirth_pending = True
+        for cid in result.corpse.pop(uid, []):
+            getattr(result, f"{result.card_decks[cid]}_discard").append(cid)
+        result.corpse_looted_by.pop(uid, None)
+        result.corpse_hand.pop(uid, None)
+        result.corpse_loot_order.pop(uid, None)
+        events.append(Event("group", "player.revived", {"user_id": uid}))
+    if next_player.rebirth_pending:
+        next_player.rebirth_pending = False
         for deck in ("door", "treasure"):
             result, drawn_events = draw_cards(
                 result,

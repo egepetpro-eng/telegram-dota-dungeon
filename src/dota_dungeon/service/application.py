@@ -112,35 +112,36 @@ class Application:
     def deliver_outbox(self, now=None):
         now = now or self.clock()
         delivered = 0
-        entries = sorted(self.repository.claim_outbox(limit=50, now=now), key=lambda row: row["id"])
+        entries = sorted(self.repository.claim_outbox(limit=1, now=now), key=lambda row: row["id"])
         for entry in entries:
             try:
                 try:
-                    result = self.bot.call(entry["method"], entry["payload"])
+                    result = self.bot.call_once(entry["method"], entry["payload"])
                 except BotAPIError as error:
                     if entry["method"] != "sendPhoto" or error.error_code != 400:
                         raise
                     payload = dict(entry["payload"])
                     payload.pop("photo", None)
                     payload["text"] = payload.pop("caption", "Изображение временно недоступно")
-                    result = self.bot.call("sendMessage", payload)
+                    result = self.bot.call_once("sendMessage", payload)
                 self.repository.mark_sent(entry["id"], result)
                 delivered += 1
             except BotAPIError as error:
+                failed_at = self.clock()
                 code = error.error_code
                 if code == 403:
                     try:
-                        self._pause_unavailable(entry, now)
+                        self._pause_unavailable(entry, failed_at)
                     except StaleAction:
                         # Keep the failed delivery durable until every affected
                         # game has paused, even if no later message is queued.
                         self.repository.retry_outbox(entry["id"], str(code),
-                                                     now + timedelta(seconds=1))
+                                                     failed_at + timedelta(seconds=1))
                     else:
                         self.repository.fail_outbox(entry["id"], str(code))
                 elif code in {0, 429} or code >= 500:
-                    seconds = error.retry_after or min(120, 2 ** min(entry["attempts"], 7))
-                    self.repository.retry_outbox(entry["id"], str(code), now + timedelta(seconds=seconds))
+                    seconds = error.retry_after if error.retry_after is not None else min(120, 2 ** min(entry["attempts"], 7))
+                    self.repository.retry_outbox(entry["id"], str(code), failed_at + timedelta(seconds=seconds))
                 else:
                     self.repository.fail_outbox(entry["id"], str(code))
                 LOG.warning("Telegram outgoing failure code=%s", code)
@@ -193,22 +194,37 @@ class Application:
                 self.repository.cancel_timer(timer["timer_id"], timer["expected_version"])
         return count
 
-    def _jobs(self):
+    def _jobs(self, job, idle_seconds):
         while not self.stop.is_set():
             try:
-                self.tick_timers()
-                self.deliver_outbox()
+                count = job()
             except Exception as error:
                 # Error text may contain transport/database secrets or hidden state.
                 LOG.error("Background worker failed type=%s", type(error).__name__)
-            self.stop.wait(1)
+                count = 0
+            # Drain ready deliveries promptly; failures have persisted backoff.
+            self.stop.wait(0 if count and job == self.deliver_outbox else idle_seconds)
+
+    def start_workers(self):
+        """Independent deadlines and four bounded delivery lanes.
+
+        Each lane leases only one destination head. A normal HTTP attempt is
+        bounded to 10 seconds (20 including a photo fallback), below the 120s
+        lease; no leased batch waits behind another destination's request.
+        """
+        jobs = [("timers", self.tick_timers, 1)] + [
+            (f"delivery-{n}", self.deliver_outbox, 0.1) for n in range(4)]
+        workers = [threading.Thread(target=self._jobs, args=(job, idle), name=name, daemon=True)
+                   for name, job, idle in jobs]
+        for worker in workers:
+            worker.start()
+        return workers
 
     def run(self):
         with self.repository.singleton("poller") as acquired:
             if not acquired:
                 raise RuntimeError("another bot poller owns this database")
-            worker = threading.Thread(target=self._jobs, name="delivery-timers", daemon=True)
-            worker.start()
+            workers = self.start_workers()
             try:
                 while not self.stop.is_set():
                     try:
@@ -225,7 +241,8 @@ class Application:
                         self.stop.wait(3)
             finally:
                 self.stop.set()
-                worker.join(timeout=25)
+                for worker in workers:
+                    worker.join(timeout=25)
 
 
 def run_service(config: Config):

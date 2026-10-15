@@ -61,7 +61,8 @@ def test_two_player_simulation_reaches_tenth_level_only_after_monster_kill():
                 recipient = next(u for u, p in state.players.items() if p.level == minimum)
                 excess = state.players[actor].hand[5:]
                 assignments = {recipient: excess}
-            step(actor, "give_charity", assignments=assignments)
+            step(actor, "give_charity", assignments=assignments,
+                 discard_ids=state.players[actor].hand[5:] if not assignments else [])
         step(actor, "end_turn")
     assert state.phase == "game.finished"
     assert state.players[first].level == 10

@@ -280,7 +280,15 @@ class GameRepository:
         now = now or datetime.now(timezone.utc)
         with self.connection() as connection:
             return connection.execute(
-                "WITH chosen AS (SELECT id FROM outbox WHERE sent_at IS NULL AND failed_at IS NULL AND next_attempt_at<=%s AND (lease_until IS NULL OR lease_until<=%s) ORDER BY id FOR UPDATE SKIP LOCKED LIMIT %s) "
+                "WITH chosen AS (SELECT candidate.id FROM outbox candidate "
+                "WHERE candidate.sent_at IS NULL AND candidate.failed_at IS NULL AND candidate.next_attempt_at<=%s "
+                "AND (candidate.lease_until IS NULL OR candidate.lease_until<=%s) "
+                "AND NOT EXISTS (SELECT 1 FROM outbox earlier WHERE earlier.id<candidate.id "
+                "AND earlier.sent_at IS NULL AND earlier.failed_at IS NULL "
+                "AND COALESCE('chat:' || (earlier.payload->>'chat_id'), 'callback:' || (earlier.payload->>'callback_query_id')) "
+                "IS NOT DISTINCT FROM COALESCE('chat:' || (candidate.payload->>'chat_id'), 'callback:' || (candidate.payload->>'callback_query_id'))) "
+                "ORDER BY (candidate.method='answerCallbackQuery') DESC, candidate.next_attempt_at, candidate.id "
+                "FOR UPDATE OF candidate SKIP LOCKED LIMIT %s) "
                 "UPDATE outbox o SET lease_until=%s,attempts=o.attempts+1 FROM chosen WHERE o.id=chosen.id RETURNING o.*",
                 (now, now, limit, now + timedelta(seconds=120))).fetchall()
 

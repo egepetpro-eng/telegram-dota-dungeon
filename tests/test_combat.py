@@ -186,7 +186,7 @@ def test_bad_stuff_can_remove_item_and_death_creates_lootable_corpse():
     assert "role" in state.players[101].in_play
     assert "hat" in state.corpse[101]
     state, _ = loot_corpse(state, 102, 101, "hat")
-    assert "hat" in state.players[102].in_play
+    assert "hat" in state.players[102].hand
 
 
 def test_dead_player_returns_with_four_cards_from_each_deck_on_next_turn():
@@ -203,6 +203,8 @@ def test_dead_player_returns_with_four_cards_from_each_deck_on_next_turn():
     state, _ = begin_escape(state, 101, catalog)
     state, _ = run_away(state, 101, "m1", FixedDie(4), catalog)
     assert not state.players[101].alive
+    while state.corpse[101]:
+        state, _ = loot_corpse(state, state.corpse_loot_order[101][0], 101, state.corpse[101][0])
     state, _ = end_turn(state, 101, Random(1))
     state.phase = "turn.charity"
     state, _ = end_turn(state, 102, Random(1))

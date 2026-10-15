@@ -102,3 +102,38 @@ Selected manifest: `{media_version: str, catalog_version: str, catalog_digest: s
 ## Ownership and integration
 
 A writes factual/release data and rule audit. B writes media data and media audit. C writes loader/core code and its tests. Coordinator writes this contract, CLI, packaging, acceptance/media tests and integration records. Each task has a fresh implementer; shared code tasks run sequentially. Findings are returned to the owner; workers never merge/push or edit another worktree. Reports include source evidence, changed files, base/commit SHAs, red/green/full-suite results and unresolved gaps.
+
+## Final review behavior clarifications (2026-10-15)
+
+Helper Item payment is an explicit **bot contract policy**. Before sending and
+accepting an offer, both screens explain that promised carried Items cannot be
+voluntarily played, paid as costs, sold or traded while that offer/payment is
+live. Existing combat restrictions already forbid selling and trading.
+A mandatory loss, transfer or death still resolves normally; unavailable Item
+obligations are removed and announced publicly and privately to the helper.
+There is no replacement payment or withdrawal phase; remaining agreed terms
+continue. A changed offer receives a new state version, invalidating earlier
+acceptance buttons. This conditional negotiation policy was approved in final
+review; it is not represented as a publisher rule. Its cost is that the helper
+bears forced-loss risk and has no automatic substitute or right to withdraw.
+
+The publisher's [classic Guest Artist rules, pages 2, 4–5](https://munchkin.game/site-munchkin/assets/files/1319/munchkingaehuang_rules.pdf)
+allow carried Items as help payments, give lowest-level players the excess-card
+discard choice, and put all corpse loot into recipients' hands. Accordingly,
+`give_charity` now takes an explicit `discard_ids` list for a lowest/tied-lowest
+actor; other actors still use balanced assignments to living minimum-level
+recipients. Corpse choices finish before the next turn advances.
+
+The [publisher FAQ, death timing](https://munchkin.game/gameplay/faq/)
+separates revival at the next person's turn from the replacement hand at the
+character's own next turn. `Player.rebirth_pending` persists that entitlement
+independently of `alive`; received charity/help cards do not consume it. The
+existing codec supplies the new field's default for older snapshots, and a
+legacy dead character acquires the entitlement when revived. Each replacement
+draw and entitlement consumption commit together through the existing service
+transaction and trusted RNG.
+
+Public card inspection validates membership and the current visible physical or
+virtual reference. It includes public profiles, combat cards and pending curses,
+shows source descriptions and live monster rewards/strength/modifiers, and only
+offers actions on owned cards. Foreign hands and unseen deck cards stay private.

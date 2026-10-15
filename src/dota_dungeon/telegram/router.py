@@ -49,7 +49,8 @@ class Router:
                 action = "resume" if snapshot.status == "paused" else "pause"
                 view.rows.append([Button("Продолжить" if action == "resume" else "Пауза", action, {}, snapshot.state.host_id)])
         if screen.startswith("card:"):
-            view.photo = self._photo(screen.removeprefix("card:"))
+            from .views import visible_card
+            view.photo = self._photo(visible_card(snapshot.state, viewer, screen.removeprefix("card:"), self.release).id)
         return view
 
     def _photo(self, card_id):
@@ -178,10 +179,15 @@ class Router:
             if event.name == "player.died":
                 text += "\nОткрытая добыча:\n" + "\n".join(card_name(self.release, cid) for cid in event.data.get("card_ids", []) if cid in self.release.catalog)
             # Only public disclosure events may render actual card identities in a group.
-            if event.name in {"door.revealed", "item.equipped", "item.unequipped", "identity.played", "combat.card_played", "card.played", "curse.applied"}:
+            if event.name in {"door.revealed", "item.equipped", "item.unequipped", "identity.played", "combat.card_played", "card.played", "curse.applied", "curse.played", "corpse.looted"}:
                 cid = event.data.get("card_id")
                 if cid in self.release.catalog:
                     text += "\n" + card_name(self.release, cid)
+            if event.name == "help.item_lost":
+                text = ("Принудительная потеря: " + card_name(self.release, event.data["card_id"])
+                        + f". Оплата этой вещью помощнику {event.data['helper_id']} отменена без замены. Остальные условия сохраняются.")
+            if event.name == "curse.played":
+                text += f" → Игрок {event.data['target_id']}"
             if event.name in {"hand.dealt", "card.drawn", "treasure.drawn"}:
                 ids = event.data.get("card_ids", [event.data.get("card_id")])
                 text = "Получены карты:\n" + "\n".join(card_name(self.release, cid) for cid in ids if cid in self.release.catalog)
@@ -364,6 +370,14 @@ class Router:
                 messages, callbacks = self._panel(snapshot, uid, "group", now)
                 self.repository.enqueue(update_id, [self._ack(query["id"])] + messages,
                                         callbacks=callbacks, game_id=state.game_id)
+            return
+        if intent.action == "inspect_card":
+            from .views import public_card_ids
+            cid = intent.args.get("card_id")
+            if cid not in public_card_ids(state):
+                raise ValueError("card is not public")
+            messages, callbacks = self._panel(snapshot, uid, "card:" + cid, now)
+            self.repository.enqueue(update_id, [self._ack(query["id"])] + messages, callbacks=callbacks, game_id=state.game_id)
             return
         if snapshot.status == "finished" and intent.action != "nav":
             raise ValueError("game finished")

@@ -72,6 +72,7 @@ class Player:
     role_ids: list[str] = field(default_factory=list)
     race_ids: list[str] = field(default_factory=list)
     alive: bool = True
+    rebirth_pending: bool = False
     strength_bonus: int = 0
     escape_bonus: int = 0
     character_sex: str | None = None

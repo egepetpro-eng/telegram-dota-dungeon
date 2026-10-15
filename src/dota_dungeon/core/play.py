@@ -151,6 +151,8 @@ def play_card(
     ):
         raise RuleError("invalid choices operands")
     choices = choices or {}
+    from .help_contracts import require_unpromised
+    require_unpromised(state, actor_id, [card_id] + choices.get("discard_ids", []))
     if "side" in choices and choices["side"] not in {"fighters", "monsters"}:
         raise RuleError("invalid combat side")
     if state.phase not in card.play_phases or state.phase in {"lobby", "game.finished"}:

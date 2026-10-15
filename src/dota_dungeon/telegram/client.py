@@ -35,13 +35,18 @@ class BotClient:
         self._sleep = sleep
         self._attempts = attempts
 
-    def call(self, method: str, payload: dict) -> Any:
+    def call_once(self, method: str, payload: dict) -> Any:
+        """One bounded outgoing attempt; the durable outbox owns retries."""
+        return self.call(method, payload, attempts=1, timeout=10)
+
+    def call(self, method: str, payload: dict, *, attempts=None, timeout=45) -> Any:
         if not method.isalnum() or type(payload) is not dict:
             raise ValueError("invalid Bot API call")
         url = "https://api.telegram.org/bot" + self._token + "/" + method
-        for attempt in range(self._attempts):
+        attempts = self._attempts if attempts is None else attempts
+        for attempt in range(attempts):
             try:
-                raw = self._transport(url, payload, 45)
+                raw = self._transport(url, payload, timeout)
             except (OSError, ValueError) as exc:
                 error = BotAPIError(0, "Bot API transport failure: " + type(exc).__name__)
             else:
@@ -60,7 +65,7 @@ class BotClient:
                     error = BotAPIError(code, description, retry_after)
             if error.error_code not in {0, 429} and error.error_code < 500:
                 raise error
-            if attempt == self._attempts - 1:
+            if attempt == attempts - 1:
                 raise error
             self._sleep(min(error.retry_after if error.retry_after is not None else 2 ** attempt, 30))
         raise AssertionError("unreachable")

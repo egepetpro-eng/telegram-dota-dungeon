@@ -127,7 +127,7 @@ HANDLERS: dict[str, Handler] = {
         s, c.actor_id, rng, catalog=catalog
     ),
     "give_charity": lambda s, c, catalog, rng: turn.give_charity(
-        s, c.actor_id, _arg(c, "assignments"), catalog
+        s, c.actor_id, _arg(c, "assignments"), catalog, discard_ids=c.args.get("discard_ids")
     ),
     "end_turn": lambda s, c, catalog, rng: turn.end_turn(
         s, c.actor_id, rng, catalog=catalog
@@ -276,10 +276,13 @@ def dispatch(
         if state.phase != "turn.prepare" or state.turn_number > 1:
             raise RuleError("not your turn")
     result, events = handler(state, command, catalog, rng)
+    from .help_contracts import reconcile_contracts
+    events.extend(reconcile_contracts(result))
     result, continuation_events = decisions.drain(
         result, catalog, rng, command.args.get("now")
     )
     events.extend(continuation_events)
+    events.extend(reconcile_contracts(result))
     if (
         result.combat
         and result.phase == "combat.active"

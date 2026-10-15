@@ -240,7 +240,8 @@ def finish(state, catalog):
 
     c = state.combat
     session = c.reward_state
-    events = []
+    from .help_contracts import reconcile_contracts
+    events = reconcile_contracts(state)
     for uid in dict.fromkeys(e["beneficiary"] for e in session["earned"]):
         entries = [e for e in session["earned"] if e["beneficiary"] == uid]
         levels = sum(e["levels"] for e in entries)

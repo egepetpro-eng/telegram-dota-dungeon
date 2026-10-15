@@ -70,3 +70,17 @@ sudo -u postgres pg_dump --format=custom dota_dungeon > /root/dota-dungeon-backu
 ## Проверка перед выпуском
 
 Полный pytest, реальные PostgreSQL-тесты конкурентных запросов/повторов/таймеров, проверка установленного wheel и независимое ревью должны пройти перед выпуском. Проверка запущенной службы отдельно от реальной партии: для игрового приёмочного теста два человека должны открыть личку бота и начать игру в своей группе.
+
+### Delivery and deadline isolation
+
+The service runs one timer worker independently of four delivery workers. Each
+worker claims one destination's oldest unfinished message; an older leased or
+backed-off message blocks later messages to that same chat. Other chats remain
+eligible, callback answers take priority, and eligible deliveries are ordered by
+retry deadline then ID. Every outgoing HTTP call has one 10-second transport
+attempt; a failed photo may make one text fallback (20 seconds of transport
+budget in total). This remains below the 120-second lease. The outbox owns
+retries, timed from the actual failure with no inline retry sleeps. The normal
+polling transport retains its existing retries. Delivery remains at least once:
+a crash after Telegram accepts a message but before `mark_sent` may repeat that
+message; committed gameplay and rewards remain protected by durable receipts.

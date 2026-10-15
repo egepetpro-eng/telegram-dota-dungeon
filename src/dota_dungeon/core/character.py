@@ -219,6 +219,8 @@ def use_ability(
     _validate_ability_target(state, actor_id, key, target, catalog, source)
     player = state.players[actor_id]
     validate_cost(player, descriptor["cost"], cost_ids)
+    from .help_contracts import require_unpromised
+    require_unpromised(state, actor_id, cost_ids)
     if any((actor_id, cid) in state.pending_initial_triggers for cid in cost_ids):
         raise RuleError("mandatory trigger card is reserved")
     for cid in cost_ids:

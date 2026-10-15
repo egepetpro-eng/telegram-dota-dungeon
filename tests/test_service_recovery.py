@@ -68,7 +68,7 @@ class Bot:
         self.replies = iter(replies)
         self.calls = []
 
-    def call(self, method, payload):
+    def call_once(self, method, payload):
         self.calls.append((method, payload))
         reply = next(self.replies)
         if isinstance(reply, Exception):

@@ -244,7 +244,7 @@ def start_curse(state, actor, target, cid, catalog, now, *, door=False):
                 kind="reaction", was_reacting=state.combat.reaction_deadline is not None
             )
         )
-    return state, offer(
+    return state, [Event("group", "curse.played", {"card_id": cid, "target_id": target, "actor_id": actor})] + offer(
         state,
         "curse_response",
         [target],

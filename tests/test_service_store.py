@@ -290,3 +290,29 @@ def test_restart_executes_persisted_timeout_once_without_repeated_reward(reposit
     else:
         assert result.trades["offer"].status == "expired"
     assert len(restarted.pending_outbox()) == 1
+
+def test_outbox_claims_only_destination_heads_and_backoff_blocks_followers(repository):
+    create(repository)
+    repository.enqueue('fair-delivery', [
+        {'method':'sendMessage','payload':{'chat_id':-100,'text':'first'}},
+        {'method':'sendMessage','payload':{'chat_id':-100,'text':'second'}},
+        {'method':'sendMessage','payload':{'chat_id':-200,'text':'healthy'}},
+        {'method':'answerCallbackQuery','payload':{'callback_query_id':'query-1'}},
+    ])
+    now = datetime.now(timezone.utc)
+    claimed = repository.claim_outbox(limit=1,now=now)
+    assert claimed[0]['method']=='answerCallbackQuery'
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        batches = list(pool.map(lambda _: repository.claim_outbox(limit=1,now=now), range(4)))
+    heads = [row for batch in batches for row in batch]
+    assert {r['payload']['text'] for r in heads} == {'first','healthy'}
+    first = next(r for r in heads if r['payload']['text']=='first')
+    healthy = next(r for r in heads if r['payload']['text']=='healthy')
+    repository.retry_outbox(first['id'],'429',now+timedelta(seconds=30))
+    repository.mark_sent(healthy['id'],{'message_id':1})
+    assert repository.claim_outbox(now=now+timedelta(seconds=1)) == []
+    retried = repository.claim_outbox(now=now+timedelta(seconds=31))
+    assert [r['id'] for r in retried] == [first['id']]
+    repository.mark_sent(first['id'],{'message_id':2})
+    follower = repository.claim_outbox(now=now+timedelta(seconds=31))
+    assert [r['payload']['text'] for r in follower] == ['second']

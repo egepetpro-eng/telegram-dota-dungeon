@@ -218,3 +218,70 @@ def test_hoard_reserved_source_and_second_shared_reward_wave_survive_restart(rep
     assert result.treasure_discard.count("hoard:1") == 1
     assert len(result.players[2].hand) == 1 and len(result.players[1].hand) == 4
     one_zone(result, release.catalog)
+
+def test_helper_item_loss_reloads_and_reaction_settles_once(repository):
+    state, release = setup(repository)
+    monster, armor, shot = 'large_angry_chicken:1', 'mithril_armor:1', 'magic_missile:1'
+    state.door_deck.remove(monster)
+    for cid in (armor, shot):
+        state.treasure_deck.remove(cid)
+        state.players[1].in_play.append(cid)
+    state.players[1].equipped = [armor]
+    state.players[2].level = 4
+    hand(state,'curse_lose_the_armor_you_are_wearing:1',2)
+    state.phase = 'combat.active'
+    state.combat = CombatState(leader_id=1,fighter_ids=[1],monster_ids=[monster])
+    repository.create(state,Random(42),{'last_action_at':NOW.isoformat()})
+    apply(repository,release,'ask_help',helper_id=2,treasure_count=0,item_ids=[armor,shot])
+    apply(repository,release,'accept_help',2)
+    saved = apply(repository,release,'play_card',2,card_id='curse_lose_the_armor_you_are_wearing:1',target={'player_id':1})
+    saved = apply(repository,release,'respond_decision',decision_id=saved.state.pending_decision.id,choices={})
+    assert saved.state.combat.help_item_ids == [shot]
+    repo, app = restart(repository,release,NOW)
+    assert repo.get('acceptance').state.combat.help_item_ids == [shot]
+    apply(repo,release,'declare_win')
+    repo, app = restart(repo,release,NOW+timedelta(seconds=30))
+    assert app.tick_timers()==1 and app.tick_timers()==0
+    result=repo.get('acceptance').state
+    assert result.combat is None and shot in result.players[2].in_play
+    assert armor not in result.players[2].in_play
+    one_zone(result,release.catalog)
+
+
+def test_revived_player_keeps_refill_entitlement_through_two_restarts(repository):
+    from dota_dungeon.core.loss_rules import death
+    from dota_dungeon.core.model import Player
+    state,release=setup(repository)
+    state.players[3]=Player(3)
+    state.order=[1,2,3]
+    state.phase='turn.charity'
+    # Open and loot role cards on each intervening turn, leaving rebirth draws free.
+    doors = ['3_872_orcs:1','amazon:1','bigfoot:1','bullrog:1',
+             'warrior:1','wizard:1','warrior:2','wizard:2']
+    for cid in doors:
+        state.door_deck.remove(cid)
+    state.door_deck.extend(doors)
+    for cid in ['mithril_armor:1','huge_rock:1','pretty_balloons:1','magic_missile:1']:
+        state.treasure_deck.remove(cid)
+        state.treasure_deck.append(cid)
+    state,_=death(state,1,release.catalog,Random(1))
+    repository.create(state,Random(42),{'last_action_at':NOW.isoformat()})
+    apply(repository,release,'end_turn')
+    repo,app=restart(repository,release,NOW)
+    saved=repo.get('acceptance')
+    assert saved.state.players[1].alive and saved.state.players[1].rebirth_pending
+    assert saved.state.players[1].hand==[]
+    # Finish the two intervening ordinary turns through real commands.
+    for uid in (2,3):
+        apply(repo,release,'open_door',uid)
+        # These controlled top doors are ordinary roles, so no combat intervenes.
+        saved=repo.get('acceptance')
+        if saved.state.combat or saved.state.pending_decision:
+            raise AssertionError('choose noncombat top doors in fixture')
+        apply(repo,release,'loot_room',uid)
+        apply(repo,release,'end_turn',uid)
+    repo,app=restart(repo,release,NOW)
+    result=repo.get('acceptance').state
+    assert result.active_user_id==1 and result.players[1].alive
+    assert not result.players[1].rebirth_pending and len(result.players[1].hand)==8
+    one_zone(result,release.catalog)

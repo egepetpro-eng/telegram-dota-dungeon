@@ -36,6 +36,9 @@ def authorize_callback(intent: CallbackIntent, *, telegram_user_id: int, chat_id
     if intent.actor_id is not None:
         if telegram_user_id != intent.actor_id or telegram_user_id not in member_ids:
             raise ValueError("button belongs to another player")
+    elif intent.action == "inspect_card":
+        if telegram_user_id not in member_ids:
+            raise ValueError("not a game member")
     else:
         if phase != "lobby" or intent.action not in {"join", "ready", "leave_lobby", "start", "refresh_lobby"}:
             raise ValueError("shared button cannot authorize this action")

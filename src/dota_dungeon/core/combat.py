@@ -180,6 +180,8 @@ def accept_help(
     if state.combat.pending_help is None or state.combat.pending_help[0] != actor_id:
         raise RuleError("no help offer for this player")
     result = deepcopy(state)
+    from .help_contracts import reconcile_contracts
+    contract_events = reconcile_contracts(result)
     _, treasures, items = result.combat.pending_help
     result.combat.pending_help = None
     result.combat.helper_id = actor_id
@@ -195,7 +197,7 @@ def accept_help(
     result.combat.passes.clear()
     from .trade import cancel_trades_for_combat
 
-    events = [Event("group", "help.accepted", {"helper_id": actor_id})]
+    events = contract_events + [Event("group", "help.accepted", {"helper_id": actor_id})]
     events.extend(cancel_trades_for_combat(result, actor_id))
     if catalog is not None:
         result, ev = settle_mandatory_monsters(result, catalog, rng or Random(), now)
@@ -678,19 +680,16 @@ def loot_corpse(
         raise RuleError("card is not on corpse")
     if actor_id in state.corpse_looted_by.get(deceased_id, set()):
         raise RuleError("player already looted corpse")
-    order = state.corpse_loot_order.get(deceased_id, [])
+    order = [u for u in state.corpse_loot_order.get(deceased_id, []) if state.players[u].alive]
     if order and actor_id != order[0]:
         raise RuleError("higher-level corpse looter acts first")
     result = deepcopy(state)
     if order:
-        result.corpse_loot_order[deceased_id].pop(0)
+        result.corpse_loot_order[deceased_id] = order[1:]
     result.corpse[deceased_id].remove(card_id)
     result.corpse_looted_by[deceased_id].add(actor_id)
-    if card_id in result.corpse_hand.get(deceased_id, set()):
-        result.players[actor_id].hand.append(card_id)
-        result.corpse_hand[deceased_id].remove(card_id)
-    else:
-        result.players[actor_id].in_play.append(card_id)
+    result.players[actor_id].hand.append(card_id)
+    result.corpse_hand.get(deceased_id, set()).discard(card_id)
     if order and not result.corpse_loot_order[deceased_id]:
         for cid in result.corpse[deceased_id]:
             getattr(result, f'{result.card_decks.get(cid,"treasure")}_discard').append(

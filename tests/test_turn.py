@@ -72,7 +72,7 @@ def charity_game(levels, hand):
 
 def test_lowest_level_actor_discards_excess():
     state = charity_game({101: 1, 102: 1}, list("abcdef"))
-    state, events = give_charity(state, 101, {})
+    state, events = give_charity(state, 101, {}, discard_ids=["a"])
     assert len(state.players[101].hand) == 5
     assert len(state.players[102].hand) == 0
     assert len(state.door_discard) == 1

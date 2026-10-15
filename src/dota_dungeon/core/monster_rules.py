@@ -210,6 +210,8 @@ def monster_action(state, actor, monster_id, choices, catalog, rng, now):
         and sum(catalog[c].value for c in cards) < spec["minimum_value"]
     ):
         raise RuleError("insufficient bribe")
+    from .help_contracts import require_unpromised
+    require_unpromised(state, actor, cards)
     result = deepcopy(state)
     discard_cards(result, actor, cards, catalog)
     if option == "distract":

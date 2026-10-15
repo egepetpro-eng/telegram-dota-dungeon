@@ -244,6 +244,7 @@ def death(state, uid, catalog, rng):
     p.attachments = {}
     p.hireling_items = {}
     p.alive = False
+    p.rebirth_pending = True
     p.pending_big_excess = 0
     p.pending_identity_excess = {}
     state.corpse[uid] = corpse
