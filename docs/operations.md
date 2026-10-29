@@ -30,6 +30,7 @@
 - Служба: `telegram-dota-dungeon.service`.
 - PostgreSQL: отдельная роль `dota_dungeon`, база `dota_dungeon`; тесты используют отдельную `dota_dungeon_test` и временные схемы.
 - Открывать входящий HTTP-порт не требуется: бот использует long polling Telegram.
+- Служба использует IPv4 и Unix-сокеты (`RestrictAddressFamilies=AF_INET AF_UNIX`). На текущем сервере IPv6-соединения с Telegram периодически зависают на 10 секунд до перехода на IPv4; это задерживает сообщения и ответы кнопок. При настройке через systemd drop-in сначала сбросьте прежний список пустой строкой `RestrictAddressFamilies=`, затем задайте новый. Проверяйте соединения из процесса с теми же ограничениями службы.
 
 Проверка под root:
 

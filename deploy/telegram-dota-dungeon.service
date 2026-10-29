@@ -21,7 +21,8 @@ PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/var/lib/telegram-dota-dungeon /var/cache/telegram-dota-dungeon
-RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# IPv6 to Telegram intermittently stalls before IPv4 fallback on this host.
+RestrictAddressFamilies=AF_INET AF_UNIX
 SyslogIdentifier=telegram-dota-dungeon
 
 [Install]
